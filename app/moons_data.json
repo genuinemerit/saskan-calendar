@@ -1,0 +1,90 @@
+[
+  {
+    "name": "Endor",
+    "distance_km": 420000,
+    "diameter_km": 3400,
+    "period_days": 33.5,
+    "albedo": 0.13,
+    "apparent_color": "Pale gray-blue",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 33.5,
+    "notes": "Tidal-locked; known as 'The Watcher'"
+  },
+  {
+    "name": "Sella",
+    "distance_km": 180000,
+    "diameter_km": 1600,
+    "period_days": 27.3,
+    "albedo": 0.20,
+    "apparent_color": "Ashy bronze",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 27.3,
+    "notes": "Highly regular; favored by navigators"
+  },
+  {
+    "name": "Lelako",
+    "distance_km": 90000,
+    "diameter_km": 500,
+    "period_days": 11.1,
+    "albedo": 0.35,
+    "apparent_color": "Bright ivory",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 11.1,
+    "notes": "Small but bright; sacred to rabbits"
+  },
+  {
+    "name": "Jembor",
+    "distance_km": 350000,
+    "diameter_km": 3000,
+    "period_days": 54.2,
+    "albedo": 0.12,
+    "apparent_color": "Rust-brown",
+    "rotation_type": "Free-spin",
+    "rotation_period_days": 19.8,
+    "notes": "Captured object; not tidally locked; shows different face"
+  },
+  {
+    "name": "Calumbra",
+    "distance_km": 270000,
+    "diameter_km": 2200,
+    "period_days": 22.7,
+    "albedo": 0.18,
+    "apparent_color": "Silvery-gray",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 22.7,
+    "notes": "Mysterious albedo variation with seasons"
+  },
+  {
+    "name": "Zehembra",
+    "distance_km": 210000,
+    "diameter_km": 1400,
+    "period_days": 18.9,
+    "albedo": 0.22,
+    "apparent_color": "Gold-hued white",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 18.9,
+    "notes": "Linked to solar omens and lore of fate"
+  },
+  {
+    "name": "Shunna",
+    "distance_km": 160000,
+    "diameter_km": 900,
+    "period_days": 16.3,
+    "albedo": 0.40,
+    "apparent_color": "Ice-blue shimmer",
+    "rotation_type": "Synchronous",
+    "rotation_period_days": 16.3,
+    "notes": "Cold, dazzling; seen best during Stillness"
+  },
+  {
+    "name": "Kanka",
+    "distance_km": 480000,
+    "diameter_km": 3800,
+    "period_days": 45.0,
+    "albedo": 0.10,
+    "apparent_color": "Deep violet-brown",
+    "rotation_type": "Chaotic spin",
+    "rotation_period_days": 38.0,
+    "notes": "Captured moon with seismic activity; sometimes 'moans' in storms"
+  }
+]
