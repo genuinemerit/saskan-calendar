@@ -547,43 +547,44 @@ def get_moon_phases(p_astro_day: float) -> dict:
     return phases
 
 
-def seed_kanka_chaos(p_years: int = 10000) -> None:
+def seed_kanka_chaos(p_max_years: int = 10000) -> None:
     """
-    @param p_years: int - years to seed Kanka's chaotic rotations.
-    The values for chaotic rotations are genreated for a span of
-        10,000 astronomical years, or other input value.
-    Run this function only as part of environment setup.
-    Each record has the following fields:
+    @param p_max_years: int - years to seed Kanka's chaotic rotations.
+    Default = 10,000 astronomical years.
+    - Run this function only as part of environment setup.
+    - Chaotic event and each aftermathc day lasts for 1 full day.
+    - Choatic event occurs at start of 1st day, as result of seismic
+      or volcanic activity, then spin readjusts over N days, after
+      which it resets to standard Kanka rotation (spin).
+    - Duration of chaos is proportional to magnitude of the event.
+    - The chaos is a forward or backward spin of Kanka, which is
+      a temporary change to its rotation.
 
-        The day in the Astronomical calendar. Implication is that
-        the chaos lasts for 24 hours (full day). When a choatic
-        event is defined, it occurs "suddenly" as start of 1st day,
-        the result of seismic or volcanic activity.  It slowly
-        readjusts over the next n days, and then resets to the
-        standard Kanka rotation (spin). The duration of the
-        chaos is proportional to the magnitude of the event.
-            (astro_day) - key: 5,    # imp[ies entire day, not just a pulse
-            "magnitude": 6,         # 1 (minor) to 10 (cataclysmic)
-            "event": "volcanic eruption", # "volcanic eruption", "earthquake", etc.
-            "event_day": 1,  # the day of triggering event, or its aftermath
-            "direction": "forward", # "forward" or "backward"
-            "duration_days": 3,     # roughly mag * 1.5
-            "note": "Brimstone Maw seen at dusk in the east"
-    }
-    Output: Rewrite the kanka_spin.json file.
+    Each record has the following fields to describe the chaos event:
+    - astro_day (int, key)  ex = 5, i.e, day 5 of the Astronomical calendar
+    - magnitude (int)       ex = 6 , 2 (minor) to 5 (cataclysmic)
+    - event (str)           "volcanic eruption", "earthquake", etc.
+    - event_day (int)       ex = 1, ordinal day of event, or aftermath
+    - direction (str)       "forward" or "backward"
+    - duration_days (int)   ex = 3, generally round(mag * 1.5)
+    - note (str)            ex = "Brimstone Maw seen at dusk in the east"
+    Then the record is augmented with data describing the aftermath in terms
+    of Kanka's rotation, substituting hard-coded data for the get_moon_phases()
+    function.
+    @output: Rewrite the kanka_spin.json file.
     """
 
-    def generate_intervals() -> list:
+    def generate_intervals(max_years: int) -> list:
         """
-        Generate random interval for Kanka's chaotic rotation,
-        covering 10,000 years.
-        The interval is a float between 3660 and 36500 days,
-        representing the number of days between chaotic events.
-        The interval is an integer number of days.
+        @param max_years: int - maximum number of years to generate chaos days for.
+        Generate random intervals for Kanka's chaotic events for max_years.
+        Interval is a integer number of days between 10 to 100 years (3660 and
+        36500 days) between chaotic events.
+        @return: list of chaos days, each day represented as an integer.
         """
         chaos_days: list = []
         current_day = 1
-        end_day = 10000 * DAYS_PER_SOLAR_TURN  # 10,000 years
+        end_day = max_years * DAYS_PER_SOLAR_TURN   # 10,000 years
         while current_day < end_day:
             interval = random.randint(3660, 36500)  # 10 to 100 years
             current_day += interval
@@ -591,15 +592,17 @@ def seed_kanka_chaos(p_years: int = 10000) -> None:
                 chaos_days.append(current_day)
         return chaos_days
 
-    def chaos_trigger_recs(k_record, chaos_days: list) -> list:
+    def chaos_trigger(chaos_days: list) -> dict:
         """
-        Generate chaos triggering records for Kanka's chaotic rotations.
+        @param chaos_days: list - days when chaos events occur.
+        Generate data records chaotic triggering event for Kanka.
+        @return: dict of chaos data records keyed by astro_day.
         """
         k_data: dict = {}
         for day in chaos_days:
-            krec = k_record.copy()
+            krec: dict = {}
             astro_day = round(day, 4)
-            krec["magnitude"] = random.randint(1, 10)
+            krec["magnitude"] = random.randint(2, 5)
             krec["event"] = random.choice([
                 "volcanic eruption",
                 "earthquake",
@@ -611,8 +614,11 @@ def seed_kanka_chaos(p_years: int = 10000) -> None:
             krec["event_day"] = 1.0
             krec["direction"] = random.choice(["forward", "backward"])
             krec["duration_days"] =\
-                random.randint(int(round(krec["magnitude"] * 1.5)),
-                               int(round(krec["magnitude"] * 2.5)))
+                random.randint(int(round(krec["magnitude"] * 3.5)),
+                               int(round(krec["magnitude"] * 4.5)))
+            # Consider using an AI call here to generate a more
+            # descriptive note based on the event and direction.
+            # For now, use a random choice from a predefined list.
             krec["note"] = random.choice([
                 "Brimstone Maw seen at dusk in the east",
                 "The sky darkened with ash and fire",
@@ -624,26 +630,83 @@ def seed_kanka_chaos(p_years: int = 10000) -> None:
             k_data[astro_day] = krec.copy()
         return k_data
 
-    k_file = "./kanka_spin.json"
-    if FM.is_file_or_dir(k_file):
-        FM.delete_file(k_file)
-    chaos_days = generate_intervals()
-    k_record = {"magnitude": 0,
-                "direction": "",
-                "duration_days": 0,
-                "note": ""}
-    chaos_data = chaos_trigger_recs(k_record, chaos_days)
+    def chaos_impact(chaos_data: dict) -> dict:
+        """
+        @param chaos_days: list - days when chaos events occur.
+        Generate data records for impact to spin on chaos trigger
+        and aftermath days.
+        @return: updated dict of chaos data records keyed by astro_day.
+        """
+        chaos_in = chaos_data.copy()
+        chaos_out: dict = {}
+        for astro_day, chaos_rec in chaos_in.items():
+            # Create a copy of the chaos record to modify
+            chaos_out[astro_day] = chaos_rec.copy()
+            # Compute last aftermath day
+            last_aftermath_day =\
+                int(round(astro_day + chaos_rec["duration_days"],  4))
+            # Get moon phase data for prior and subsequent days
+            pri_day = int(round(astro_day - 1.0, 4))
+            sub_day = int(round(last_aftermath_day + 1.0, 4))
+            mid_day = int(round((pri_day + sub_day) / 2, 4))
+            print("\nChaos Event on Astro Day:", astro_day, "with midpoint",
+                  mid_day, "and last aftermath day", last_aftermath_day)
+            p_day_phase = get_moon_phases(pri_day)['Kanka']
+            pp(("Prior Day Kanka Phase", pri_day, p_day_phase))
+            s_day_phase = get_moon_phases(sub_day)['Kanka']
+            pp(("Subsequent Day Kanka Phase", sub_day, s_day_phase))
+            # Add spin data for the event day
+            # Add spin data for aftermath days
+            # Things to consider:
+            # - The revolution days and period don't change.
+            # - The rotation day and period could be considered to be
+            #   be changed. Not sure yet. May also need to consider
+            #   carefullly what to do if the rotation period is exceeded
+            #   during the aftermath days.
+            # - It is the phase-offset that really changes. And because of
+            #   that, the face name, notes, and omen could also change.
+            # So...TODO:
+            #  - Based on direction, period within the aftermath (before,
+            #    after the midpoint, or at the midpoint), modify the
+            #    phase offset proportionally down (for reverse spin) or
+            #    up (for forward spin), by increments.
+            #  - Phase offset is a float between 0.0 and 1.0, where
+            #    0.0 is the start of the revolution (Full Moon) and
+            #    1.0 is the end of the revolution (Full Moon). So if the
+            #    adjusted phase offset comes out below 0.0 or above 1.0,
+            #    adjust it again to reflect movement around the period,
+            #    sort of like a clock face. For example, if the
+            #    adjusted phase offset is 1.2, it should be adjusted to
+            #    0.2, and if it is -0.2, it should be adjusted to 0.8.
+            #    To compute it correctly, we can use the modulo operator:
+            #    adjusted_offset = (original_offset + adjustment) % 1.0
+            #  - The adjustment is a function of the direction and the
+            #    duration of the aftermath, and the midpoint of the aftermath.
+            #  - Use the adjusted phase offset to set the
+            #  - Make set_kanka_faces() a global function
+            #  - Use it to set the face name, notes, and omen based on the
+            #    adjusted phase offset.
+        return chaos_out
+
+    # Main: seed_kanka_chaos()
+    # ==========================================================
+    # Define days when chaos events occur.
+    chaos_days = generate_intervals(p_max_years)
+    # Generate data for the chaos events.
+    chaos_data = chaos_trigger(chaos_days)
+    # Generate data for spin impacts.
+    _ = chaos_impact(chaos_data)
     # Next -- augment chaos_data with aftermath impacts to Kanka's rotation.
     # The aftermath is a gradual return to the standard rotation:
     # - the first day is the event trigger day, when the chaotic spin
-    #  forward or backward beging. At the apex of the duration, whhich is
+    #  forward or backward begins. At the apex of the duration, which is
     #  the mid-point of the duration days, the chaotic spin is at it maximum
     #  effect, and during the rest of the duration, it gradually returns to the
     #  standard rotation. There is no permanet change to Kanka's rotation, we
-    #  always return to the point where Kanka would normally be on the day after
+    #  always return to the point where Kanka would normally be on the day _after_
     #  the last duration day. This implies that the face of Kanka during the
     #  chaotic period is a function of its face on the day of the event and
-    #  its face on the day after the last duration day, both of whhich are
+    #  its face on the day after the last duration day, both of which are
     #  predictable using the get_moon_phases function.
     #  The fun part is figuring out how to represent the chaotic
     #  rotation in the data. We can use the same structure as the
@@ -663,6 +726,10 @@ def seed_kanka_chaos(p_years: int = 10000) -> None:
     # for each day of the duration.
     # This way, the get_moon_phases function can simply read for the astro_day
     # and return the appropriate data, including the extra chaotic data.
+    # Write the chaos data to the kanka_spin.json file.
+    k_file = "./kanka_spin.json"
+    if FM.is_file_or_dir(k_file):
+        FM.delete_file(k_file)
     FM.write_file(k_file, json.dumps(chaos_data))
 
 
