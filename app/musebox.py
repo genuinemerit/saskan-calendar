@@ -12,7 +12,7 @@ Each section can be accessed via the unified `MUSEBOX` object.
 For usage examples, see the comments at the bottom or refer to tests.
 
 See these references for more information on music21 library:
-web.mit.edu/music21/doc/
+https://www.music21.org/music21docs/
 web.mit.edu/music21/doc/genindex.html
 web.mit.edu/music21/doc/py-modindex.html
 The "genindex" link is the best detailed technical reference.
@@ -309,21 +309,36 @@ class ScaleSet:
             if mode_name in list(self.scale[k].keys())
         }
 
-    def get_key_signatures(self) -> dict:
-    """
-    Return a dict of KeySignature objects for each (key, mode) pair.
-    """
-    ks_map = {}
-    for key, modes in self.scale.items():
-        ks_map[key] = {}
-        for mode, scale_obj in modes.items():
-            pitches = scale_obj.getPitches()
-            acc_count = sum(
-                1 if '#' in p.name else -1 if '-' in p.name else 0
-                for p in pitches
-            )
-            ks_map[key][mode] = m21.key.KeySignature(acc_count)
-    return ks_map
+    def get_key_signatures(self, key=None, mode=None) -> dict:
+        """
+        Return a dict of KeySignature objects for each (key, mode) pair.
+        Count sharps and flats separately. Ignore double-flats, double-sharps.
+        N.B. - Will still need to pay attention to accidentals when scoring;
+         this just identifies the proper key signature for a given scale.
+         Remember that it may or may not actually cover all the accidentals.
+        """
+        key_param = key
+        mode_param = mode
+        ks_map = {}
+        for k, modes in self.scale.items():
+            if key_param is not None and k != key_param:
+                continue
+            ks_map[k] = {}
+            for m, scale in modes.items():
+                if mode_param is not None and m != mode_param:
+                    continue
+                pitches = scale.getPitches()
+                sharps = sum(1 for p in pitches if "#" in p.name and "##" not in p.name)
+                flats = sum(1 for p in pitches if "-" in p.name and "--" not in p.name)
+                if sharps > flats:
+                    acc_count = sharps
+                elif flats > sharps:
+                    acc_count = -flats
+                else:
+                    # arbitrarily favor sharps if tied
+                    acc_count = sharps
+                ks_map[k][m] = m21.key.KeySignature(acc_count)
+        return ks_map
 
 
 @dataclass(frozen=True)

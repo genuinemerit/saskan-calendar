@@ -1,6 +1,6 @@
 from pprint import pprint as pp # noqa F401
 import music_core as mus
-from musebox import NoteSet, ScaleSet, KeySignatureSet
+from musebox import NoteSet, ScaleSet
 
 
 """
@@ -94,15 +94,16 @@ def basic_tests():
     # Next, some explicit checks on NS.note values.
 
     NS = NoteSet()
-    print(NS.display_notes())
+    print(f"\ndisplay_notes:\n{NS.display_notes()}")
 
     # Next, some explicit checks on SS.scale values.
     SS = ScaleSet()
-    print(SS.display_scale())     # All scales
-    print(SS.get_modes("harmonicminor"))   # Select by name
-
-    KSS = KeySignatureSet()
-    pp((KSS))
+    print(f"\ndisplay_scale() [all scales]:\n{SS.display_scale()}")
+    print(f"\nget_modes(harmonicminor):\n{SS.get_modes('harmonicminor')}")
+    print(f"\nget_key_signatures [all signatures]:\n{SS.get_key_signatures()}")
+    print(f"\nget_key_signatures [all modes in C]:\n{SS.get_key_signatures(key='C')}")
+    print(f"\nget_key_signatures [all major modes]:\n{SS.get_key_signatures(mode='major')}")
+    print(f"\nget_key_signatures [C major]:\n{SS.get_key_signatures(key='C', mode='major')}")
 
 
 if __name__ == "__main__":
