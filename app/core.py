@@ -390,6 +390,127 @@ def get_astro_events(p_astro_day: float) -> list:
     return events
 
 
+def get_kanka_faces(offset: float) -> tuple:
+    """
+    @param offset: float - the phase offset of Kanka's rotation,
+        a value between 0.0 and 1.0 inclusive, where 0.0 and 1.0 both
+        mean "full moon" and 0.5 means "new moon".
+    Set Kanaka's unique rotation face names.
+    Eventually:
+        Trigger special texts for chaotic rotations.
+    @return: tuple of (name, notes, omen)
+    """
+    if offset <= 0.03 or offset >= 0.97:
+        name = "Grin Without Cause, Laughter in the Dust"
+        notes = "A toothy curve of craters, askew. Surprising luck. Unwanted guests."
+        omen = "Beware striking deals; they favor the fool."
+    elif offset > 0.03 and offset < 0.23:
+        name = "The Black Wink is Not an Eye"
+        notes = "A darkened divot shaped like a closed eye. Speak softly."
+        omen = "Secrets withheld will twist in the throat."
+    elif offset >= 0.23 and offset <= 0.27:
+        name = "The Tilted Mask, Half Jest, Half Spite"
+        notes = "Shadows seem misaligned with the expected arc. Servants rise, masters fall."
+        omen = "A good time for gambling or revolution."
+    elif offset > 0.27 and offset < 0.47:
+        name = "The Crooked Maw of the Devourer of Patterns"
+        notes = "Jagged valley, illusion of a scream. Interruptions, madness."
+        omen = "Lose something; find something better or worse."
+    elif offset >= 0.47 and offset <= 0.53:
+        name = "Vein of Fire, a Fissure in the Ice"
+        notes = "Rare glowing vein. Upheaval, literal and social."
+        omen = "Watch the mountain roots; some will walk."
+    elif offset > 0.53 and offset < 0.73:
+        name = "The Jester of Perpetual Challenge"
+        notes = "Crescent shadow bends like an arched brow. Days of duels, dares, and dancing."
+        omen = "Speak plainly or be tricked."
+    elif offset >= 0.73 and offset <= 0.77:
+        name = "The Bleeding Curve, The Smile That Wounds"
+        notes = "Faint reddish tint on the terminator line. Bloodlettings or fevers."
+        omen = "A time of confession and consequence."
+    elif offset > 0.77 and offset < 0.97:
+        name = "The Shattered Wheel, Never Whole"
+        notes = "Craters misaligned as if part of a broken circle. Chaotic shifts."
+        omen = "Nothing holds and no pact binds when Kanka resets her spin."
+    return (name, notes, omen)
+
+
+def get_jembor_faces(offset: float) -> tuple:
+    """
+    @param offset: float - the phase offset of Jembor's rotation,
+    Jembor's unique rotation face names.
+    @return: tuple of (name, notes, omen)
+    """
+    if offset <= 0.03 or offset >= 0.97:
+        name = "Veiborn, the Hidden One"
+        notes = "Jembor rises with no markings visible."
+        omen = "Secrets yet to unfold.  Read silent augurs."
+    elif offset > 0.03 and offset < 0.23:
+        name = "Mirror Drift, a Seer of Doubles"
+        notes = "A shimmered visage reflecting another world."
+        omen = "Twins, echoes, and deceptive signs."
+    elif offset >= 0.23 and offset <= 0.27:
+        name = "Sable Crown, Sovereign of Stillness"
+        notes = "Regal and motionless. Auspicious births."
+        omen = "Abdications. Rising of cloistered powers."
+    elif offset > 0.27 and offset < 0.47:
+        name = "Wyrmrest, the Sleeping Beast"
+        notes = "Ridges give impression of scales or coils."
+        omen = "Latent energy. Stirring of old memories."
+    elif offset >= 0.47 and offset <= 0.53:
+        name = "Ashen Gate, a Threshold of Shadows"
+        notes = "A darkened rim, marked by a pale cleft."
+        omen = "A portal. The hinge between worlds."
+    elif offset > 0.53 and offset < 0.73:
+        name = "The Weeping Stone, Tears of Cold Fire"
+        notes = "Light patterns create a shining streak."
+        omen = "Grief, release, and haunted songs."
+    elif offset >= 0.73 and offset <= 0.77:
+        name = "Eye of the Hollow, the Watcher Beyond"
+        notes = "A dark circle on pale stone."
+        omen = "Jembor is watching Gavor."
+    elif offset > 0.77 and offset < 0.97:
+        name = "The Pale Harrow, Bringer of Reckoning"
+        notes = "The bright face, visible even at dawn."
+        omen = "Omens of judgment, trials, or retribution."
+    return (name, notes, omen)
+
+
+def get_revolution_data(astro_day: float,
+                        rev_period: float) -> tuple:
+    """
+    @param astro_day: float number of an astronomical day since epoch start.
+    @param rev_period: float number of the moon's revolution period in days.
+    Compute revolution period and phase
+    @return: tuple of (rev_period, rev_day, offset, rev_phase)
+    - rev_period: float - the revolution period of the moon in days.
+    - rev_day: float - the current revolution day, 1.0 to rev_period
+    - offset: float - the phase offset, 0.0 to 1.0
+    - rev_phase: str - the current phase of the moon.
+    """
+    rev_day = ((astro_day - 1.0) % rev_period) + 1.0
+    rev_day = 1.0 if rev_day == rev_period else\
+        round(rev_day - 1, 2)
+    offset = round(rev_day / rev_period, 2)
+    if offset <= 0.03 or offset >= 0.97:
+        rev_phase = "Full"
+    elif offset > 0.03 and offset < 0.23:
+        rev_phase = "Waning Gibbous"
+    elif offset >= 0.23 and offset <= 0.27:
+        rev_phase = "Waning Half Moon"
+    elif offset > 0.27 and offset < 0.47:
+        rev_phase = "Waning Crescent"
+    elif offset >= 0.47 and offset <= 0.53:
+        rev_phase = "New"
+    elif offset > 0.53 and offset < 0.73:
+        rev_phase = "Waxing Crescent"
+    elif offset >= 0.73 and offset <= 0.77:
+        rev_phase = "Waxing Half Moon"
+    elif offset > 0.77 and offset < 0.97:
+        rev_phase = "Waxing Gibbous"
+    return (rev_period, rev_day, offset, rev_phase)
+
+
 def get_moon_phases(p_astro_day: float) -> dict:
     """
     @param solar_day: float number of an astronomical day since epoch start.
@@ -397,106 +518,6 @@ def get_moon_phases(p_astro_day: float) -> dict:
     Assume that all moons were "Full" and "Standard" on solar day 1.0.
     See moons_data.json for details on each moon.
     :return: dict with moon names as keys and their phases and faces as values."""
-
-    def set_revolution_data(moon: dict) -> tuple:
-        """ Compute revolution period and phase """
-        rev_period = round(float(moon["period_days"]), 2)
-        rev_day = ((astro_day - 1.0) % rev_period) + 1.0
-        rev_day = 1.0 if rev_day == rev_period else\
-            round(rev_day - 1, 2)
-        offset = round(rev_day / rev_period, 2)
-        if offset <= 0.03 or offset >= 0.97:
-            rev_phase = "Full"
-        elif offset > 0.03 and offset < 0.23:
-            rev_phase = "Waning Gibbous"
-        elif offset >= 0.23 and offset <= 0.27:
-            rev_phase = "Waning Half Moon"
-        elif offset > 0.27 and offset < 0.47:
-            rev_phase = "Waning Crescent"
-        elif offset >= 0.47 and offset <= 0.53:
-            rev_phase = "New"
-        elif offset > 0.53 and offset < 0.73:
-            rev_phase = "Waxing Crescent"
-        elif offset >= 0.73 and offset <= 0.77:
-            rev_phase = "Waxing Half Moon"
-        elif offset > 0.77 and offset < 0.97:
-            rev_phase = "Waxing Gibbous"
-        return (rev_period, rev_day, offset, rev_phase)
-
-    def set_jembor_faces(offset: float) -> tuple:
-        """ Set Jembor's unique rotation face names """
-        if offset <= 0.03 or offset >= 0.97:
-            name = "Veiborn, the Hidden One"
-            notes = "Jembor rises with no markings visible."
-            omen = "Secrets yet to unfold.  Read silent augurs."
-        elif offset > 0.03 and offset < 0.23:
-            name = "Mirror Drift, a Seer of Doubles"
-            notes = "A shimmered visage reflecting another world."
-            omen = "Twins, echoes, and deceptive signs."
-        elif offset >= 0.23 and offset <= 0.27:
-            name = "Sable Crown, Sovereign of Stillness"
-            notes = "Regal and motionless. Auspicious births."
-            omen = "Abdications. Rising of cloistered powers."
-        elif offset > 0.27 and offset < 0.47:
-            name = "Wyrmrest, the Sleeping Beast"
-            notes = "Ridges give impression of scales or coils."
-            omen = "Latent energy. Stirring of old memories."
-        elif offset >= 0.47 and offset <= 0.53:
-            name = "Ashen Gate, a Threshold of Shadows"
-            notes = "A darkened rim, marked by a pale cleft."
-            omen = "A portal. The hinge between worlds."
-        elif offset > 0.53 and offset < 0.73:
-            name = "The Weeping Stone, Tears of Cold Fire"
-            notes = "Light patterns create a shining streak."
-            omen = "Grief, release, and haunted songs."
-        elif offset >= 0.73 and offset <= 0.77:
-            name = "Eye of the Hollow, the Watcher Beyond"
-            notes = "A dark circle on pale stone."
-            omen = "Jembor is watching Gavor."
-        elif offset > 0.77 and offset < 0.97:
-            name = "The Pale Harrow, Bringer of Reckoning"
-            notes = "The bright face, visible even at dawn."
-            omen = "Omens of judgment, trials, or retribution."
-        return (name, notes, omen)
-
-    def set_kanka_faces(offset: float) -> tuple:
-        """
-        Set Kanaka's unique rotation face names,
-        >> and adjust offset for its chaotic rotations <<
-        """
-        if offset <= 0.03 or offset >= 0.97:
-            name = "Grin Without Cause, Laughter in the Dust"
-            notes = "A toothy curve of craters, askew. Surprising luck. Unwanted guests."
-            omen = "Beware striking deals; they favor the fool."
-        elif offset > 0.03 and offset < 0.23:
-            name = "The Black Wink is Not an Eye"
-            notes = "A darkened divot shaped like a closed eye. Speak softly."
-            omen = "Secrets withheld will twist in the throat."
-        elif offset >= 0.23 and offset <= 0.27:
-            name = "The Tilted Mask, Half Jest, Half Spite"
-            notes = "Shadows seem misaligned with the expected arc. Servants rise, masters fall."
-            omen = "A good time for gambling or revolution."
-        elif offset > 0.27 and offset < 0.47:
-            name = "The Crooked Maw of the Devourer of Patterns"
-            notes = "Jagged valley, illusion of a scream. Interruptions, madness."
-            omen = "Lose something; find something better or worse."
-        elif offset >= 0.47 and offset <= 0.53:
-            name = "Vein of Fire, a Fissure in the Ice"
-            notes = "Rare glowing vein. Upheaval, literal and social."
-            omen = "Watch the mountain roots; some will walk."
-        elif offset > 0.53 and offset < 0.73:
-            name = "The Jester of Perpetual Challenge"
-            notes = "Crescent shadow bends like an arched brow. Days of duels, dares, and dancing."
-            omen = "Speak plainly or be tricked."
-        elif offset >= 0.73 and offset <= 0.77:
-            name = "The Bleeding Curve, The Smile That Wounds"
-            notes = "Faint reddish tint on the terminator line. Bloodlettings or fevers."
-            omen = "A time of confession and consequence."
-        elif offset > 0.77 and offset < 0.97:
-            name = "The Shattered Wheel, Never Whole"
-            notes = "Craters misaligned as if part of a broken circle. Chaotic shifts."
-            omen = "Nothing holds and no pact binds when Kanka resets her spin."
-        return (name, notes, omen)
 
     def set_rotation_data(moon: dict) -> tuple:
         # Compute rotation period and face
@@ -512,10 +533,10 @@ def get_moon_phases(p_astro_day: float) -> dict:
             offset = round(rot_day / rot_period, 2)
             if moon["name"] == "Jembor":
                 (name, notes, omen) =\
-                    set_jembor_faces(offset)
+                    get_jembor_faces(offset)
             elif moon["name"] == "Kanka":
                 (name, notes, omen) =\
-                    set_kanka_faces(offset)
+                    get_kanka_faces(offset)
         return (rot_period, rot_day, name, notes, omen)
 
     def set_moon_return_values(phases: dict) -> dict:
@@ -539,7 +560,8 @@ def get_moon_phases(p_astro_day: float) -> dict:
     for moon in moon_defs:
         phases[moon["name"]] = {}
         (rev_period, rev_day, offset, rev_phase) =\
-            set_revolution_data(moon)
+            get_revolution_data(astro_day,
+                                round(float(moon["period_days"]), 2))
         (rot_period, rot_day, name, notes, omen) =\
             set_rotation_data(moon)
         phases = set_moon_return_values(phases)
@@ -552,7 +574,7 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
     @param p_max_years: int - years to seed Kanka's chaotic rotations.
     Default = 10,000 astronomical years.
     - Run this function only as part of environment setup.
-    - Chaotic event and each aftermathc day lasts for 1 full day.
+    - Chaotic event and each aftermath day lasts for 1 full day.
     - Choatic event occurs at start of 1st day, as result of seismic
       or volcanic activity, then spin readjusts over N days, after
       which it resets to standard Kanka rotation (spin).
@@ -651,9 +673,11 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
             mid_day = int(round((pri_day + sub_day) / 2, 4))
             print("\nChaos Event on Astro Day:", astro_day, "with midpoint",
                   mid_day, "and last aftermath day", last_aftermath_day)
-            p_day_phase = get_moon_phases(pri_day)['Kanka']
+            p_day_phase = get_moon_phases(pri_day)['Kanka']['phase_offset']
+            p_avg_incr = 1 / get_moon_phases(pri_day)['Kanka']['rotation_period']
+            p_day_phase = get_moon_phases(pri_day)['Kanka']['phase_offset']
             pp(("Prior Day Kanka Phase", pri_day, p_day_phase))
-            s_day_phase = get_moon_phases(sub_day)['Kanka']
+            s_day_phase = get_moon_phases(sub_day)['Kanka']['phase_offset']
             pp(("Subsequent Day Kanka Phase", sub_day, s_day_phase))
             # Add spin data for the event day
             # Add spin data for aftermath days
@@ -682,19 +706,20 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
             #    adjusted_offset = (original_offset + adjustment) % 1.0
             #  - The adjustment is a function of the direction and the
             #    duration of the aftermath, and the midpoint of the aftermath.
-            #  - Use the adjusted phase offset to set the
-            #  - Make set_kanka_faces() a global function
+            #  - Use the adjusted phase offset to set the face
+            #  - Make get_kanka_faces() a global function
             #  - Use it to set the face name, notes, and omen based on the
             #    adjusted phase offset.
+            #    See notes in test_math.py for more details.
         return chaos_out
 
     # Main: seed_kanka_chaos()
     # ==========================================================
-    # Define days when chaos events occur.
+    # Set days on which chaos events occur.
     chaos_days = generate_intervals(p_max_years)
-    # Generate data for the chaos events.
+    # Generate basic data for the chaos events.
     chaos_data = chaos_trigger(chaos_days)
-    # Generate data for spin impacts.
+    # Generate data for spin impact / aftermath.
     _ = chaos_impact(chaos_data)
     # Next -- augment chaos_data with aftermath impacts to Kanka's rotation.
     # The aftermath is a gradual return to the standard rotation:
@@ -702,7 +727,7 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
     #  forward or backward begins. At the apex of the duration, which is
     #  the mid-point of the duration days, the chaotic spin is at it maximum
     #  effect, and during the rest of the duration, it gradually returns to the
-    #  standard rotation. There is no permanet change to Kanka's rotation, we
+    #  standard rotation. There is no permanent change to Kanka's rotation, we
     #  always return to the point where Kanka would normally be on the day _after_
     #  the last duration day. This implies that the face of Kanka during the
     #  chaotic period is a function of its face on the day of the event and
@@ -719,7 +744,7 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
         phases[moon["name"]]["face_notes"] = notes
         phases[moon["name"]]["face_omen"] = omen
     """
-    # ... because we will be subtituting for what the get_moon_phases function
+    # ... because we will be substituting for what the get_moon_phases function
     # would return for Kanka during the chaotic period.
     # The kanka_spin data will be updated with the fields listed above, with
     # values added to the record for the event day, and more records written
