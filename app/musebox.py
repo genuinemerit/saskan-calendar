@@ -104,12 +104,13 @@ The "genindex" link is the best detailed technical reference.
 
 import music21 as m21
 from dataclasses import dataclass, field
-from pprint import pformat as pf    # noqa: F401
-from pprint import pprint as pp     # noqa: F401
-from tabulate import tabulate       # noqa: F401
-from typing import Union     # noqa: F401
+from pprint import pformat as pf  # noqa: F401
+from pprint import pprint as pp  # noqa: F401
+from tabulate import tabulate  # noqa: F401
+from typing import Union  # noqa: F401
 
 import method_files as mf  # noqa F401
+
 FM = mf.FileMethods()
 
 
@@ -142,30 +143,45 @@ class NoteSet:
     - Support display of tuplet ratios in display_notes()
 
     """
+
     note: dict = field(init=False, default_factory=lambda: NoteSet.build_notes())
 
     @staticmethod
     def build_notes():
-        note = {ntype: {} for ntype in
-                ('plain', 'rest', 'dotted', 'triplet', 'quintuplet', 'septuplet')}
+        note = {
+            ntype: {}
+            for ntype in (
+                "plain",
+                "rest",
+                "dotted",
+                "triplet",
+                "quintuplet",
+                "septuplet",
+            )
+        }
 
         base_durations = {
-            'breve': 8.0, 'whole': 4.0, 'half': 2.0,
-            'quarter': 1.0, 'eighth': 0.5, '16th': 0.25,
-            '32nd': 0.125, '64th': 0.0625
+            "breve": 8.0,
+            "whole": 4.0,
+            "half": 2.0,
+            "quarter": 1.0,
+            "eighth": 0.5,
+            "16th": 0.25,
+            "32nd": 0.125,
+            "64th": 0.0625,
         }
 
         for name, dur_val in base_durations.items():
             dur_plain = m21.duration.Duration(dur_val)
-            note['plain'][name] = dur_plain
-            note['rest'][name] = m21.note.Rest(quarterLength=dur_val)
-            note['dotted'][name] = m21.duration.Duration(dur_val * 1.5)
+            note["plain"][name] = dur_plain
+            note["rest"][name] = m21.note.Rest(quarterLength=dur_val)
+            note["dotted"][name] = m21.duration.Duration(dur_val * 1.5)
 
             # Create tuplets as separate Duration objects
             for kind, ratio in {
-                'triplet': (3, 2),
-                'quintuplet': (5, 2),
-                'septuplet': (7, 2)
+                "triplet": (3, 2),
+                "quintuplet": (5, 2),
+                "septuplet": (7, 2),
             }.items():
                 d = m21.duration.Duration(dur_val)
                 d.appendTuplet(m21.duration.Tuplet(*ratio))
@@ -179,13 +195,13 @@ class NoteSet:
         """
         output = ""
         for category, notes in self.note.items():
-            headers = ['Note Name', 'Duration (quarterLength)']
+            headers = ["Note Name", "Duration (quarterLength)"]
             rows = []
             for name, dur in notes.items():
-                ql = dur.quarterLength if hasattr(dur, 'quarterLength') else '?'
+                ql = dur.quarterLength if hasattr(dur, "quarterLength") else "?"
                 rows.append([name, ql])
             output += f"\n{category.upper()}:\n"
-            output += tabulate(rows, headers=headers, tablefmt='grid')
+            output += tabulate(rows, headers=headers, tablefmt="grid")
             output += "\n"
         return output
 
@@ -205,22 +221,61 @@ class ScaleSet:
      'AbstractRagMarwa', 'AbstractScale', 'AbstractWeightedHexatonicBlues',
      'ConcreteScale', ]
     """
+
     scale: dict = field(init=False, default_factory=lambda: ScaleSet.build_scales())
 
     @staticmethod
     def build_scales():
         scale = {}
-        keys = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#',
-                'F', 'B-', 'E-', 'A-', 'D-', 'G-', 'C-', 'F-']
+        keys = [
+            "C",
+            "G",
+            "D",
+            "A",
+            "E",
+            "B",
+            "F#",
+            "C#",
+            "G#",
+            "F",
+            "B-",
+            "E-",
+            "A-",
+            "D-",
+            "G-",
+            "C-",
+            "F-",
+        ]
         for k in keys:
             scale[k] = {}
-        m21_scales = ['ChromaticScale', 'CyclicalScale', 'DiatonicScale',
-                      'DorianScale', 'HarmonicMinorScale', 'HypoaeolianScale', 'HypodorianScale',
-                      'HypolocrianScale', 'HypolydianScale', 'HypomixolydianScale',
-                      'HypophrygianScale', 'LocrianScale', 'LydianScale', 'MajorScale',
-                      'MelodicMinorScale', 'MinorScale', 'MixolydianScale', 'OctatonicScale',
-                      'OctaveRepeatingScale', 'PhrygianScale', 'RagAsawari', 'RagMarwa',
-                      'ScalaScale', 'SieveScale', 'WeightedHexatonicBlues', 'WholeToneScale']
+        m21_scales = [
+            "ChromaticScale",
+            "CyclicalScale",
+            "DiatonicScale",
+            "DorianScale",
+            "HarmonicMinorScale",
+            "HypoaeolianScale",
+            "HypodorianScale",
+            "HypolocrianScale",
+            "HypolydianScale",
+            "HypomixolydianScale",
+            "HypophrygianScale",
+            "LocrianScale",
+            "LydianScale",
+            "MajorScale",
+            "MelodicMinorScale",
+            "MinorScale",
+            "MixolydianScale",
+            "OctatonicScale",
+            "OctaveRepeatingScale",
+            "PhrygianScale",
+            "RagAsawari",
+            "RagMarwa",
+            "ScalaScale",
+            "SieveScale",
+            "WeightedHexatonicBlues",
+            "WholeToneScale",
+        ]
         for k in keys:
             for s in m21_scales:
                 try:
@@ -243,105 +298,97 @@ class ScaleSet:
             modes = [mode] if mode else self.scale[k].keys()
             for m in modes:
                 scl = self.scale[k][m]
-                pitches = [p.nameWithOctave for p in scl.getPitches(k + '4', k + '5')]
+                pitches = [p.nameWithOctave for p in scl.getPitches(k + "4", k + "5")]
                 output += f"{k} {m}: {' '.join(pitches)}\n"
         return output
 
     def get_modes(self, mode_name):
-        return {k: self.scale[k][mode_name]
-                for k in self.scale if mode_name in list(self.scale[k].keys())}
+        return {
+            k: self.scale[k][mode_name]
+            for k in self.scale
+            if mode_name in list(self.scale[k].keys())
+        }
 
-
-@dataclass(frozen=True)
-class KeySignatureSet:
-    scale = ScaleSet().scale  # This should be placed outside of the init block.
-    keysig = dict()
-    for k in scale.keys():
-        keysig[k] = dict()
-        for mode, m_obj in scale[k].items():
-            a_cnt = 0
-            for p in m_obj.pitches:
-                a_cnt = a_cnt + 1 if '#' in p.name\
-                    else a_cnt - 1 if '-' in p.name else a_cnt
-            keysig[k][mode] = m21.key.KeySignature(a_cnt)
+    def get_key_signatures(self) -> dict:
+    """
+    Return a dict of KeySignature objects for each (key, mode) pair.
+    """
+    ks_map = {}
+    for key, modes in self.scale.items():
+        ks_map[key] = {}
+        for mode, scale_obj in modes.items():
+            pitches = scale_obj.getPitches()
+            acc_count = sum(
+                1 if '#' in p.name else -1 if '-' in p.name else 0
+                for p in pitches
+            )
+            ks_map[key][mode] = m21.key.KeySignature(acc_count)
+    return ks_map
 
 
 @dataclass(frozen=True)
 class TimeSignatureSet:
     timesig = dict()
-    for sig in ('2/2', '3/4', '4/4', '6/8'):
+    for sig in ("2/2", "3/4", "4/4", "6/8"):
         timesig[sig] = m21.meter.TimeSignature(sig)
 
 
 @dataclass(frozen=True)
 class ThemeSet:
     theme = dict()
-    theme[0] = ['ii', 'V', 'I']
-    theme[1] = ['I', 'V', 'vi', 'IV']
-    theme[2] = ['I', 'V', 'vi', 'ii']
-    theme[3] = ['I', 'iii', 'vi', 'IV']
-    theme[4] = ['I', 'iii', 'vi', 'ii']
-    theme[5] = ['I', 'vi', 'IV', 'V']
-    theme[6] = ['I', 'IV', 'vi', 'V']
-    theme[7] = ['I', 'vi', 'ii', 'V']
-    theme[8] = ['I', 'ii', 'vi', 'V']
-    theme[9] = ['I', 'IV', 'I', 'IV', 'V']
-    theme[10] = ['I', 'IV', 'I', 'IV']
-    theme[11] = ['vi', 'IV', 'vi', 'IV']
-    theme[12] = ['ii', 'V', 'IV', 'V']
-    theme[13] = ['ii', 'V', 'vi', 'IV']
-    theme[14] = ['I', 'iii', 'IV', 'V']
-    theme[15] = ['I', 'ii', 'iii', 'IV', 'V']
-    theme[16] = ['I', 'V', 'vi', 'iii']
-    theme[17] = ['IV', 'I', 'IV', 'V']
-    theme[18] = ['I', 'I', 'I', 'I']
-    theme[19] = ['IV', 'IV', 'I', 'I']
-    theme[20] = ['V', 'IV', 'I', 'V']
-    theme[21] = ['I', 'IV', 'I', 'I']
-    theme[22] = ['V', 'IV', 'I', 'I']
+    theme[0] = ["ii", "V", "I"]
+    theme[1] = ["I", "V", "vi", "IV"]
+    theme[2] = ["I", "V", "vi", "ii"]
+    theme[3] = ["I", "iii", "vi", "IV"]
+    theme[4] = ["I", "iii", "vi", "ii"]
+    theme[5] = ["I", "vi", "IV", "V"]
+    theme[6] = ["I", "IV", "vi", "V"]
+    theme[7] = ["I", "vi", "ii", "V"]
+    theme[8] = ["I", "ii", "vi", "V"]
+    theme[9] = ["I", "IV", "I", "IV", "V"]
+    theme[10] = ["I", "IV", "I", "IV"]
+    theme[11] = ["vi", "IV", "vi", "IV"]
+    theme[12] = ["ii", "V", "IV", "V"]
+    theme[13] = ["ii", "V", "vi", "IV"]
+    theme[14] = ["I", "iii", "IV", "V"]
+    theme[15] = ["I", "ii", "iii", "IV", "V"]
+    theme[16] = ["I", "V", "vi", "iii"]
+    theme[17] = ["IV", "I", "IV", "V"]
+    theme[18] = ["I", "I", "I", "I"]
+    theme[19] = ["IV", "IV", "I", "I"]
+    theme[20] = ["V", "IV", "I", "V"]
+    theme[21] = ["I", "IV", "I", "I"]
+    theme[22] = ["V", "IV", "I", "I"]
 
 
 @dataclass(frozen=True)
 class DegreeSet:
-    degree = {
-        'I': 1,
-        'ii': 2,
-        'iii': 3,
-        'IV': 4,
-        'V': 5,
-        'vi': 6,
-        'vii': 7}
+    degree = {"I": 1, "ii": 2, "iii": 3, "IV": 4, "V": 5, "vi": 6, "vii": 7}
 
 
 @dataclass(frozen=True)
 class ProgressionMap:
     prog = dict()
     theme = ThemeSet.theme
-    prog[0] = {"phrases": 4, 'chords': theme[0] * 4}
-    prog[1] = {"phrases": 3,  'chords': theme[1] * 3}
-    prog[2] = {"phrases": 3,  'chords': theme[2] * 3}
-    prog[3] = {"phrases": 3,  'chords': theme[3] * 3}
-    prog[4] = {"phrases": 3,  'chords': theme[4] * 3}
-    prog[5] = {"phrases": 3,  'chords': theme[5] * 3}
-    prog[6] = {"phrases": 3,  'chords': theme[6] * 3}
-    prog[7] = {"phrases": 3,  'chords': theme[7] * 3}
-    prog[8] = {"phrases": 3,  'chords': theme[8] * 3}
-    prog[9] = {"phrases": 3,  'chords': theme[9] * 3}
-    prog[10] = {"phrases": 3,  'chords': theme[10] * 2 + theme[11]}
-    prog[11] = {"phrases": 4,  'chords': theme[11] + theme[12] +
-                theme[11] + theme[12]}
-    prog[12] = {"phrases": 4,  'chords': theme[10] + theme[13] +
-                theme[10] + theme[13]}
-    prog[13] = {"phrases": 3,  'chords': theme[14] * 3}
-    prog[14] = {"phrases": 3,  'chords': theme[15] * 3}
-    prog[15] = {"phrases": 4,  'chords': theme[16] + theme[17] +
-                theme[16] + theme[17]}
-    prog[16] = {"phrases": 3,  'chords': theme[18] + theme[19] +
-                theme[20]}
-    prog[17] = {"phrases": 3,  'chords': theme[21] + theme[19] +
-                theme[20]}
-    prog[18] = {"phrases": 3,  'chords': theme[18] + theme[19] +
-                theme[22]}
+    prog[0] = {"phrases": 4, "chords": theme[0] * 4}
+    prog[1] = {"phrases": 3, "chords": theme[1] * 3}
+    prog[2] = {"phrases": 3, "chords": theme[2] * 3}
+    prog[3] = {"phrases": 3, "chords": theme[3] * 3}
+    prog[4] = {"phrases": 3, "chords": theme[4] * 3}
+    prog[5] = {"phrases": 3, "chords": theme[5] * 3}
+    prog[6] = {"phrases": 3, "chords": theme[6] * 3}
+    prog[7] = {"phrases": 3, "chords": theme[7] * 3}
+    prog[8] = {"phrases": 3, "chords": theme[8] * 3}
+    prog[9] = {"phrases": 3, "chords": theme[9] * 3}
+    prog[10] = {"phrases": 3, "chords": theme[10] * 2 + theme[11]}
+    prog[11] = {"phrases": 4, "chords": theme[11] + theme[12] + theme[11] + theme[12]}
+    prog[12] = {"phrases": 4, "chords": theme[10] + theme[13] + theme[10] + theme[13]}
+    prog[13] = {"phrases": 3, "chords": theme[14] * 3}
+    prog[14] = {"phrases": 3, "chords": theme[15] * 3}
+    prog[15] = {"phrases": 4, "chords": theme[16] + theme[17] + theme[16] + theme[17]}
+    prog[16] = {"phrases": 3, "chords": theme[18] + theme[19] + theme[20]}
+    prog[17] = {"phrases": 3, "chords": theme[21] + theme[19] + theme[20]}
+    prog[18] = {"phrases": 3, "chords": theme[18] + theme[19] + theme[22]}
 
 
 @dataclass(frozen=True)
@@ -349,46 +396,60 @@ class MotifGrammar:
     motif = dict()
 
     # 4 total beats per motif - check
-    motif['4/4'] = {
-        "MO1": {'1st': "S~S~B^        | S~S~Bv",
-                '2nd': "T~B~          | T~B~",
-                '3rd': "",
-                'Change': "S~S~S~S~      | SrS~B~",
-                'Turn': 'Q~QvQ~QvQ~QvQ~Qv  | SvS^S^S^',
-                'End': 'B~B~          | D~'}}
+    motif["4/4"] = {
+        "MO1": {
+            "1st": "S~S~B^        | S~S~Bv",
+            "2nd": "T~B~          | T~B~",
+            "3rd": "",
+            "Change": "S~S~S~S~      | SrS~B~",
+            "Turn": "Q~QvQ~QvQ~QvQ~Qv  | SvS^S^S^",
+            "End": "B~B~          | D~",
+        }
+    }
 
     # 3 total beats per motif - check
-    motif['3/4'] = {
-        "MO2": {'1st': "D~        | S^S^",
-                '2nd': "D~        | SvSv",
-                '3rd': "",
-                'Change': "T~        | D~",
-                'Turn': "",
-                'End': 'S~S~      | D~'},
-        "MO3": {'1st': "S~Q~Q~    | D^",
-                '2nd': "S~Q~Q~    | Dv",
-                '3rd': "",
-                'Change': "T~        | D~",
-                'Turn': "",
-                'End': 'S~        | B~B~'}}
+    motif["3/4"] = {
+        "MO2": {
+            "1st": "D~        | S^S^",
+            "2nd": "D~        | SvSv",
+            "3rd": "",
+            "Change": "T~        | D~",
+            "Turn": "",
+            "End": "S~S~      | D~",
+        },
+        "MO3": {
+            "1st": "S~Q~Q~    | D^",
+            "2nd": "S~Q~Q~    | Dv",
+            "3rd": "",
+            "Change": "T~        | D~",
+            "Turn": "",
+            "End": "S~        | B~B~",
+        },
+    }
 
     # 2 total beats per motif - check
-    motif['2/2'] = {
-        "MO4": {'1st': "B~B~",
-                '2nd': "D~",
-                '3rd': "",
-                'Change': "S~S~S~Sr",
-                'Turn': "",
-                'End': 'Dv'}}
+    motif["2/2"] = {
+        "MO4": {
+            "1st": "B~B~",
+            "2nd": "D~",
+            "3rd": "",
+            "Change": "S~S~S~Sr",
+            "Turn": "",
+            "End": "Dv",
+        }
+    }
 
     # 6 total beats per motif - check
-    motif['6/8'] = {
-        "MO4": {'1st': "B~B^B^       | B~BvBv",
-                '2nd': "B~BvBv       | B~B~B~",
-                '3rd': "B~B~B~       | DvB~",
-                'Change': "B^B^B^       | DvB~",
-                'Turn': "",
-                'End': 'SvSvSvSvSvSv | D~B~'}}
+    motif["6/8"] = {
+        "MO4": {
+            "1st": "B~B^B^       | B~BvBv",
+            "2nd": "B~BvBv       | B~B~B~",
+            "3rd": "B~B~B~       | DvB~",
+            "Change": "B^B^B^       | DvB~",
+            "Turn": "",
+            "End": "SvSvSvSvSvSv | D~B~",
+        }
+    }
 
 
 @dataclass(frozen=True)
