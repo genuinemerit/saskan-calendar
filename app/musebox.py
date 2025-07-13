@@ -249,7 +249,7 @@ class ScaleSet:
         ]
         for k in keys:
             scale[k] = {}
-        m21_scales = [
+        m21.scales = [
             "ChromaticScale",
             "CyclicalScale",
             "DiatonicScale",
@@ -278,7 +278,7 @@ class ScaleSet:
             "WholeToneScale",
         ]
         for k in keys:
-            for s in m21_scales:
+            for s in m21.scales:
                 try:
                     ScaleClass = getattr(m21.scale, s)
                     scale_name = s.replace("Scale", "").replace("Blues", "").lower()
@@ -431,28 +431,31 @@ class DegreeSet:
             Adds upper extensions or altered tones
             (usually if your triad "looks like" something more complex due to scale structure)
     """
+
     degrees: Dict[str, Dict[str, List[str]]] = field(init=False)
 
-    def __init__(self, scale_set: 'ScaleSet'):
-        object.__setattr__(self, 'degrees', self.build_degrees(scale_set))
+    def __init__(self, scale_set: "ScaleSet"):
+        object.__setattr__(self, "degrees", self.build_degrees(scale_set))
 
     @staticmethod
-    def build_degrees(scale_set: 'ScaleSet') -> Dict[str, Dict[str, List[str]]]:
+    def build_degrees(scale_set: "ScaleSet") -> Dict[str, Dict[str, List[str]]]:
         result = {}
 
         for key, modes in scale_set.scale.items():
             result[key] = {}
             for mode, scale in modes.items():
                 try:
-                    scale_pitches = scale.getPitches(key + '4', key + '5')[:7]
+                    scale_pitches = scale.getPitches(key + "4", key + "5")[:7]
                     degree_labels = []
 
                     for i in range(7):
-                        triad = m21.chord.Chord([
-                            scale_pitches[i % 7],
-                            scale_pitches[(i + 2) % 7],
-                            scale_pitches[(i + 4) % 7]
-                        ])
+                        triad = m21.chord.Chord(
+                            [
+                                scale_pitches[i % 7],
+                                scale_pitches[(i + 2) % 7],
+                                scale_pitches[(i + 4) % 7],
+                            ]
+                        )
                         try:
                             rn = m21.roman.romanNumeralFromChord(triad, key)
                             degree_labels.append(rn.figure)
@@ -463,7 +466,9 @@ class DegreeSet:
                     result[key][mode] = ["?"] * 7  # fallback in case of pitch issue
         return result
 
-    def get_degrees(self, key: str, mode: str, no_inversions: bool = False) -> List[str]:
+    def get_degrees(
+        self, key: str, mode: str, no_inversions: bool = False
+    ) -> List[str]:
         """
         Get the Roman numeral degrees for a given key and mode.
         If no_inversions is True, strip inversion notation from the figures.
@@ -474,8 +479,10 @@ class DegreeSet:
             for fig in figures:
                 # Remove common inversion figures (e.g., '64', '6', etc.)
                 simplified.append(
-                    fig.replace('64', '').replace('6', '')
-                    .replace('#863', '').replace('86', '')
+                    fig.replace("64", "")
+                    .replace("6", "")
+                    .replace("#863", "")
+                    .replace("86", "")
                     .strip()
                 )
             return simplified
@@ -489,6 +496,7 @@ class Theme:
     Assign a name, a category, words indicating its "flavor", and default number
       of times to repeat the theme.
     """
+
     id: int
     name: str
     degrees: List[str]
@@ -503,45 +511,156 @@ class MuseBoxThemes:
     Note that a theme is not yet associated with a key, nor a specific motif
      regarding what to do with each of the chords.
     """
+
     @staticmethod
     def default_themes() -> List[Theme]:
         return [
-            Theme(0,  "Resolve 1",  ["ii", "V", "I"], "jazz", "turnaround, resolving", 4),
-            Theme(1,  "Anthem 1",  ["I", "V", "vi", "IV"], "pop", "anthemic, emotional", 3),
-            Theme(2,  "Anthem 2",  ["I", "V", "vi", "ii"], "pop", "anthemic, emotional", 3),
-            Theme(3,  "Moody 1",  ["I", "iii", "vi", "IV"], "pop", "emotional, introspective", 3),
-            Theme(4,  "Moody 2",  ["I", "iii", "vi", "ii"], "pop", "emotional, introspective", 3),
-            Theme(5,  "Resolve 2",  ["I", "vi", "IV", "V"], "pop", "classic resolution", 3),
-            Theme(6,  "Lifting",  ["I", "IV", "vi", "V"], "pop", "emotional lift", 3),
-            Theme(7,  "Resolve 3",  ["I", "vi", "ii", "V"], "jazz", "resolving, classic motion", 3),
-            Theme(8,  "Resolve 4",  ["I", "ii", "vi", "V"], "jazz", "resolving, classic motion", 3),
-            Theme(9,  "Steady 1",  ["I", "IV", "I", "IV", "V"], "folk", "cadence, steady", 3),
+            Theme(0, "Resolve 1", ["ii", "V", "I"], "jazz", "turnaround, resolving", 4),
+            Theme(
+                1, "Anthem 1", ["I", "V", "vi", "IV"], "pop", "anthemic, emotional", 3
+            ),
+            Theme(
+                2, "Anthem 2", ["I", "V", "vi", "ii"], "pop", "anthemic, emotional", 3
+            ),
+            Theme(
+                3,
+                "Moody 1",
+                ["I", "iii", "vi", "IV"],
+                "pop",
+                "emotional, introspective",
+                3,
+            ),
+            Theme(
+                4,
+                "Moody 2",
+                ["I", "iii", "vi", "ii"],
+                "pop",
+                "emotional, introspective",
+                3,
+            ),
+            Theme(
+                5, "Resolve 2", ["I", "vi", "IV", "V"], "pop", "classic resolution", 3
+            ),
+            Theme(6, "Lifting", ["I", "IV", "vi", "V"], "pop", "emotional lift", 3),
+            Theme(
+                7,
+                "Resolve 3",
+                ["I", "vi", "ii", "V"],
+                "jazz",
+                "resolving, classic motion",
+                3,
+            ),
+            Theme(
+                8,
+                "Resolve 4",
+                ["I", "ii", "vi", "V"],
+                "jazz",
+                "resolving, classic motion",
+                3,
+            ),
+            Theme(
+                9, "Steady 1", ["I", "IV", "I", "IV", "V"], "folk", "cadence, steady", 3
+            ),
             Theme(10, "Steady 2", ["I", "IV", "I", "IV"], "folk", "cadence, steady", 3),
-            Theme(11, "Ambient", ["vi", "IV", "vi", "IV"], "pop", "cyclical, ambient", 3),
+            Theme(
+                11, "Ambient", ["vi", "IV", "vi", "IV"], "pop", "cyclical, ambient", 3
+            ),
             Theme(12, "Upbeat", ["ii", "V", "IV", "V"], "jazz", "resolving, upbeat", 3),
-            Theme(13, "Soulful", ["ii", "V", "vi", "IV"], "jazz", "soulful resolution", 3),
-            Theme(14, "Ambiguous", ["I", "iii", "IV", "V"], "general", "modally ambiguous", 3),
-            Theme(15, "Tension", ["I", "ii", "iii", "IV", "V"], "general", "laddered tension", 3),
+            Theme(
+                13, "Soulful", ["ii", "V", "vi", "IV"], "jazz", "soulful resolution", 3
+            ),
+            Theme(
+                14,
+                "Ambiguous",
+                ["I", "iii", "IV", "V"],
+                "general",
+                "modally ambiguous",
+                3,
+            ),
+            Theme(
+                15,
+                "Tension",
+                ["I", "ii", "iii", "IV", "V"],
+                "general",
+                "laddered tension",
+                3,
+            ),
             Theme(16, "Circular", ["I", "V", "vi", "iii"], "pop", "circular motion", 3),
             Theme(17, "Steady 3", ["IV", "I", "IV", "V"], "folk", "classic cadence", 3),
-            Theme(18, "Grounding 1", ["I", "I", "I", "I"], "folk", "pedal, grounding", 3),
-            Theme(19, "Grounding 2", ["IV", "IV", "I", "I"], "folk", "plagal, grounding", 3),
+            Theme(
+                18, "Grounding 1", ["I", "I", "I", "I"], "folk", "pedal, grounding", 3
+            ),
+            Theme(
+                19,
+                "Grounding 2",
+                ["IV", "IV", "I", "I"],
+                "folk",
+                "plagal, grounding",
+                3,
+            ),
             Theme(20, "Cyclical", ["V", "IV", "I", "V"], "folk", "plagal, cycle", 3),
-            Theme(21, "Stable", ["I", "IV", "I", "I"], "folk", "reaffirming, stable", 3),
+            Theme(
+                21, "Stable", ["I", "IV", "I", "I"], "folk", "reaffirming, stable", 3
+            ),
             Theme(22, "Closure", ["V", "IV", "I", "I"], "folk", "classic closure", 3),
-            Theme(23, "Plagal Cadence", ['IV', 'I'], "folk", "reverent, gospel", 4),
-            Theme(24, "Deceptive Cadence", ['V', 'vi'], "classical", "unexpected, clever", 4),
-            Theme(25, "Backdoor II-V", ['ii', 'bVII', 'I'], "jazz", "cool, laid-back", 4),
-            Theme(26, "Mixolydian Rock", ['I', 'bVII', 'IV'], "rock", "strong, anthem", 4),
-            Theme(27, "Minor Modal Loop", ['i', 'bVI', 'bVII', 'i'], "modal", "looping, moody", 3),
-            Theme(28, "Extended Cycle", ['iii', 'vi', 'ii', 'V', 'I'],
-                  "classical", "driving, narrative", 2),
-            Theme(29, "Blues Turnaround", ['I', 'IV', 'I', 'V'],
-                  "blues", "traditional, foundational", 3),
-            Theme(30, "Dorian Lift", ['i', 'ii', 'IV', 'V'], "modal", "minor, hopeful", 3),
-            Theme(31, "Chromatic Pivot", ['I', '#iv°', 'V', 'I'],
-                  "classical", "surprise, cinematic", 3),
-            Theme(32, "Modal Bounce", ['bVII', 'IV', 'bVII', 'I'], "rock", "bright, returning", 3),
+            Theme(23, "Plagal Cadence", ["IV", "I"], "folk", "reverent, gospel", 4),
+            Theme(
+                24,
+                "Deceptive Cadence",
+                ["V", "vi"],
+                "classical",
+                "unexpected, clever",
+                4,
+            ),
+            Theme(
+                25, "Backdoor II-V", ["ii", "bVII", "I"], "jazz", "cool, laid-back", 4
+            ),
+            Theme(
+                26, "Mixolydian Rock", ["I", "bVII", "IV"], "rock", "strong, anthem", 4
+            ),
+            Theme(
+                27,
+                "Minor Modal Loop",
+                ["i", "bVI", "bVII", "i"],
+                "modal",
+                "looping, moody",
+                3,
+            ),
+            Theme(
+                28,
+                "Extended Cycle",
+                ["iii", "vi", "ii", "V", "I"],
+                "classical",
+                "driving, narrative",
+                2,
+            ),
+            Theme(
+                29,
+                "Blues Turnaround",
+                ["I", "IV", "I", "V"],
+                "blues",
+                "traditional, foundational",
+                3,
+            ),
+            Theme(
+                30, "Dorian Lift", ["i", "ii", "IV", "V"], "modal", "minor, hopeful", 3
+            ),
+            Theme(
+                31,
+                "Chromatic Pivot",
+                ["I", "#iv°", "V", "I"],
+                "classical",
+                "surprise, cinematic",
+                3,
+            ),
+            Theme(
+                32,
+                "Modal Bounce",
+                ["bVII", "IV", "bVII", "I"],
+                "rock",
+                "bright, returning",
+                3,
+            ),
         ]
 
 
@@ -551,6 +670,7 @@ class ThemeLibrary:
     A collection of Themes, along with methods for searching by Theme metadata
       and generating the full progression of Degrees (chords) associated with a Theme.
     """
+
     themes: List[Theme] = field(default_factory=list)
 
     def get_by_category(self, category: str) -> List[Theme]:
@@ -575,39 +695,386 @@ class MuseBoxThemeLibrary(ThemeLibrary):
     """
     Default ThemeLibary, inherits methods from ThemeLibrary()
     """
+
     def __init__(self):
         super().__init__(themes=MuseBoxThemes.default_themes())
 
 
 @dataclass(frozen=True)
+class MidiInstrument:
+    """
+    Represents a General MIDI instrument definition.
+    """
+
+    program_number: int  # 0-127 MIDI program number
+    name: str  # e.g., "Acoustic Grand Piano"
+    family: str  # e.g., "Piano", "Strings"
+
+
+@dataclass(frozen=True)
+class Music21Instrument:
+    """
+    Maps to music21's instrument class metadata.
+    You're correct to be cautious: music21 does have a concept of instruments,
+     but it does not offer a rich, categorized orchestration or instrumentation
+     database in the same way General MIDI or VST standards do.
+
+    Instead, music21 provides a module: `music21.instrument`, which includes:
+
+    * A collection of class-based instrument definitions (e.g., `Violin()`, `Piano()`,
+    `ElectricGuitar()`)
+    * Support for setting instrument metadata on streams (like part names,
+    midi program numbers, transpositions)
+    * Utilities to convert between instrument objects and MIDI metadata
+
+    What music21 lacks:
+
+    * A fully browsable instrument catalog with tags, families, descriptions
+    * An orchestration-aware API (e.g., automatic instrument pairing or families)
+    * Built-in support for extended techniques, articulations, or plugin-based synthesis mappings
+
+    That said, you *can* build a higher-level orchestration framework by
+    wrapping music21's classes and introspecting the module, e.g.:
+
+    ```python
+    from music21 import instrument
+    all_instruments = [cls for name, cls in instrument.__dict__.items() if isinstance(cls, type)
+    and issubclass(cls, instrument.Instrument)]
+    ```
+
+    This will give you a full list of built-in instrument classes. You can inspect attributes like:
+
+    * `.instrumentName`
+    * `.instrumentFamily`
+    * `.midiProgram`
+
+    And build your own registry.
+
+    So in your MuseBox context, it's totally appropriate to:
+
+    * Pull and map music21 instruments into your own `Music21Instrument` dataclass
+    * Add tags like family/category yourself
+    * Optionally extend with orchestration logic from MIDI or MuseBox motifs
+    """
+
+    m21.class_name: str
+    instrument_name: str
+    family: str
+    midi_program: Optional[int] = None
+
+
+@dataclass
+class SynthPlugin:
+    """
+    Represents a software instrument plugin available on the system.
+    Could be user-supplied or discovered via scan.
+    """
+
+    name: str  # e.g., "Vital Synth", "Dexed"
+    path: str  # Filesystem path to plugin file (VST, LV2, AU, etc.)
+    type: str  # "VST2", "VST3", "LV2", "AU"
+    categories: List[str] = field(default_factory=list)
+    is_installed: bool = True
+
+
+@dataclass(frozen=True)
+class MidiBankVariation:
+    program_number: int
+    bank_msb: int  # Bank select MSB
+    bank_lsb: int  # Bank select LSB
+    name: str
+    family: str
+
+
+@dataclass(frozen=True)
+class MidiDrumNote:
+    note_number: int  # MIDI note number 35-81
+    name: str  # e.g., "Acoustic Bass Drum"
+    kit_name: Optional[str] = "Standard Kit"
+
+
+@dataclass
+class GeneralMidiExtensions:
+    level2_variations: List[MidiBankVariation]
+    drum_notes: List[MidiDrumNote]
+
+    def preload_gm2_variations(self):
+        self.level2_variations = [
+            MidiBankVariation(0, 0, 0, "Acoustic Grand Piano", "Piano"),
+            MidiBankVariation(0, 8, 0, "Piano + Pad Layer", "Piano"),
+            MidiBankVariation(0, 0, 8, "Piano + Strings", "Piano"),
+            MidiBankVariation(0, 0, 24, "Bright Grand Piano", "Piano"),
+            # More GM2 examples can be added here...
+        ]
+
+    def preload_drum_notes(self):
+        self.drum_notes = [
+            MidiDrumNote(35, "Acoustic Bass Drum"),
+            MidiDrumNote(36, "Bass Drum 1"),
+            MidiDrumNote(38, "Acoustic Snare"),
+            MidiDrumNote(40, "Electric Snare"),
+            MidiDrumNote(42, "Closed Hi-Hat"),
+            MidiDrumNote(46, "Open Hi-Hat"),
+            MidiDrumNote(49, "Crash Cymbal 1"),
+            MidiDrumNote(51, "Ride Cymbal 1"),
+            MidiDrumNote(57, "Crash Cymbal 2"),
+            MidiDrumNote(59, "Ride Cymbal 2")
+            # Extend as needed from GM drum map
+        ]
+
+
+@dataclass
+class InstrumentRegistry:
+    """
+    Central repository for available instruments, their mappings, and metadata.
+    """
+
+    midi: List[MidiInstrument] = field(default_factory=list)
+    music21: List[Music21Instrument] = field(default_factory=list)
+    synth_plugins: List[SynthPlugin] = field(default_factory=list)
+
+    def get_by_name(self, name: str) -> Dict[str, object]:
+        return {
+            "midi": [i for i in self.midi if i.name == name],
+            "music21": [i for i in self.music21 if i.m21.class_name == name],
+            "synth_plugins": [p for p in self.synth_plugins if p.name == name],
+        }
+
+    def preload_standard_midi(self):
+        gm_families = [
+            (
+                "Piano",
+                [
+                    "Acoustic Grand Piano",
+                    "Bright Acoustic Piano",
+                    "Electric Grand Piano",
+                    "Honky-tonk Piano",
+                    "Electric Piano 1",
+                    "Electric Piano 2",
+                    "Harpsichord",
+                    "Clavinet",
+                ],
+            ),
+            (
+                "Chromatic Percussion",
+                [
+                    "Celesta",
+                    "Glockenspiel",
+                    "Music Box",
+                    "Vibraphone",
+                    "Marimba",
+                    "Xylophone",
+                    "Tubular Bells",
+                    "Dulcimer",
+                ],
+            ),
+            (
+                "Organ",
+                [
+                    "Drawbar Organ",
+                    "Percussive Organ",
+                    "Rock Organ",
+                    "Church Organ",
+                    "Reed Organ",
+                    "Accordion",
+                    "Harmonica",
+                    "Tango Accordion",
+                ],
+            ),
+            (
+                "Guitar",
+                [
+                    "Acoustic Guitar (nylon)",
+                    "Acoustic Guitar (steel)",
+                    "Electric Guitar (jazz)",
+                    "Electric Guitar (clean)",
+                    "Electric Guitar (muted)",
+                    "Overdriven Guitar",
+                    "Distortion Guitar",
+                    "Guitar Harmonics",
+                ],
+            ),
+            (
+                "Bass",
+                [
+                    "Acoustic Bass",
+                    "Electric Bass (finger)",
+                    "Electric Bass (pick)",
+                    "Fretless Bass",
+                    "Slap Bass 1",
+                    "Slap Bass 2",
+                    "Synth Bass 1",
+                    "Synth Bass 2",
+                ],
+            ),
+            (
+                "Strings",
+                [
+                    "Violin",
+                    "Viola",
+                    "Cello",
+                    "Contrabass",
+                    "Tremolo Strings",
+                    "Pizzicato Strings",
+                    "Orchestral Harp",
+                    "Timpani",
+                ],
+            ),
+            (
+                "Ensemble",
+                [
+                    "String Ensemble 1",
+                    "String Ensemble 2",
+                    "Synth Strings 1",
+                    "Synth Strings 2",
+                    "Choir Aahs",
+                    "Voice Oohs",
+                    "Synth Choir",
+                    "Orchestra Hit",
+                ],
+            ),
+        ]
+
+        program_number = 0
+        for family, names in gm_families:
+            for name in names:
+                self.midi.append(
+                    MidiInstrument(
+                        program_number=program_number, name=name, family=family
+                    )
+                )
+                program_number += 1
+
+    def preload_music21_instruments(self):
+        seen = set()
+        for name, cls in m21.instrument.__dict__.items():
+            if not isinstance(cls, type):
+                continue
+            if not issubclass(cls, m21.instrument.Instrument):
+                continue
+            if cls is m21.instrument.Instrument:
+                continue
+            try:
+                inst = cls()
+                key = (cls.__name__, inst.instrumentName)
+                if key in seen:
+                    continue
+                seen.add(key)
+                self.music21.append(Music21Instrument(
+                    class_name=cls.__name__,
+                    instrument_name=inst.instrumentName,
+                    family=inst.instrumentFamily,
+                    midi_program=inst.midiProgram
+                ))
+            except Exception:
+                continue
+
+
+@dataclass(frozen=True)
 class MotifGrammar:
     """
-    Lots to think about here.
-    A motif is a set of rules for generating musical phrases.
-    Each motif is defined by a time signature and a set of rules for generating
-      musical phrases within that time signature.
-    Each motif can have multiple variations, which are defined by a set of rules
-      for generating musical phrases within that motif.
-    The Motif Grammar is a simple meta-language for defining the following components
-    of a musical composition. Once defined, these components will be used to generate
-    a music21 stream.Score object and/or a MIDI file, and to save the MotifGrammar file
-    as well, so that it can be reused, modified, edited later.
-    Ideally, the MotifGrammar will step the user through a series of questions
-    to define the components of a musical composition, and then generate the
-    music21 stream.Score object and/or a MIDI file based on the user's answers, as
-    well as save the MotifGrammar file for later use.  We also want to be able to
-    review and modify the MotifGrammar file later, after listening to the generated music.
+    A Motif is a set of rules for generating musical Phrases applied to a Progression. It is
+      the result of applying a MotifGrammar to a Progression in order to create a Phrase.
 
-    A "Progression" will be passed into the MotifGrammar,
-    It contains a string of Degrees (chords) in Roman Numeral notation.
-    We may also want to require that some of the metadata about the Theme(s) in
-      the Progression is passed in, which just describe its category and flavor.
+    The MotifGrammar is a meta-language that defines components of a musical Phrase and
+      a kind of "compiler" for generating Motifs based on those rules. The Grammar (rules) are
+      defined by the user, but a pre-configured set of grammars is provided.  The MotifGrammar
+      consists of a set of rules that define how to generate Motifs based on a set of Degrees
+
+    A Phrase consists of N bars, each bar containing N Notes.
+
+    A Progression is a set of Themes, which are defined by a set of Degrees (chords), and
+      it should also include metadata about the Themes in the Progression.
+
+    A Composition is a set of fully realized Progressions, that is, its Phrases are complete
+      in the sense that all of its Phrases are defined by a set of Notes, its MotifGrammar
+      is complete.
+
+    Each Phrase (defined by a MotifGrammar) has a time signature.
+      A Phrase may have 1 or more Voices.
+
+    Each Voice is a Role for a given Phrase covering the same set of Degrees, but with a
+        modified MotifGrammar. A Phrase has one Voice by default.
+    - A Voice may or may not be associated with a specific instrument.
+
+    A Composition is used to generate:
+      - a music21 stream.Score object
+      - a MIDI file
+      - a MotifGrammar file (a/k/a, a MuseBox JSON or YAML file)
+
+    The process of generating a Composition is interactive and is managed by the
+      CompositionEngine.  It is an ETL-like process, where the user provides input
+      and the system generates output based on that input. Each step in the process
+      is reversible and editable, allowing the user to go back and modify their choices.
+      The output is saved in a structured format that can be easily shared, and each
+      step produces a new instance of the Composition, tracked by a CompositionHistory.
+    Each transformation step is pure:
+    - Don't mutate in-place
+    - Return a new object or modified copy
+    - Make rollback and testing trivial
+
+    The CompositionPlan:
+    - Defines the overall structure of the ETL process for creating a Composition
+    - Identifies what methods, classes, data structures are needed in each step
+    - Provides a high-level overview of the transformation pipeline
+    - Provides a way to visualize the entire process
+    - Provides a scaffold for using a plug-in architecture making it easy to add new steps
+      or to modify, extend, enhance existing ones.
+
+    The CompositionHistory:
+    - Holds a list of transformation steps performed
+    - Optionally stores CompositionPlan snapshots
+    - Supports `.undo_last()` or `.restore_to(step_index)`
+
+    All data is stored in a structured format, such as JSON or YAML:
+    - Store MotifGrammar, CompositionPlan, any other relevant crafted data as JSON
+    - Allows CLI tools, version control, even GUI support down the line
+
+    Balance creative expression with solid software design for a modular, extensible
+    generative music system. Its design dimensions:
+
+    **Clarity:**
+    - Each layer (Motif, Phrase, Voice, Progression, Composition) is well-defined.
+    - Use common musical terms to enhance readability for musicians, while grounding
+      the architecture in object-like clarity for programmers.
+
+    **Simplicity:**
+    - Separate concerns. Each part (Grammar, Plan, Engine, History) has a defined role.
+    - Avoid premature optimization (e.g., handling all embellishments or dynamics from
+      the start). Tag them as "plugin" features or `TODO` stubs.
+
+    **Testability:**
+    - Emphasize pure functions, immutable data, and undoable steps.
+      This inherently supports good testability.
+    - Add a formal "validation step" to CompositionPlan or CompositionHistory to
+      confirm the resulting object is complete and musically coherent before rendering.
+
+    **Minimum Viability:**
+    To prototype or prove the system quickly, define a minimal working pipeline in code:
+
+    1. One `Motif` rule, one `Phrase`, one `Progression`, and a static time signature
+    2. Generate one Score using basic triads only (no ornamentation, one voice)
+    3. Use Music21 to render and play
+    4. Serialize to JSON
+    5. Then add a simple CLI to run the pipeline with user input for the MotifGrammar
+
+    This will prototype a working pipeline:
+    ThemeSet + MotifGrammar => Phrase => Score => MIDI + JSON
+
+    **Completeness:**
+    - Consider: tempo, modulation, sectional form (e.g., ABA, rondo, etc.).
+      Not urgent, but good next-tier features.
+    - Eventually: "PlaybackConfig" or "PerformanceSettings" (e.g., tempo curves,
+      swing, humanization).
+
+    NOTES:
 
     orchestration/instrumentation
         What kind of instruments do we want to use?
         Do we want to use a single instrument, or multiple instruments?
-        Do we want to use a specific instrument for each motif?
+        Do we want to use a specific instrument for each voice?
         Do we want to instantiate each motif with its own set of instruments?
+
     motif
         A composition may have multiple motifs. How many do we want?
         What is the overall structure of the motifs within the composition?
@@ -627,6 +1094,7 @@ class MotifGrammar:
         Do we break out its notes into a melodic phrase?
         How many notes -- how do we break it up?
         If it is arpeggiated, or a melodic phrase, what interval do we use?
+
     rhythm
         What kind of beat do we want to use?
         What time signature do we want to use?
@@ -640,6 +1108,7 @@ class MotifGrammar:
         Is it a regular beat, or is it a tied note?
         For tied notes we need to consider joining degrees together, crossing bars.
         Assign notes from the NoteSet to the rhythm.
+
     embellishments
         What kind of embellishments do we want to use?
         Do we want to use grace notes?
@@ -656,46 +1125,9 @@ class MotifGrammar:
         Do we want to use ornaments?
         Do we want to use special effects?
         Do we want to use any other embellishments?
-
-
-This is *very much* like an ETL pattern:
-
-* **Extract**: gather themes, user input, keys, motifs
-* **Transform**: apply rhythmic logic, motif rules, inversion/arpeggiation logic, etc.
-* **Load**: into a `music21.stream.Score`, MIDI output, or saved grammar file
-
-The idea of **trackable, reversible, saveable transformations** is right
-in line with professional tooling.
-
----
-
-## ✅ Design Ideas to Support That
-
-Here’s what we want in our architecture:
-
-### 🧱 1. `CompositionHistory` Class
-
-* Holds a list of **transformation steps**
-* Optionally stores **CompositionPlan snapshots**
-* Supports `.undo_last()` or `.restore_to(step_index)`
-
-### 🧠 2. Each Transform Step Should Be Pure
-
-* Don't mutate in-place
-* Return a new object or modified copy
-* Makes rollback and testing trivial
-
-### 💾 3. JSON or YAML Storage
-
-* Store `MotifGrammar` + `CompositionPlan` + steps as JSON
-* Allows CLI tools, version control, even GUI support down the line
-
-### 🔁 4. Optional `Replay()` Feature
-
-* Rebuild a final composition from a saved grammar + step list
-
     """
 
+    # Old prototype of MotifGrammar
     motif = dict()
 
     # 4 total beats per motif - check
@@ -762,12 +1194,6 @@ Here’s what we want in our architecture:
 
 
 @dataclass
-class Instrumentation:
-    instruments: List[str]  # MIDI instrument names or numbers
-    per_motif: bool = False  # True if each motif gets its own instrumentation
-
-
-@dataclass
 class Embellishment:
     grace_notes: bool = False
     trills: bool = False
@@ -816,18 +1242,29 @@ class MotifStructure:
 
 
 @dataclass
+class Phrase:
+    name: str
+
+
+@dataclass
+class Voice(Phrase):
+    name: str
+    instrumentation: bool = False  # True if Voice has specific instrumentation
+
+
+@dataclass
 class CompositionPlan:
     key: str
     mode: str
     theme_metadata: Dict[str, str]  # category, flavor, etc.
     progression: List[str]  # sequence of degrees
     motif_structure: MotifStructure
-    instrumentation: Instrumentation
     save_path: Optional[str] = None  # where to save generated MIDI/Score
 
 
 # The CompositionEngine would consume a CompositionPlan,
 # generate a music21 Score, and optionally export files and grammar state.
+
 
 @dataclass
 class CompositionHistory:
@@ -835,25 +1272,23 @@ class CompositionHistory:
     Tracks changes to a CompositionPlan as discrete steps.
     Each step stores a shallow or deep copy of the plan and a short description.
     """
+
     steps: List[Dict[str, object]] = field(default_factory=list)
 
-    def record_step(self, plan: 'CompositionPlan', description: str):
-        self.steps.append({
-            'description': description,
-            'plan': copy.deepcopy(plan)
-        })
+    def record_step(self, plan: "CompositionPlan", description: str):
+        self.steps.append({"description": description, "plan": copy.deepcopy(plan)})
 
-    def undo_last(self) -> Optional['CompositionPlan']:
+    def undo_last(self) -> Optional["CompositionPlan"]:
         if len(self.steps) > 1:
             self.steps.pop()  # Remove last step
-            return copy.deepcopy(self.steps[-1]['plan'])
+            return copy.deepcopy(self.steps[-1]["plan"])
         elif self.steps:
-            return copy.deepcopy(self.steps[0]['plan'])
+            return copy.deepcopy(self.steps[0]["plan"])
         return None
 
-    def restore_to(self, index: int) -> Optional['CompositionPlan']:
+    def restore_to(self, index: int) -> Optional["CompositionPlan"]:
         if 0 <= index < len(self.steps):
-            return copy.deepcopy(self.steps[index]['plan'])
+            return copy.deepcopy(self.steps[index]["plan"])
         return None
 
     def describe_history(self) -> List[str]:
