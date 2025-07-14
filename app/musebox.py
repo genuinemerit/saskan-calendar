@@ -699,6 +699,15 @@ class MuseBoxThemeLibrary(ThemeLibrary):
     def __init__(self):
         super().__init__(themes=MuseBoxThemes.default_themes())
 
+# Next steps:
+#  Test, play with the InstrumentRegistry and related classes.
+#  Consider moving those to a separate module.
+#  Consider other ways to break up the MuseBox.py file, for example,
+#  by separating out the frozen dataclasses vs. the "engine" classes.
+#  Test, play with the Embellishment, Dynamics, Tempo and Clef classes,
+#    building them out per the comments in those classes.
+#  Begin testing, playing, building out the MotifRules and the Composition classes.
+
 
 @dataclass(frozen=True)
 class MidiInstrument:
@@ -768,6 +777,8 @@ class SynthPlugin:
     """
     Represents a software instrument plugin available on the system.
     Could be user-supplied or discovered via scan.
+    See standalone script 'discover_synths.py'. May want to add it here
+    as a method to the InstrumentRegistry class.
     """
 
     name: str  # e.g., "Vital Synth", "Dexed"
@@ -818,7 +829,7 @@ class GeneralMidiExtensions:
             MidiDrumNote(49, "Crash Cymbal 1"),
             MidiDrumNote(51, "Ride Cymbal 1"),
             MidiDrumNote(57, "Crash Cymbal 2"),
-            MidiDrumNote(59, "Ride Cymbal 2")
+            MidiDrumNote(59, "Ride Cymbal 2"),
             # Extend as needed from GM drum map
         ]
 
@@ -827,6 +838,8 @@ class GeneralMidiExtensions:
 class InstrumentRegistry:
     """
     Central repository for available instruments, their mappings, and metadata.
+    This can be extended.  Might make sense to break this out into a separate
+    module.
     """
 
     midi: List[MidiInstrument] = field(default_factory=list)
@@ -960,14 +973,180 @@ class InstrumentRegistry:
                 if key in seen:
                     continue
                 seen.add(key)
-                self.music21.append(Music21Instrument(
-                    class_name=cls.__name__,
-                    instrument_name=inst.instrumentName,
-                    family=inst.instrumentFamily,
-                    midi_program=inst.midiProgram
-                ))
+                self.music21.append(
+                    Music21Instrument(
+                        class_name=cls.__name__,
+                        instrument_name=inst.instrumentName,
+                        family=inst.instrumentFamily,
+                        midi_program=inst.midiProgram,
+                    )
+                )
             except Exception:
                 continue
+
+
+@dataclass(frozen=True)
+class Embellishment:
+    name: str
+    m21_type: str  # e.g., 'ornamentation', 'articulation', 'expression'
+    description: Optional[str] = None
+    music21_symbol: Optional[str] = None  # Link to music21 class or symbol
+
+
+@dataclass
+class EmbellishmentLibrary:
+    """
+     music21's terminology splits **Embellishments** into more technical subcategories:
+
+    | MuseBox Term       | music21 / MusicXML Equivalent      |
+    | ------------------ | ---------------------------------- |
+    | Ornament           | `ornamentations`, e.g., `Trill`, `Turn`, `Mordent`, `Appoggiatura` |
+    | Articulation       | `articulations`, e.g., `Staccato`, `Tenuto`, `Accent`, `Marcato` |
+    | Expression         | `expressions`, e.g., `DynamicWedge`, `Crescendo`, `TextExpression` |
+    | Style/Technique    | `technical`, `style`, `notations`, e.g., `Harmonic`, `Fermata`,
+                             `ArpeggioMark` |
+    | Performance Effect | MIDI-based, e.g., bends, vibrato, slide (not native in music21)  |
+
+    ---
+
+    ## ✅ Approach for MuseBox (Now and Later)
+
+    ### 1. **Keep `Embellishment` Layer Unified**
+
+    MuseBox should keep using `Embellishment` as a general term—it works well at
+      the composition grammar level. Think of it as the "intention" layer.
+
+    ### 2. **Don’t Lock Into music21’s API Yet**
+
+    The music21 documentation (e.g., Chapter 33) is still thin or placeholder-ish. So:
+
+    * Only link to music21 **if the class is stable** (e.g., `Staccato()`, `Trill()` are stable)
+    * For MIDI-style or continuous effects (vibrato, bend), we may need to stub or
+       model them in MuseBox independently for now
+
+    ### 3. **Later: Create an `EmbellishmentMapper`**
+
+    A helper class that:
+
+    * Takes a MuseBox `Embellishment`
+    * Returns the correct `music21` object(s), e.g., `Staccato()`,
+      `Trill()`, `DynamicWedge('crescendo')`
+
+    There are others that could be added later, such as `Harmonic()`, `Fermata()`,
+    `ArpeggioMark()`, etc. But for now, we can keep it simple
+    and focus on the core embellishments that are most relevant to MuseBox's
+    composition and performance goals.
+
+    """
+
+    embellishments: List[Embellishment] = field(default_factory=list)
+
+    def load_defaults(self):
+        self.embellishments = [
+            Embellishment(
+                "grace_note",
+                "ornamentation",
+                "Quick lead-in note before a main note.",
+                "GraceNote",
+            ),
+            Embellishment(
+                "trill",
+                "ornamentation",
+                "Rapid alternation between two adjacent notes.",
+                "Trill",
+            ),
+            Embellishment(
+                "turn",
+                "ornamentation",
+                "Four-note ornament surrounding the main note.",
+                "Turn",
+            ),
+            Embellishment(
+                "mordent",
+                "ornamentation",
+                "Rapid alternation with the note below.",
+                "Mordent",
+            ),
+            Embellishment(
+                "acciaccatura",
+                "ornamentation",
+                "Crushed note played before the main note.",
+                "Acciaccatura",
+            ),
+            Embellishment(
+                "appoggiatura",
+                "ornamentation",
+                "Leaning note that takes time from the main note.",
+                "Appoggiatura",
+            ),
+            Embellishment(
+                "slide",
+                "expression",
+                "Glide between notes, especially on string or synth.",
+                None,
+            ),
+            Embellishment(
+                "bend", "expression", "Pitch bend, often for guitar or synth.", None
+            ),
+            Embellishment(
+                "vibrato", "expression", "Oscillation in pitch or volume.", None
+            ),
+            Embellishment(
+                "staccato", "articulation", "Short and detached.", "Staccato"
+            ),
+            Embellishment("tenuto", "articulation", "Hold for full value.", "Tenuto"),
+            Embellishment("accent", "articulation", "Play with emphasis.", "Accent"),
+        ]
+
+    def get_by_category(self, category: str) -> List[Embellishment]:
+        return [e for e in self.embellishments if e.m21_type == category]
+
+    def find(self, name: str) -> Optional[Embellishment]:
+        for e in self.embellishments:
+            if e.name == name:
+                return e
+        return None
+
+
+@dataclass(frozen=True)
+class DynamicMark:
+    """
+    Represents a basic dynamic marking.
+    Build out to include full set of dynamics, including
+    crescendos, decrescendos, and other expressive markings.
+    This is a simplified version, but can be extended later.
+    The values can be populated either in this class or
+    in a separate library that maps to music21's dynamic classes.
+    """
+    symbol: str  # e.g., 'p', 'mf', 'ff'
+    description: Optional[str] = None  # e.g., 'mezzo forte'
+    m21_symbol: Optional[str] = None  # directly usable in music21.dynamic.Dynamic
+
+
+@dataclass(frozen=True)
+class ClefMark:
+    """
+    Represents a musical clef for staff layout.
+    Build this out to include all common clefs,
+    such as treble, bass, alto, tenor, and percussion.
+    """
+    name: str  # e.g., 'treble', 'bass', 'alto', 'tenor'
+    m21_class: str  # music21 class name, e.g., 'TrebleClef'
+    transposing: bool = False  # for octave or non-C clefs
+
+
+@dataclass(frozen=True)
+class TempoMark:
+    """
+    Represents a tempo indication.
+    Build out to include a standard set of tempo markings,
+    such as 'Largo', 'Adagio', 'Andante', 'Allegro', etc.
+    Tie them to BPM ranges and provide English descriptions.
+    Also include a method to set a specific BPM value.
+    """
+    bpm: Optional[int] = None  # e.g., 120
+    text: Optional[str] = None  # e.g., 'Allegro'
+    description: Optional[str] = None  # e.g., 'fast, lively'
 
 
 @dataclass(frozen=True)
@@ -1191,23 +1370,6 @@ class MotifGrammar:
 # This is a scaffold breakdown of your MotifGrammar system,
 # separated into clear, modular dataclasses and related elements.
 # Each one could be refined and composed into a larger CompositionEngine.
-
-
-@dataclass
-class Embellishment:
-    grace_notes: bool = False
-    trills: bool = False
-    turns: bool = False
-    mordents: bool = False
-    appoggiaturas: bool = False
-    acciaccaturas: bool = False
-    slides: bool = False
-    bends: bool = False
-    vibrato: bool = False
-    dynamics: Optional[str] = None  # e.g. 'p', 'mf', 'ff'
-    articulations: List[str] = field(default_factory=list)
-    ornaments: List[str] = field(default_factory=list)
-    effects: List[str] = field(default_factory=list)
 
 
 @dataclass
