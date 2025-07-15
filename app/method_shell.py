@@ -61,11 +61,12 @@ class ShellMethods(object):
         return pendulum.now(timezone).to_iso8601_string()
 
     @classmethod
-    def get_date_string(cls, p_date, p_date_format: str = "") -> str:
+    def get_date_string(cls, p_date=None, p_date_format: str = "") -> str:
         """Get a date string in YYYY-MM-DD format.
         :param p_date: Date object or string
         :param p_date_format: Date format string
         """
+        p_date = p_date or pendulum.now()
         if p_date_format:
             p_date = pendulum.from_format(p_date, p_date_format)
         return p_date.to_date_string()
