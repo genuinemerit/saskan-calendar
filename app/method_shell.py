@@ -83,6 +83,7 @@ class ShellMethods(object):
     @classmethod
     def get_uid(cls, p_uid_length: int = 32) -> str:
         """Generate a URL-safe, cryptographically strong random value.
+        Must be at least 32 characters long.
         :param p_uid_length: Length of the UID
         """
         p_uid_length = max(p_uid_length, 32)

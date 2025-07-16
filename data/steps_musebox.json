@@ -1,12 +1,11 @@
-[
-  {
-    "md1NQlY0E5XTMHaOH7JkLcRKvSywEqVDR2GD6MSILxY": {
-      "name": "daves 2nd test",
-      "steps": {
-        "init_composition": {
-          "0": "Set ID and name of the composition."
-        }
+{
+  "EY9FJ3zN1gb39fFPiWMNWoappE86HfoepukhvQ03P2g": {
+    "name": "Daves 1st test",
+    "steps": {
+      "0": {
+        "init_composition": "Set ID and name of the composition."
       }
-    }
+    },
+    "file_type": "CompDaves1stTest"
   }
-]
+}

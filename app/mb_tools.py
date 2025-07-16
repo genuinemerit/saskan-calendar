@@ -5,10 +5,29 @@
 
 Define helper functions for MuseBox.
 """
+from dataclasses import dataclass, field  # noqa: F401
 from pprint import pformat as pf  # noqa: F401
 from pprint import pprint as pp  # noqa: F401
 from tabulate import tabulate  # noqa: F401
 from typing import Union, List, Dict, Optional  # noqa: F401
+
+
+@dataclass(frozen=True)
+class Text:
+    """
+    Often-used text strings for MuseBox.
+    """
+    confirm_exit: str = "Are you sure you want to exit? (Y/N): "
+    error: str = "An error occurred. Please try again."
+    goodbye: str = "Goodbye! 👋"
+    invalid_input: str = "Invalid input. Please try again."
+    loading: str = "Loading data..."
+    new_prompt: str = "[N]ew"
+    no_data: str = "No data available."
+    open_prompt: str = "[O]pen"
+    quit_prompt: str = "[Q]uit"
+    saving: str = "Saving data..."
+    welcome: str = "Welcome to MuseBox! 🎶"
 
 
 def pitch_from_diatonic_number(dn: int) -> str:

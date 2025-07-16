@@ -40,6 +40,9 @@ class MuseBoxFiles():
         Potential Enhancements
         - Accept a directory path, and auto-load everything in it.
         - Add a .describe() method that prints schema-ish summaries of your loaded files.
+        - Decide if this really serves a purpose. Does it improve capabilities
+          beyond what the FileMethods class already does? Maybe it only confuses
+          things to load files into a list called "DB"?
         """
         db = {}
         p_data = [p_data.strip()] if isinstance(p_data, str) else p_data

@@ -7,7 +7,7 @@
 Define methods to use drive composition generation.
 """
 
-import json  # For JSON file handling
+import json
 import music21 as m21  # noqa: F401
 from copy import copy, deepcopy  # noqa: F401
 from dataclasses import dataclass, field  # noqa: F401
@@ -16,10 +16,10 @@ from pprint import pprint as pp  # noqa: F401
 from tabulate import tabulate  # noqa: F401
 from typing import Union, List, Dict, Optional, Any  # noqa: F401
 
-import mb_files  # noqa: F401
-import mb_tools as MBT  # noqa: F401
-import method_files  # noqa F401
-import method_shell  # noqa F401
+import method_files
+import method_shell
+import mb_tools as MBT
+import mb_files
 
 FIL = method_files.FileMethods()
 SHL = method_shell.ShellMethods()
@@ -87,10 +87,7 @@ class CompositionPlan:
     @staticmethod
     def build_plans():
         plans: dict = {}
-        plans[0] = {
-            "method": CompositionEngine.init_composition,
-            "sub_steps": []
-        }
+        plans[0] = {"steps": {0: CompositionEngine.init_composition}}
         return plans
 
 
@@ -110,49 +107,30 @@ class CompositionHistory:
     def log_action(self, action: str, description: str = None):
         """Record an action in the history log."""
         description = "" if description is None else description
-        FIL.append_file(p_path=self.log_path,
-                        p_text=f"{SHL.get_iso_time_stamp()} | {action} | {description}\n")
+        FIL.append_file(
+            p_path=self.log_path,
+            p_text=f"{SHL.get_iso_time_stamp()} | {action} | {description}\n",
+        )
 
     def record_comp(self, comp: Composition):
         """Record step metadata to in-memory metadata and as a JSON file.
-           Record composition object as a pickled file.
+        Record composition object as a pickled file.
         """
         # Save steps metadata to JSON file
-        # TO DO:
-        # Might be bettter to treat this more like a log file?
-        # In any case, keep in mind that if there is a single steps metadata file,
-        # it will be overwritten each time a new composition is created, so need to
-        # read it first (to a list), then append the new steps and save it back (as JSON).
-        if comp.name not in self.steps:
-            self.steps.append({comp.id: {"name": comp.name, "steps": comp.steps}})
-        else:
-            self.steps[comp.id] = {"name": comp.name, "steps": comp.steps}
-        FIL.write_file(self.steps_path, p_data=json.dumps(self.steps, indent=2), p_file_type="w+")
+        steps_meta = {}
+        if FIL.is_file_or_dir(self.steps_path):
+            steps_meta = json.loads(FIL.get_file(self.steps_path))
+
+        steps_meta[comp.id] = {"name": comp.name,
+                               "steps": comp.steps,
+                               "file_type": comp.file_type}
+        FIL.write_file(
+            self.steps_path,
+            p_data=json.dumps(steps_meta, indent=2),
+            p_file_type="w+",
+        )
         # Save the composition object as a pickled file
         FIL.pickle_object(comp.path, comp)
-
-    """
-    steps: List[Dict[str, object]] = field(default_factory=list)
-
-    def record_step(self, plan: "CompositionPlan", description: str):
-        self.steps.append({"description": description, "plan": copy.deepcopy(plan)})
-
-    def undo_last(self) -> Optional["CompositionPlan"]:
-        if len(self.steps) > 1:
-            self.steps.pop()  # Remove last step
-            return copy.deepcopy(self.steps[-1]["plan"])
-        elif self.steps:
-            return copy.deepcopy(self.steps[0]["plan"])
-        return None
-
-    def restore_to(self, index: int) -> Optional["CompositionPlan"]:
-        if 0 <= index < len(self.steps):
-            return copy.deepcopy(self.steps[index]["plan"])
-        return None
-
-    def describe_history(self) -> List[str]:
-        return [f"Step {i}: {step['description']}" for i, step in enumerate(self.steps)]
-    """
 
 
 class CompositionEngine:
@@ -168,46 +146,25 @@ class CompositionEngine:
     def init_composition(cls) -> Composition:
         """
         Initialize a new Composition.
-        TODO:
-        - Make sure composition name is unique.
         """
         hist = CompositionHistory()
         comp = Composition()
         comp.id = SHL.get_uid()
-        comp.name = MBT.prompt_for_value("Enter the name of the composition: ")
-        comp.file_type = MBT.to_pascal_case(f"comp_{comp.name}")
-        comp.path = str(MBF.set_data_path(comp.file_type)).replace(".json", ".pkl")
-        comp.steps["init_composition"] = {0: "Set ID and name of the composition."}
-
-        pp((dir(comp)))
-        print(f"Log file: {hist.log_path}")
-
-        hist.log_action("CompositionEngine.init_composition",
-                        f"Initialize new composition {comp.id}")
-
+        already_exists = True
+        while already_exists:
+            already_exists = False
+            comp.name = MBT.prompt_for_value(f"Name of composition, or {MBT.Text.quit_prompt}: ")
+            if comp.name.strip().lower() == "q":
+                print(f"{MBT.Text.goodbye}")
+                return None
+            comp.file_type = MBT.to_pascal_case(f"comp_{comp.name}")
+            comp.path = str(MBF.set_data_path(comp.file_type)).replace(".json", ".pkl")
+            if FIL.is_file_or_dir(comp.path):
+                print(f"Composition `{comp.file_type}` already exists. " +
+                      "Choose a different name.")
+                already_exists = True
+        comp.steps[0] = {"init_composition": "Set ID and name of the composition."}
+        hist.log_action(
+            "CompositionEngine.init_composition", f"ID: {comp.id}"
+        )
         hist.record_comp(comp)
-
-    """
-    def apply_changes(self, changes: Dict[str, Any]):
-        # Apply changes to the current plan
-        for key, value in changes.items():
-            setattr(self.current_plan, key, value)
-        self.history.record_step(self.current_plan, "Applied changes")
-
-    def undo_last_change(self):
-        self.current_plan = self.history.undo_last() or self.current_plan
-
-    def redo_change(self):
-        self.current_plan = self.history.redo_last() or self.current_plan
-
-    def generate_score(self) -> m21.stream.Score:
-        # Placeholder: Implement actual score generation logic here
-        return m21.stream.Score()
-
-    def export_to_midi(self, file_path: str):
-        # Placeholder: Implement actual MIDI export logic here
-
-    def export_to_json(self, file_path: str):
-        # Placeholder: Implement actual JSON export logic here
-        pass
-    """
