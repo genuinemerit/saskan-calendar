@@ -2,6 +2,9 @@
 """
 :module:    mb_files.py
 :author:    PQ (pq_rfw @ pm.me)
+
+DENIGRATED. Use mb_tools.py and method_files.py instead.
+If at some point I decided to pre-load data files, do it in mb_tools.py.
 """
 
 from pathlib import Path
@@ -25,9 +28,12 @@ class MuseBoxFiles():
         - Assume they are stored in the app's /data directory and
            have a ".json" extension.
         - Example: "moons_data" --> ../data/moons_data.json
+        - This assumes we want to load all data files into the "DB",
+          that is, into memory. Thinking this is not a great idea.
         """
-        p_data = [] if p_data is None else p_data
-        self.DB: dict = self.load_data(p_data)
+        pass
+        # p_data = [] if p_data is None else p_data
+        # self.DB: dict = self.load_data(p_data)
 
     def load_data(self, p_data: Union[str, list[str]]) -> dict[str, dict]:
         """
@@ -70,7 +76,10 @@ class MuseBoxFiles():
             return []
 
     def set_data_path(self, data_key: str) -> str:
-        """Return the path where to store the data file for the specified key."""
+        """Return the path where to store the data file for the specified key."
+            This is the only function that is really useful.
+            Move it to mb_tools.py.
+        """
         return Path('..') / 'data' / f"{data_key}.json"
 
     def list_db(self) -> None:

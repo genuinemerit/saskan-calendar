@@ -1,11 +1,20 @@
 {
-  "EY9FJ3zN1gb39fFPiWMNWoappE86HfoepukhvQ03P2g": {
-    "name": "Daves 1st test",
-    "steps": {
+  "QBcYQbB7diufofM0qSbM_OBzffxfozrjOdcN7DvX5WU": {
+    "name": "Daves 1st Test",
+    "plans": {
       "0": {
-        "init_composition": "Set ID and name of the composition."
+        "init_composition (Step 0)": "Set ID and name of the composition."
       }
     },
-    "file_type": "CompDaves1stTest"
+    "data_name": "CompDaves1stTest"
+  },
+  "HEtgwwKmjVReQk2L4aGdYRAjdV5vNhrytDotCr6LFzE": {
+    "name": "Daves 2nd Test",
+    "plans": {
+      "0": {
+        "open_composition (Step 1)": "Open an existing composition."
+      }
+    },
+    "data_name": "CompDaves2ndTest"
   }
 }

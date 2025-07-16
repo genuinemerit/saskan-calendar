@@ -19,11 +19,9 @@ from typing import Union, List, Dict, Optional, Any  # noqa: F401
 import method_files
 import method_shell
 import mb_tools as MBT
-import mb_files
 
 FIL = method_files.FileMethods()
 SHL = method_shell.ShellMethods()
-MBF = mb_files.MuseBoxFiles()
 
 
 class Composition:
@@ -36,9 +34,9 @@ class Composition:
     def __init__(self):
         self.id = None
         self.name = None
-        self.file_type = None
+        self.data_name = None
         self.path = None
-        self.steps: Dict[str, Any] = {}
+        self.plans: Dict[str, Any] = {}
         self.theme = None
         # Additional attributes and methods can be added as needed.
 
@@ -87,7 +85,8 @@ class CompositionPlan:
     @staticmethod
     def build_plans():
         plans: dict = {}
-        plans[0] = {"steps": {0: CompositionEngine.init_composition}}
+        plans[0] = {"steps": {0: CompositionEngine.init_composition,
+                              1: CompositionEngine.open_composition}}
         return plans
 
 
@@ -100,8 +99,13 @@ class CompositionHistory:
     """
 
     def __init__(self):
-        self.log_path = MBF.set_data_path(f"log_musebox_{SHL.get_date_string()}")
-        self.steps_path = MBF.set_data_path("steps_musebox")
+        self.log_path = MBT.set_data_path("log", f"log_musebox_{SHL.get_date_string()}")
+        if not FIL.is_file_or_dir(self.log_path):
+            FIL.write_file(
+                p_path=self.log_path,
+                p_data=f"{SHL.get_iso_time_stamp()} | Log initialized. | \n",
+            )
+        self.steps_path = MBT.set_data_path("steps", "steps_musebox")
         self.steps: List[Dict[str, Any]] = []
 
     def log_action(self, action: str, description: str = None):
@@ -114,16 +118,15 @@ class CompositionHistory:
 
     def record_comp(self, comp: Composition):
         """Record step metadata to in-memory metadata and as a JSON file.
-        Record composition object as a pickled file.
+        Save the composition object as a pickled file.
         """
         # Save steps metadata to JSON file
         steps_meta = {}
         if FIL.is_file_or_dir(self.steps_path):
             steps_meta = json.loads(FIL.get_file(self.steps_path))
-
         steps_meta[comp.id] = {"name": comp.name,
-                               "steps": comp.steps,
-                               "file_type": comp.file_type}
+                               "plans": comp.plans,
+                               "data_name": comp.data_name}
         FIL.write_file(
             self.steps_path,
             p_data=json.dumps(steps_meta, indent=2),
@@ -135,8 +138,8 @@ class CompositionHistory:
 
 class CompositionEngine:
     """
-    Tracks changes to a CompositionPlan as discrete steps.
-    Each step stores a shallow or deep copy of the plan and a short description.
+    Tracks changes to a Composition as discrete steps.
+    Each step stores a copy of the plan being implemented.
     """
 
     def __init__(self):
@@ -147,24 +150,62 @@ class CompositionEngine:
         """
         Initialize a new Composition.
         """
-        hist = CompositionHistory()
-        comp = Composition()
-        comp.id = SHL.get_uid()
-        already_exists = True
-        while already_exists:
-            already_exists = False
-            comp.name = MBT.prompt_for_value(f"Name of composition, or {MBT.Text.quit_prompt}: ")
-            if comp.name.strip().lower() == "q":
+        created = False
+        while not created:
+            comp_name = MBT.prompt_for_value(f"Name of composition, or {MBT.Text.quit_prompt}: ")
+            if comp_name.strip().lower() == "q":
                 print(f"{MBT.Text.goodbye}")
                 return None
-            comp.file_type = MBT.to_pascal_case(f"comp_{comp.name}")
-            comp.path = str(MBF.set_data_path(comp.file_type)).replace(".json", ".pkl")
-            if FIL.is_file_or_dir(comp.path):
-                print(f"Composition `{comp.file_type}` already exists. " +
+            data_name = MBT.to_pascal_case(f"comp_{comp_name}")
+            comp_path = str(MBT.set_data_path("composition", data_name, "pkl"))
+            if FIL.is_file_or_dir(comp_path):
+                print(f"Composition `{data_name}` already created. " +
                       "Choose a different name.")
-                already_exists = True
-        comp.steps[0] = {"init_composition": "Set ID and name of the composition."}
-        hist.log_action(
-            "CompositionEngine.init_composition", f"ID: {comp.id}"
-        )
-        hist.record_comp(comp)
+            else:
+                hist = CompositionHistory()
+                comp = Composition()
+                comp.id = SHL.get_uid()
+                comp.name = comp_name
+                comp.data_name = data_name
+                comp.path = comp_path
+                comp.plans[0] = {"init_composition (Step 0)": "Set ID and name of the composition."}
+                hist.log_action(
+                    "CompositionEngine.init_composition", f"{comp.data_name} | {comp.id}"
+                )
+                hist.record_comp(comp)
+                created = True
+
+    @classmethod
+    def open_composition(cls) -> Composition:
+        """
+        Open an existing Composition.
+        """
+        comp_list = FIL.scan_dir(MBT.Paths.compositions, p_file_pattern="Comp*.pkl")
+        if len(comp_list) == 0:
+            print(f"{MBT.Text.no_data}")
+            return None
+        for i, c in enumerate(comp_list):
+            comp_list[i] = c.stem.replace('Comp', '')
+            print(f"{i+1}: {comp_list[i]}")
+        picked = False
+        while not picked:
+            choice = MBT.prompt_for_value("Select a composition by number, " +
+                                          f"or {MBT.Text.quit_prompt}: ")
+            if choice.strip().lower() == "q":
+                print(f"{MBT.Text.goodbye}")
+                return None
+            elif 1 <= int(choice) < len(comp_list) + 1:
+                print(f"Selected composition: {comp_list[int(choice)-1]}")
+                hist = CompositionHistory()
+                comp = FIL.unpickle_object(
+                    MBT.Paths.compositions / f"Comp{comp_list[int(choice)-1]}.pkl"
+                )
+                comp.plans[0] = {"open_composition (Step 1)": "Open an existing composition."}
+                hist.log_action(
+                    "CompositionEngine.open_composition",
+                    f"{comp.data_name} | {comp.id}"
+                )
+                hist.record_comp(comp)
+                picked = True
+            else:
+                print(f"{MBT.Text.invalid_input}")
