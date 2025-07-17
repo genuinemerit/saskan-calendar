@@ -1,20 +1,43 @@
 {
-  "QBcYQbB7diufofM0qSbM_OBzffxfozrjOdcN7DvX5WU": {
-    "name": "Daves 1st Test",
+  "1yJ-mnJUsRxgXbWKASoypqrE7y8AU4meYNk-AeaFUEw": {
+    "name": "Daves First Score",
     "plans": {
       "0": {
-        "init_composition (Step 0)": "Set ID and name of the composition."
+        "0": {
+          "step": "init_composition",
+          "desc": "Set ID and name of the composition.",
+          "stat": "completed"
+        },
+        "1": {
+          "step": "open_composition",
+          "desc": "Open an existing composition.",
+          "stat": "completed",
+          "1": {
+            "step": "_rename_composition",
+            "desc": "Renamed the composition.",
+            "stat": "completed"
+          }
+        }
       }
     },
-    "data_name": "CompDaves1stTest"
+    "data_name": "CompDavesFirstScore"
   },
-  "HEtgwwKmjVReQk2L4aGdYRAjdV5vNhrytDotCr6LFzE": {
-    "name": "Daves 2nd Test",
+  "-2lT-SwMS0v06Y37UMjKublZmcV0Nxu7tmL_TRhC2Fs": {
+    "name": "Daves Second Score",
     "plans": {
       "0": {
-        "open_composition (Step 1)": "Open an existing composition."
+        "0": {
+          "step": "init_composition",
+          "desc": "Set ID and name of the composition.",
+          "stat": "completed"
+        },
+        "1": {
+          "step": "open_composition",
+          "desc": "Open an existing composition.",
+          "stat": "completed"
+        }
       }
     },
-    "data_name": "CompDaves2ndTest"
+    "data_name": "CompDavesSecondScore"
   }
 }

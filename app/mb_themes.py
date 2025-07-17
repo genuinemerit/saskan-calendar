@@ -274,9 +274,15 @@ class ThemeLibrary:
     """
     A collection of Themes, along with methods for searching by Theme metadata
       and generating the full progression of Degrees (chords) associated with a Theme.
+    TODO:
+    - List categories of themes.
+    - List flavors of themes.
     """
 
     themes: List[Theme] = field(default_factory=list)
+
+    def list_categories(self) -> List[str]:
+        return sorted(set(t.category for t in self.themes))
 
     def get_by_category(self, category: str) -> List[Theme]:
         return [t for t in self.themes if t.category == category]

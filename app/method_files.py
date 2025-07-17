@@ -293,6 +293,22 @@ class FileMethods(object):
         except Exception as err:
             raise err
 
+    @classmethod
+    def rename_file(cls, p_path: str, p_new_name: str):
+        """
+        Rename a file.
+
+        :param p_path: Path to the file to be renamed.
+        :param p_new_name: New name for the file.
+        """
+        try:
+            abs_path = Path(p_path).resolve()
+            ext = abs_path.suffix
+            new_path = abs_path.parent / f"{p_new_name}{ext}"
+            abs_path.rename(new_path)
+        except Exception as err:
+            raise err
+
     # CHMOD methods
     # ==============================================================
     @classmethod

@@ -19,6 +19,7 @@ class Text:
     Often-used text strings for MuseBox.
     """
 
+    comp_id: str = "Composition ID: "
     confirm_exit: str = "Are you sure you want to exit? (Y/N): "
     error: str = "An error occurred. Please try again."
     goodbye: str = "Goodbye! 👋"
@@ -30,6 +31,7 @@ class Text:
     quit_prompt: str = "[Q]uit"
     saving: str = "Saving data..."
     welcome: str = "Welcome to MuseBox! 🎶"
+    yes_no_prompt: str = "[Y]es/[N]o"
 
 
 @dataclass(frozen=True)
