@@ -11,12 +11,12 @@
         "1": {
           "step": "open_composition",
           "desc": "Open an existing composition.",
-          "stat": "completed",
-          "1": {
-            "step": "_rename_composition",
-            "desc": "Renamed the composition.",
-            "stat": "completed"
-          }
+          "stat": "completed"
+        },
+        "2": {
+          "step": "select_themes",
+          "desc": "Select themes for the composition.",
+          "stat": "completed"
         }
       }
     },

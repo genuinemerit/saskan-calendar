@@ -66,7 +66,7 @@ class CompositionPlan:
         plans: dict = {}
         plans[0] = {"steps": {0: Engine.init_composition,
                               1: Engine.open_composition,
-                              2: Engine.select_theme}}
+                              2: Engine.select_themes}}
         return plans
 
 
@@ -86,41 +86,35 @@ class MuseBox:
         """
         yesno = ""
         while yesno.strip()[:1].lower() not in ['n', 'o', 'q']:
-            yesno = MBT.prompt_for_value(f"Start a {MBT.Text.new_prompt} composition, " +
+            yesno = MBT.prompt_for_value(f"\nStart a {MBT.Text.new_prompt} composition, " +
                                          f"{MBT.Text.open_prompt} existing, or " +
-                                         f"{MBT.Text.quit_prompt}: ")
-        if yesno.strip()[:1].lower() == 'n':
+                                         f"{MBT.Text.quit_prompt}: " +
+                                         f"\n{MBT.Text.entry_prompt}")
+        if yesno.strip()[:1].lower() == 'n':    # new
             id = self.PLAN.plans[0]["steps"][0]()
             print(f"\n{MBT.Text.comp_id}", id)
-        elif yesno.strip()[:1].lower() == 'o':
+        elif yesno.strip()[:1].lower() == 'o':  # open
             id = self.PLAN.plans[0]["steps"][1]()
             print(f"\n{MBT.Text.comp_id}", id)
         else:
-            print(f"{MBT.Text.goodbye}")
+            print(f"\n{MBT.Text.goodbye}")
             exit(0)
-        # check for status of 0-0 or 0-1
-        # if either is completed, then prompt for 0-2, theme selection
+        # This works for a sequential flow. It assumes themes not picked yet.
+        # Need to engineer it so user can jump to either editing any completed
+        # step or move to the next unfinished or not-started step. May make sense
+        # to treat re-naming as a discrete but optional step, rather than as a
+        # "sub-step" of plan 0 / step 1. Each step can have a quality of "required"
+        # or "optional".
         (plan, step, status) = self.HIST.get_last_step_status(id)
         if status == "completed" and int(plan) == 0 and int(step) in [0, 1]:
-            self.PLAN.plans[0]["steps"][2](id)
+            id = self.PLAN.plans[0]["steps"][2](id)
         else:
-            print("Not ready to add a theme yet.")
+            print("\nNot ready to add a theme yet. ⛔")
 
     def run_cli(self):
         """Run the command line interface for MuseBox.
-        NEXT:
-        - Based on the status of the current composition, prompt the user to
-          go to the next step. For example, if a plan is active, and either
-          plan 0/step 0, or plan 0 / step 1 is completed, but plan 0 / step 2
-          is not started or not completed, then prompt the user to work on plan 0 / step 2,
-          which will be to select and load a theme.
-        - Update the steps metadata struture to indicate what plan is currently
-          being executed. Also update to indicate if a step is completed,
-          is currently being executed, or has been started but not completed.
-          At present I am only storing the current step, but need to store all
-          initiated steps and their status.
         """
-        print(f"{MBT.Text.welcome}\n")
+        print(f"\n{MBT.Text.welcome}")
         self.plan_0_name_id_theme()
 
 

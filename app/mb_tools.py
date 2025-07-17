@@ -21,13 +21,17 @@ class Text:
 
     comp_id: str = "Composition ID: "
     confirm_exit: str = "Are you sure you want to exit? (Y/N): "
-    error: str = "An error occurred. Please try again."
+    entry_prompt: str = "==> "
+    error: str = "An error occurred. ❌ Please try again."
     goodbye: str = "Goodbye! 👋"
-    invalid_input: str = "Invalid input. Please try again."
+    invalid_input: str = "Invalid input. ❌ Please try again."
     loading: str = "Loading data..."
     new_prompt: str = "[N]ew"
-    no_data: str = "No data available."
+    no_data: str = "No data available. 🤨"
     open_prompt: str = "[O]pen"
+    ord_first: str = "First"
+    ord_second: str = "Second"
+    ord_third: str = "Third"
     quit_prompt: str = "[Q]uit"
     saving: str = "Saving data..."
     welcome: str = "Welcome to MuseBox! 🎶"
@@ -47,7 +51,7 @@ class Paths:
 
 
 def set_data_path(path_type: str, data_name: str, ext: str = "json") -> str:
-    """Return the path where to store the data file for the specified key."""
+    """Return the path where to store the data file for the specified data name."""
     if path_type not in ["data", "logs", "compositions"]:
         path_type = "data"  # Default to 'data' if invalid type
     mb_path = (

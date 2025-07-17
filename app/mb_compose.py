@@ -38,7 +38,7 @@ class Composition:
         self.data_name = None
         self.path = None
         self.plans: Dict[str, Any] = {}
-        self.theme = None
+        self.themes: Dict[str, Any] = {}
         # Add attributes and methods as needed.
 
 
@@ -136,7 +136,7 @@ class CompositionEngine:
     @classmethod
     def _if_exit_app(cls, prompt):
         if prompt.strip().lower() == "q":
-            print(f"{MBT.Text.goodbye}")
+            print(f"\n{MBT.Text.goodbye}")
             exit(0)
 
     @classmethod
@@ -213,12 +213,54 @@ class CompositionEngine:
             "desc": "Renamed the composition.",
             "stat": "completed",
         }
-        print(f"Renamed composition to: {comp.name} ({comp.data_name})")
+        print(f"\nRenamed composition to: {comp.name} ({comp.data_name})")
         HIST = CompositionHistory()
         HIST.log_and_record(
             comp,
             "CompositionEngine.rename_composition",
             f"Renamed to: {comp.name} | ID: {comp.id}",
+        )
+        return comp  # Return the updated Composition object
+
+    @classmethod
+    def _get_theme_categories(cls) -> tuple:
+        """
+        Return theme_library, theme_cats and cat_nums
+        """
+        theme_library = mb_themes.MuseBoxThemeLibrary()
+        theme_cats = theme_library.list_categories()
+        cat_nums = []
+        cat_prompt = ""
+        for i, category in enumerate(theme_cats):
+            cat_nums.append(i + 1)
+            cat_prompt += f"  {i + 1}: {category}\n"
+        return (theme_library, theme_cats, cat_nums, cat_prompt)
+
+    @classmethod
+    def _save_theme_picks(cls, comp_id: str, picks: list, themes: list) -> Composition:
+        """
+        :param: comp_id (str) - Composition unique ID
+        :param: picks (List of int) - Theme IDs to add to Composition
+        :param: thems (List of Theme objects) - From selected categories
+        Update the Composition object with selected themes.
+        """
+        HIST = CompositionHistory()
+        step = HIST.get_steps()[comp_id]
+        comp = FIL.unpickle_object(MBT.Paths.compositions / f"{step["data_name"]}.pkl")
+        comp.plans[0][2] = {
+            "step": "select_themes",
+            "desc": "Select themes for the composition.",
+            "stat": "completed",
+        }
+        comp.themes: Dict = {}
+        for p in picks:
+            for t in themes:
+                if p == t.id:
+                    comp.themes[p] = t
+        HIST.log_and_record(
+            comp,
+            "CompositionEngine.select_themes",
+            f"Themes selected: {str(picks)} | ID: {comp.id}",
         )
         return comp  # Return the updated Composition object
 
@@ -235,19 +277,20 @@ class CompositionEngine:
         id = None
         while not created:
             comp_name = MBT.prompt_for_value(
-                f"Name of composition\nor {MBT.Text.quit_prompt}: "
+                f"\nName of composition\nor {MBT.Text.quit_prompt}" +
+                f"\n{MBT.Text.entry_prompt}"
             )
             cls._if_exit_app(comp_name)
             data_name = MBT.to_pascal_case(f"comp_{comp_name}")
             comp_path = str(MBT.set_data_path("composition", data_name, "pkl"))
             if FIL.is_file_or_dir(comp_path):
                 print(
-                    f"Composition `{data_name}` already created.\n"
+                    f"\nComposition `{data_name}` already created.\n"
                     + "Choose a different name."
                 )
             else:
                 comp = cls._create_composition(comp_name, data_name, comp_path)
-                print(f"Created new composition: {comp.name} ({comp.data_name})\n")
+                print(f"\nCreated new composition: {comp.name} ({comp.data_name})")
                 created = True
                 id = comp.id
         return id  # Return the ID of the created composition, or None if not created
@@ -266,19 +309,19 @@ class CompositionEngine:
         picked = False
         while not picked:
             choice = MBT.prompt_for_value(
-                f"Select a composition by number \nor {MBT.Text.quit_prompt}: "
+                f"\nSelect a composition by number \nor {MBT.Text.quit_prompt}: " +
+                f"\n{MBT.Text.entry_prompt}"
             )
             cls._if_exit_app(choice)
             if 1 <= int(choice) < len(comp_list) + 1:
-                print(f"Selected composition: {comp_list[int(choice)-1]}")
                 comp = FIL.unpickle_object(
                     MBT.Paths.compositions / f"Comp{comp_list[int(choice)-1]}.pkl"
                 )
                 comp = cls._mark_selected_composition(comp)
-                print(f"Opened composition: {comp.name} ({comp.data_name})\n")
+                print(f"\nOpened composition: {comp.name} ({comp.data_name})")
                 picked = True
             else:
-                print(f"{MBT.Text.invalid_input}")
+                print(f"\n{MBT.Text.invalid_input}")
         comp = cls._request_change_name(comp)
         return comp.id
 
@@ -292,17 +335,21 @@ class CompositionEngine:
         assert_done = False
         while not assert_done:
             yesno = MBT.prompt_for_value(
-                f"Change name of composition `{comp.name}`\n{MBT.Text.yes_no_prompt}: "
+                f"\nChange name of composition `{comp.name}`" +
+                f"\n{MBT.Text.yes_no_prompt}"
+                f"\n{MBT.Text.entry_prompt}"
             )
             if yesno.strip().lower() in ["y", "yes"]:
-                new_name = MBT.prompt_for_value(
-                    "Enter new name for the composition.\n"
+                prompt = (
+                    "\nEnter new name for the composition.\n"
                     + "or [N]o change or Return to keep current name.\n"
-                    + f"or {MBT.Text.quit_prompt}: "
+                    + f"or {MBT.Text.quit_prompt}"
+                    + f"\n{MBT.Text.entry_prompt}"
                 )
+                new_name = MBT.prompt_for_value(prompt)
                 cls._if_exit_app(new_name)
                 if new_name.lower().strip() in ("", "n", "no"):
-                    print(f"No change to composition name: {comp.name}")
+                    print(f"\nNo change to composition name: {comp.name}")
                     assert_done = True
                     break
                 else:
@@ -311,32 +358,89 @@ class CompositionEngine:
             elif yesno.strip().lower() in ["n", "no"]:
                 assert_done = True
             else:
-                print(f"{MBT.Text.invalid_input}")
+                print(f"\n{MBT.Text.invalid_input}")
         return comp
 
     @classmethod
-    def select_theme(cls, id: int) -> None:
+    def _select_themes_by_category(cls) -> list:
         """
-        Plan 0, Step 2: Select a theme for the currently selected Composition.
+        Pick one or two theme categories.
+        :returns: (list) of Themes in the selected categories.
         """
-        theme_library = mb_themes.MuseBoxThemeLibrary()
-        categories = theme_library.list_categories()
-        prompt = "Select a Theme category by number\n" \
-                 f"or {MBT.Text.quit_prompt}\n"
-        select_range = []
-        for i, category in enumerate(categories):
-            select_range.append(i + 1)
-            prompt += f"  {i + 1}: {category}\n"
-
-        assert_done = False
-        while not assert_done:
-            choice = MBT.prompt_for_value(prompt)
-            cls._if_exit_app(choice)
-            if int(choice) in select_range:
-                print(f"choice: {int(choice)}")
-                assert_done = True
+        theme_library, theme_cats, cat_nums, cat_prompt = cls._get_theme_categories()
+        comp_themes = []
+        ords = [MBT.Text.ord_first, MBT.Text.ord_second]
+        for o in ords:
+            # FIX: simplify by accepting up to two numbers
+            prompt = (
+                f"\nSelect {o} Theme category by number\n"
+                f"or {MBT.Text.quit_prompt}\n{cat_prompt}"
+            )
+            prompt += f"\n{MBT.Text.entry_prompt}"
+            assert_done = False
+            while not assert_done:
+                choice = MBT.prompt_for_value(prompt)
+                cls._if_exit_app(choice)
+                if int(choice) in cat_nums:
+                    cat = theme_cats[int(choice) - 1]
+                    for theme in theme_library.get_by_category(cat):
+                        comp_themes.append(theme)
+                    assert_done = True
+                else:
+                    print(f"\n{MBT.Text.invalid_input}")
+            if o == MBT.Text.ord_second:
+                break
             else:
-                print(f"{MBT.Text.invalid_input}")
-        category = categories[int(choice) - 1]
-        themes = theme_library.get_by_category(category)
-        pp((f"Themes in category '{category}': ", themes))
+                while True:
+                    prompt = f"\nSelect more categories? {MBT.Text.yes_no_prompt}"
+                    prompt += f"\n{MBT.Text.entry_prompt}"
+                    choice = MBT.prompt_for_value(prompt)
+                    if choice.strip().lower() in ["n", "no"]:
+                        more = False
+                        break
+                    elif choice.strip().lower() in ["y", "yes"]:
+                        more = True
+                        break
+                if not more:
+                    break
+        return comp_themes
+
+    @classmethod
+    def select_themes(cls, id: int) -> None:
+        """
+        Plan 0, Step 2: Select up to three themes for the Composition.
+        """
+        themes = cls._select_themes_by_category()
+        prompt = (
+            "\nSelect up to 3 Themes by ID. Separate number by commas.\n"
+            + "For example: 23, 8, 19"
+        )
+        theme_ids = []
+        for theme in themes:
+            if f"ID: {theme.id}" not in prompt:
+                theme_ids.append(int(theme.id))
+                prompt += (
+                    f"\nID: {theme.id}\t{theme.category}   {theme.name}   {theme.degrees}"
+                    + f"\trepeats: {theme.repeat}  flavor: {theme.flavor}"
+                )
+        prompt += f"\n{MBT.Text.entry_prompt}"
+        ok = False
+        while not ok:
+            choice = MBT.prompt_for_value(prompt)
+            try:
+                err = False
+                for p in choice.split(","):
+                    if int(p.strip()) not in theme_ids:
+                        print(f"\n[{p.strip()}] {MBT.Text.invalid_input}")
+                        err = True
+                        break
+                if err:
+                    continue
+                picks = [int(x.strip()) for x in choice.split(",")]
+                ok = True
+            except Exception as e:
+                print(f"{e}")
+
+        print(f"\nYou picked: {picks}")
+        comp = cls._save_theme_picks(id, picks, themes)
+        return comp.id
