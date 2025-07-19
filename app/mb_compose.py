@@ -99,6 +99,21 @@ class CompositionHistory:
         self.record_steps(comp)
         self.record_comp(comp)
 
+    def get_comp_ids(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Read basic
+        """
+        comp_ids = {}
+        if FIL.is_file_or_dir(self.steps_path):
+            self.steps = json.loads(FIL.get_file(self.steps_path))
+            for comp_id, data in self.steps.items():
+                comp_ids[comp_id] = {
+                    "name": data["name"],
+                    "plans": data["plans"],
+                    "data_name": data["data_name"],
+                }
+        return comp_ids
+
     def get_steps(self) -> List[Dict[str, Any]]:
         """
         Read latest steps data from the steps file.
@@ -114,7 +129,7 @@ class CompositionHistory:
         """
         :param id: The id of the Composition object to check.
         Get the last completed step for the given composition.
-        :return: The highest plan and step number, along with the status.
+        :return: The highest plan and step number, along with its status.
         """
         steps = self.get_steps()
         plan = steps[id]["plans"]
@@ -208,8 +223,8 @@ class CompositionEngine:
         comp.path = str(
             MBT.set_data_path("composition", comp.data_name, "pkl")
         )  # new path
-        comp.plans[0][1][1] = {
-            "step": "_rename_composition",
+        comp.plans[0][2] = {
+            "step": "rename_composition",
             "desc": "Renamed the composition.",
             "stat": "completed",
         }
@@ -247,7 +262,7 @@ class CompositionEngine:
         HIST = CompositionHistory()
         step = HIST.get_steps()[comp_id]
         comp = FIL.unpickle_object(MBT.Paths.compositions / f"{step["data_name"]}.pkl")
-        comp.plans[0][2] = {
+        comp.plans[0][3] = {
             "step": "select_themes",
             "desc": "Select themes for the composition.",
             "stat": "completed",
@@ -267,11 +282,13 @@ class CompositionEngine:
     # ========== Plan/Step Methods ==========
 
     @classmethod
-    def init_composition(cls):
+    def init_composition(cls) -> Optional[int]:
         """
         Plan 0, Step 0: Initialize a new Composition.
         Initialize a new Composition.
         Assign an ID and name to the composition.
+        :returns: (int) - The ID of the newly created Composition.
+        If the user chooses to quit, return None.
         """
         created = False
         id = None
@@ -293,14 +310,15 @@ class CompositionEngine:
                 print(f"\nCreated new composition: {comp.name} ({comp.data_name})")
                 created = True
                 id = comp.id
-        return id  # Return the ID of the created composition, or None if not created
+        return id
 
     @classmethod
     def open_composition(cls):
         """
         Plan 0, Step 1: Open an existing Composition.
         Open an existing Composition.
-        Optionally change the name --> Step 1.1 (optional)
+        May be executed at any time against an existing comp.
+        Required for most other steps.
         """
         comp_list = cls._get_composition_list()
         if comp_list is None:
@@ -322,15 +340,13 @@ class CompositionEngine:
                 picked = True
             else:
                 print(f"\n{MBT.Text.invalid_input}")
-        comp = cls._request_change_name(comp)
         return comp.id
 
     @classmethod
-    def _request_change_name(cls, comp: Composition) -> Composition:
+    def rename_composition(cls, comp: Composition) -> Composition:
         """
-        Plan 0, Step 1.1 (optional): Request a change of name for the current Composition.
-        This step is optional and executed only after opening a composition.
-        It is not triggered directly from the CLI.
+        Plan 0, Step 2 (optional): Request a change of name for the current Composition.
+        This step is optional and can be executed at any time against an existing comp.
         """
         assert_done = False
         while not assert_done:
@@ -408,7 +424,7 @@ class CompositionEngine:
     @classmethod
     def select_themes(cls, id: int) -> None:
         """
-        Plan 0, Step 2: Select up to three themes for the Composition.
+        Plan 0, Step 3: Select up to three themes for the Composition.
         """
         themes = cls._select_themes_by_category()
         prompt = (

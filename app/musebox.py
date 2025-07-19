@@ -6,86 +6,180 @@
 
 Define methods to drive interactive use of the MuseBox system.
 This module provides the main entry point for the MuseBox system,
-allowing users to create, open, and manage compositions.
+menuing users to create, open, and manage compositions.
 For more information on music21 library, see: https://www.music21.org/music21docs/
 """
 
+from colorama import init, Fore, Style
 from dataclasses import dataclass, field
 from pprint import pformat as pf  # noqa: F401
 from pprint import pprint as pp  # noqa: F401
 from typing import Dict
 
-from mb_compose import CompositionEngine as Engine
-from mb_compose import CompositionHistory as History
 import mb_tools as MBT
+from mb_compose import CompositionEngine, CompositionHistory
 
 
 @dataclass(frozen=True)
 class CompositionPlan:
     """
-    A composition plan is a static map of the steps needed to generate a piece of music
-    using MuseBox components. It is like the control script for an ETL process.
-    Each step of the plan produces specific metadata and saved outputs (JSON files,
-    for the most part). Each step is logged using CompositionHistory methods. Each
-    of the steps are handled using interface and middleware methods defined in the
-    CompositionEngine class.
+    The CompositionPlan maps tasks to generate a piece of music using MuseBox.
+    It is is similar to an ETL process map. There are multiple plans, which need
+    to be executed in a specific order. Previous plan must be completed before
+    the next one can be started.
 
-    The actual progress of a particular composition, that is, creation of objects, dicts,
-    files and status updated, occurs in instances of the Composition class.
+    Each plan is a sequence of steps, which are methods in the CompositionEngine class.
+    Each step is a method that performs a specific task in the composition process.
+    Some steps are required (non-optional), while others are optional. Non-optional
+    steps must be completed before the next step can be started. All non-optional steps
+    in a plan must be completed before the next plan can be started.
+    Steps are tied to methods defined in the CompositionEngine class.
 
-    A new instance of a CompositionPlan requires a Theme input.
-    To edit an existing plan, use the CompositionHistory class to restore a previous state.
+    Many steps are repeatable, meaning they can be executed multiple times, and in
+    any order, as long as its preceding plans and non-optional steps are completed.
 
-    The main steps of the plan are:
-    1. Obtain the Theme and name the piece.
-    2. Select MotifGrammar, MotifRules, and MotifStructure. (?) This includes key.
-    3. Select RhythmPatterns. (May need to happen before step 2.)
-    4. Define or iterate over the Phrases.
-    5. Define the Voice(s) and their roles, including optionally instrumentation.
-    6. Compose the music in the form of a music21 Stream, a MIDI file and/or a JSON
-       or MusicXML file.
-    7. Play, publish, or export the music.
+    The details of each composition are stored in a pickled object. The status
+    of the plans and steps are stored in JSON file.  Most activities are loggged as well.
 
-    At each step, actions are logged by CompositionHistory and the plan instance is
-    updated with discrete data structures for each step.  Any saved step can be restored
-    using the CompositionHistory class, and then edited further using the CompositionEngine.
-
-    As the system evolves, the CompositionPlan is likely to include additional metadata
-    and sub-steps to handle more complex compositions, such as:
-    - Multiple themes or motifs.
-    - Complex rhythmic structures.
-    - Dynamic changes in instrumentation.
+    The plans are:
+    1. Create a new composition. Assign ID, Name and Themes.
+    2. Select Motif Grammar, Rules, and Structures to apply to the Themes.
+       In summary: define the Motifs of the composition. Includes key signature(s).
+    3. Select Rhythmic Patterns to apply to the Motifs.
+    4. Define Phrases, which are clusters of Motifs.
+    5. Define Voices, Roles, and Instrumentation.
+    6. Compose scores and music as music21 Stream, MIDI file, JSON, MusicXML file.
+    7. Play, publish, print or export the music.
     """
 
-    plans: Dict[str, Dict] = field(
+    plan: Dict[str, Dict] = field(
         init=False, default_factory=lambda: CompositionPlan.build_plans()
     )
 
     @staticmethod
     def build_plans():
-        plans: dict = {}
-        plans[0] = {"steps": {0: Engine.init_composition,
-                              1: Engine.open_composition,
-                              2: Engine.select_themes}}
-        return plans
+        ENGINE = CompositionEngine()
+        plan: dict = {}
+        plan[0] = {"name": "Plan 0: Name, ID and Themes",
+                   "desc": ("Create a new composition, assign name and ID" +
+                            "and select one or two themes."),
+                   "step": {0: {"method": ENGINE.init_composition,
+                                "optional": False, "repeatable": False},
+                            1: {"method": ENGINE.open_composition,
+                                "optional": False, "repeatable": True},
+                            2: {"method": ENGINE.rename_composition,
+                                "optional": True, "repeatable": True},
+                            3: {"method": ENGINE.select_themes,
+                                "optional": False, "repeatable": True}}}
+        return plan
 
 
-class MuseBox:
-    """Class for managing the music core of the Saskan game.
-    It provides access to various music components and methods.
+class MuseBox():
+    """Class for providing user access to various MuseBox components and methods.
+    This class serves as the main entry point for the MuseBox system, menuing users
+    to create, open, and manage compositions. It provides a command line interface
+    (CLI) for interacting with the system, guiding users through the process of
+    creating and managing compositions.
     """
 
     PLAN = CompositionPlan()
-    HIST = History()
+    HIST = CompositionHistory()
 
-    def plan_0_name_id_theme(self):
-        """Plan 0: Name the composition, assign an ID, and select a theme."
-        Step 0: New composition, assign an ID and name.
-        Step 1: Open an existing composition. Option to change name.
-        Step 2: Select a theme.
+    def __init__(self):
+        self.comp_id = None  # ID of the open composition.
+
+    def action_is_quit(self, choice: str):
+        if choice in ['q', 'quit']:
+            print(f"\n{MBT.Text.goodbye}")
+            return True
+        else:
+            return False
+
+    def action_is_ok(self, choice: str, menu: list):
+        if choice in menu:
+            return True
+        else:
+            print(f"\n{MBT.Text.invalid_input}")
+            return False
+
+    def action_new(self, choice: str):
+        if choice in ['n', 'new']:
+            # print('Executing Plan 0 Step 0: New Composition.')
+            plan_0 = self.PLAN.plan[0]
+            self.comp_id = plan_0["step"][0]["method"]()
+
+    def action_next(self, choice: str):
         """
-        yesno = ""
-        while yesno.strip()[:1].lower() not in ['n', 'o', 'q']:
+        Execute the next step in the composition process.
+        """
+        print('TAB: Executing next step in the composition process.')
+
+    def action_open(self, choice: str):
+        """
+        Get list of open compositions and user chooses one.
+        """
+        if choice in ['o', 'open']:
+            # print('Executing Plan 0 Step 1: Open a Composition.')
+            plan_0 = self.PLAN.plan[0]
+            self.comp_id = plan_0["step"][1]["method"]()
+
+    def action_edit(self, choice: str):
+        """
+        Execute an available edit step in the composition process.
+        """
+        print('TAB: Select an available edit step in the composition process.')
+
+    def main_menu_cli(self):
+        """
+        TODO:
+        - Refactor this to use the CompositionPlan class more fluidly.
+        - Make it more flexible to menu jumping to any step in the plan.
+        - Use sequential flow to choose what to present to the user.
+        - Make use of HIST methods to check status of steps and plans,
+          which should determine what repeatable steps are available and
+          what should be the next unfinished step in the flow.
+        - Think in terms of a single "menu" presentation, which is driven by
+          steps status metadata. Use familiar interactive patterns and text
+          like "New", "Open", "Edit", "Quit".
+        - Consider whether "Save" is appropriate. So far, a step is either
+          completed or not. When it is completed, it is saved. If it is not
+          completed, it has to be started again.
+        MAYBE:
+        - Rather than "Save", might want something more like "Lock". If a
+          user wants to change a composition step that is locked, then the
+          composition needs to forked or unlocked. (Maybe this is for down the road.)
+        - Also consider if a [B]ack option is needed, to go back to the previous step
+          or action within a step.
+        - look into using the click or rich libraries to enhance CLI experience.
+        """
+        while True:
+            print("comp_id:", self.comp_id)
+            if self.comp_id is None:
+                menu = ['n', 'o', 'e', 'q', 'new', 'open', 'quit']
+                prompt = f"{MBT.Text.main_prompt}"
+            else:
+                menu = ['n', 'e', 'q', 'next', 'edit', 'quit']
+                prompt = f"{MBT.Text.edit_prompt}"
+            choice = ""
+            while choice not in menu:
+                choice = MBT.prompt_for_value(
+                    f"\n{prompt} " + f"\n{MBT.Text.entry_prompt}"
+                )
+                if self.action_is_quit(choice):
+                    exit(0)
+                if not self.action_is_ok(choice, menu):
+                    continue
+                # Standard main menu actions:
+                if 'new' in menu:
+                    self.action_new(choice)
+                if 'next' in menu:
+                    self.action_next(choice)
+                if 'open' in menu:
+                    self.action_open(choice)
+                if 'edit' in menu:
+                    self.action_edit(choice)
+
+        """
             yesno = MBT.prompt_for_value(f"\nStart a {MBT.Text.new_prompt} composition, " +
                                          f"{MBT.Text.open_prompt} existing, or " +
                                          f"{MBT.Text.quit_prompt}: " +
@@ -110,12 +204,14 @@ class MuseBox:
             id = self.PLAN.plans[0]["steps"][2](id)
         else:
             print("\nNot ready to add a theme yet. ⛔")
+        """
 
     def run_cli(self):
         """Run the command line interface for MuseBox.
         """
-        print(f"\n{MBT.Text.welcome}")
-        self.plan_0_name_id_theme()
+        init(autoreset=True)
+        print(Fore.YELLOW + Style.BRIGHT + f"\n{MBT.Text.welcome}")
+        self.main_menu_cli()
 
 
 if __name__ == "__main__":
