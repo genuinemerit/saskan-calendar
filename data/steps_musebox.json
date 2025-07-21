@@ -17,6 +17,11 @@
           "step": "select_themes",
           "desc": "Select themes for the composition.",
           "stat": "completed"
+        },
+        "3": {
+          "step": "select_themes",
+          "desc": "Select themes for the composition.",
+          "stat": "completed"
         }
       }
     },

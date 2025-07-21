@@ -99,9 +99,15 @@ class CompositionHistory:
         self.record_steps(comp)
         self.record_comp(comp)
 
+    # ========== Metadata Methods ==========
+    # May want to consider moving these to a separate class
+    # that handles metadata operations for compositions.
+    # =======================================
+
     def get_comp_ids(self) -> Dict[str, Dict[str, Any]]:
         """
-        Read basic
+        Read basic metadata from the steps JSON file.
+        :return: Dictionary of composition IDs with their metadata.
         """
         comp_ids = {}
         if FIL.is_file_or_dir(self.steps_path):
@@ -116,10 +122,7 @@ class CompositionHistory:
 
     def get_steps(self) -> List[Dict[str, Any]]:
         """
-        Read latest steps data from the steps file.
-        Populate self.steps with the data and return it.
-        If the file does not exist, return an empty list.
-        :return: List of steps with their metadata..
+        :return: List of steps with their metadata.
         """
         if FIL.is_file_or_dir(self.steps_path):
             self.steps = json.loads(FIL.get_file(self.steps_path))
@@ -144,12 +147,22 @@ class CompositionEngine:
     Make changes to a Composition via discrete plan steps.
     Each step updates a copy of the plan being implemented
      and records metadata about the step.
+    Consider breakig this class into smaller classes,
+    maybe one for GUI interaction and presentation,
+    one for data management, and one for more detailed
+    composition logic, like building up themes or motifs,
+    or possibly using sub-classes for each plan step.
     """
 
     # ========== Utility Methods ==========
+    # These can probably go elsewhere.
+    # =======================================
 
     @classmethod
     def _if_exit_app(cls, prompt):
+        # TODO;
+        # See similar method in mb_musebox.py
+        # Can we use a commoon method? Maybe in mb_tools.py?
         if prompt.strip().lower() == "q":
             print(f"\n{MBT.Text.goodbye}")
             exit(0)
@@ -158,6 +171,8 @@ class CompositionEngine:
     def _get_composition_list(cls) -> Dict:
         """
         Get a list of all compositions in the compositions directory.
+        May want to move this to a "metadata" class.
+        We also need a "get_composition_by_id" method.
         """
         comp_list = FIL.scan_dir(MBT.Paths.compositions, p_file_pattern="Comp*.pkl")
         if len(comp_list) == 0:
@@ -166,6 +181,13 @@ class CompositionEngine:
             comp_list[i] = c.stem.replace("Comp", "")
             print(f"{i+1}: {comp_list[i]}")
         return comp_list
+
+    # ========== Worker Methods ==========
+    # These methods are used internally by the main called methods.
+    # They are not intended to be called directly by the user.
+    # Generally, they prepare data to to be stored and should
+    # always return an updated Composition object.
+    # =======================================
 
     @classmethod
     def _create_composition(
@@ -216,6 +238,7 @@ class CompositionEngine:
     def _rename_composition(cls, comp: Composition, new_name: str) -> Composition:
         """
         Rename the composition and update its metadata.
+        Give this "worker" method a different name from its calling method.
         """
         comp.name = new_name
         comp.data_name = MBT.to_pascal_case(f"comp_{new_name}")
@@ -241,6 +264,10 @@ class CompositionEngine:
     def _get_theme_categories(cls) -> tuple:
         """
         Return theme_library, theme_cats and cat_nums
+        TODO:
+        - Consider moving this to a separate class that handles theme operations,
+          or one that pulls in data and objects from the various static dataclasses.
+        - OR it could be a method of the mb_themes.MuseBoxThemeLibrary class.
         """
         theme_library = mb_themes.MuseBoxThemeLibrary()
         theme_cats = theme_library.list_categories()
@@ -280,9 +307,14 @@ class CompositionEngine:
         return comp  # Return the updated Composition object
 
     # ========== Plan/Step Methods ==========
+    # For these main methods, always pass in and return the Composition ID.
+    # Don't assume the user has a Composition object in memory.
+    # Do assume all methods can handled a composition ID passed in, including
+    # one that is nul (None).
+    # =======================================
 
     @classmethod
-    def init_composition(cls) -> Optional[int]:
+    def init_composition(cls, comp_id=None) -> Optional[int]:
         """
         Plan 0, Step 0: Initialize a new Composition.
         Initialize a new Composition.
@@ -313,7 +345,7 @@ class CompositionEngine:
         return id
 
     @classmethod
-    def open_composition(cls):
+    def open_composition(cls, comp_id) -> Optional[int]:
         """
         Plan 0, Step 1: Open an existing Composition.
         Open an existing Composition.
@@ -343,10 +375,12 @@ class CompositionEngine:
         return comp.id
 
     @classmethod
-    def rename_composition(cls, comp: Composition) -> Composition:
+    def rename_composition(cls, comp_id: int) -> Optional[int]:
         """
-        Plan 0, Step 2 (optional): Request a change of name for the current Composition.
+        Plan 0, Step 2 (optional): Request a change of name for the identified Composition.
         This step is optional and can be executed at any time against an existing comp.
+        TODO:
+        Retrieve the Composition object by its ID.
         """
         assert_done = False
         while not assert_done:
@@ -382,12 +416,17 @@ class CompositionEngine:
         """
         Pick one or two theme categories.
         :returns: (list) of Themes in the selected categories.
+        TODO:
+        - Consider moving this to a separate class that handles theme operations?
+          It is properly just an extension to the main method, and not a "worker" method,
+          that is, it is still dealing with presentation and user interaction.
+          I split it up just to prevent the main method from being too long.
         """
         theme_library, theme_cats, cat_nums, cat_prompt = cls._get_theme_categories()
         comp_themes = []
         ords = [MBT.Text.ord_first, MBT.Text.ord_second]
         for o in ords:
-            # FIX: simplify by accepting up to two numbers
+            # FIX ==> simplify by accepting up to two numbers in one choice.
             prompt = (
                 f"\nSelect {o} Theme category by number\n"
                 f"or {MBT.Text.quit_prompt}\n{cat_prompt}"
@@ -422,7 +461,7 @@ class CompositionEngine:
         return comp_themes
 
     @classmethod
-    def select_themes(cls, id: int) -> None:
+    def select_themes(cls, id: int) -> Optional[int]:
         """
         Plan 0, Step 3: Select up to three themes for the Composition.
         """

@@ -56,25 +56,43 @@ class CompositionPlan:
         init=False, default_factory=lambda: CompositionPlan.build_plans()
     )
 
-    @staticmethod
-    def build_plans():
+    @classmethod
+    def build_plans(cls):
         ENGINE = CompositionEngine()
         plan: dict = {}
-        plan[0] = {"name": "Plan 0: Name, ID and Themes",
-                   "desc": ("Create a new composition, assign name and ID" +
-                            "and select one or two themes."),
-                   "step": {0: {"method": ENGINE.init_composition,
-                                "optional": False, "repeatable": False},
-                            1: {"method": ENGINE.open_composition,
-                                "optional": False, "repeatable": True},
-                            2: {"method": ENGINE.rename_composition,
-                                "optional": True, "repeatable": True},
-                            3: {"method": ENGINE.select_themes,
-                                "optional": False, "repeatable": True}}}
+        plan[0] = {
+            "name": "Plan 0: Name, ID and Themes",
+            "desc": (
+                "Create a new composition, assign name and ID."
+                + "\nThen select one or two themes."
+            ),
+            "step": {
+                0: {
+                    "method": ENGINE.init_composition,
+                    "optional": False,
+                    "repeatable": False,
+                },
+                1: {
+                    "method": ENGINE.open_composition,
+                    "optional": False,
+                    "repeatable": True,
+                },
+                2: {
+                    "method": ENGINE.rename_composition,
+                    "optional": True,
+                    "repeatable": True,
+                },
+                3: {
+                    "method": ENGINE.select_themes,
+                    "optional": False,
+                    "repeatable": True,
+                },
+            },
+        }
         return plan
 
 
-class MuseBox():
+class MuseBox:
     """Class for providing user access to various MuseBox components and methods.
     This class serves as the main entry point for the MuseBox system, menuing users
     to create, open, and manage compositions. It provides a command line interface
@@ -82,14 +100,13 @@ class MuseBox():
     creating and managing compositions.
     """
 
-    PLAN = CompositionPlan()
-    HIST = CompositionHistory()
-
     def __init__(self):
         self.comp_id = None  # ID of the open composition.
+        self.PLAN = CompositionPlan()
+        self.HIST = CompositionHistory()
 
     def action_is_quit(self, choice: str):
-        if choice in ['q', 'quit']:
+        if choice in ["q", "quit"]:
             print(f"\n{MBT.Text.goodbye}")
             return True
         else:
@@ -103,7 +120,7 @@ class MuseBox():
             return False
 
     def action_new(self, choice: str):
-        if choice in ['n', 'new']:
+        if choice in ["n", "new"]:
             # print('Executing Plan 0 Step 0: New Composition.')
             plan_0 = self.PLAN.plan[0]
             self.comp_id = plan_0["step"][0]["method"]()
@@ -112,13 +129,28 @@ class MuseBox():
         """
         Execute the next step in the composition process.
         """
-        print('TAB: Executing next step in the composition process.')
+        if choice in ["n", "next"]:
+            last_step = self.HIST.get_last_step_status(self.comp_id)
+            last_plan_num = int(last_step[0])
+            last_step_num = int(last_step[1])
+            for n in self.PLAN.plan.keys():
+                if n < last_plan_num:
+                    continue
+                plan = self.PLAN.plan[n]
+                for step_num, step in plan["step"].items():
+                    if step["optional"] is False and step_num > last_step_num:
+                        self.comp_id = step["method"](self.comp_id)
+                        return
+            print(
+                "\nNo next step available. "
+                + "All steps completed. No more plans defined."
+            )
 
     def action_open(self, choice: str):
         """
         Get list of open compositions and user chooses one.
         """
-        if choice in ['o', 'open']:
+        if choice in ["o", "open"]:
             # print('Executing Plan 0 Step 1: Open a Composition.')
             plan_0 = self.PLAN.plan[0]
             self.comp_id = plan_0["step"][1]["method"]()
@@ -127,7 +159,50 @@ class MuseBox():
         """
         Execute an available edit step in the composition process.
         """
-        print('TAB: Select an available edit step in the composition process.')
+        if choice in ["e", "edit"]:
+            last_step = self.HIST.get_last_step_status(self.comp_id)
+            last_plan_num = int(last_step[0])
+            last_step_num = int(last_step[1])
+            steps_available = []
+            for n in self.PLAN.plan.keys():
+                if n > last_plan_num:
+                    break
+                plan = self.PLAN.plan[n]
+                for s, step in plan["step"].items():
+                    if (
+                        step["repeatable"] is True
+                        and n <= last_plan_num
+                        and s <= last_step_num
+                    ):
+                        m = step["method"].__name__.split(".")[-1]
+                        steps_available.append(f"Plan {n}, Step {s}, {m}")
+            if not steps_available:
+                print(
+                    "\nNo edit steps available. "
+                    + "All steps completed or no repeatable steps defined."
+                )
+            else:
+                prompt = (
+                    "\nSelect an edit step by number "
+                    + "(e.g., '0.1' for Plan 0, Step 1): "
+                )
+                pick_steps = []
+                for step in steps_available:
+                    step_p = step.replace('Plan ', '').replace('Step ', '').replace(', ', '.')
+                    pick_steps.append(step_p[:3])
+                    prompt += f"\n{step_p}"
+                prompt += f"\nor {MBT.Text.quit_prompt}"
+                prompt += f"\n{MBT.Text.entry_prompt}"
+                while choice not in pick_steps:
+                    choice = MBT.prompt_for_value(prompt)
+                    if self.action_is_quit(choice):
+                        exit(0)
+                    if not self.action_is_ok(choice, pick_steps):
+                        continue
+                    plan = self.PLAN.plan[int(choice[0])]
+                    # print("\nExecuting " +
+                    #       f"{plan['step'][int(choice[2])]['method'].__name__}...")
+                    self.comp_id = plan["step"][int(choice[2])]["method"](self.comp_id)
 
     def main_menu_cli(self):
         """
@@ -153,12 +228,12 @@ class MuseBox():
         - look into using the click or rich libraries to enhance CLI experience.
         """
         while True:
-            print("comp_id:", self.comp_id)
+            # print("comp_id:", self.comp_id)
             if self.comp_id is None:
-                menu = ['n', 'o', 'e', 'q', 'new', 'open', 'quit']
+                menu = ["n", "o", "e", "q", "new", "open", "quit"]
                 prompt = f"{MBT.Text.main_prompt}"
             else:
-                menu = ['n', 'e', 'q', 'next', 'edit', 'quit']
+                menu = ["n", "e", "q", "next", "edit", "quit"]
                 prompt = f"{MBT.Text.edit_prompt}"
             choice = ""
             while choice not in menu:
@@ -170,13 +245,13 @@ class MuseBox():
                 if not self.action_is_ok(choice, menu):
                     continue
                 # Standard main menu actions:
-                if 'new' in menu:
+                if "new" in menu:
                     self.action_new(choice)
-                if 'next' in menu:
+                if "next" in menu:
                     self.action_next(choice)
-                if 'open' in menu:
+                if "open" in menu:
                     self.action_open(choice)
-                if 'edit' in menu:
+                if "edit" in menu:
                     self.action_edit(choice)
 
         """
@@ -207,8 +282,7 @@ class MuseBox():
         """
 
     def run_cli(self):
-        """Run the command line interface for MuseBox.
-        """
+        """Run the command line interface for MuseBox."""
         init(autoreset=True)
         print(Fore.YELLOW + Style.BRIGHT + f"\n{MBT.Text.welcome}")
         self.main_menu_cli()
