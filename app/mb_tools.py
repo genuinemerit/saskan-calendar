@@ -3,7 +3,7 @@
 :module:    mb_tools.py
 :author:    PQ (pq_rfw @ pm.me)
 
-Define helper functions for MuseBox.
+Helper functions for MuseBox.
 """
 
 from colorama import init, Fore, Style  # noqa: F401
@@ -15,6 +15,8 @@ from tabulate import tabulate  # noqa: F401
 from typing import Union, List, Dict, Optional  # noqa: F401
 
 
+# ============ Constants ============
+
 @dataclass(frozen=True)
 class Text:
     """
@@ -24,12 +26,14 @@ class Text:
     init(autoreset=True)
     comp_id: str = "Composition ID: "
     confirm_exit: str = "Are you sure you want to exit? (Y/N): "
-    edit_prompt: str = "[N]ext step, [E]dit, [Q]uit"
+    edit_menu = ("n", "o", "e", "q", "next", "open" "edit", "quit")
+    edit_prompt: str = "[N]ext step, [O]pen, [E]dit, [Q]uit"
     entry_prompt: str = "==> "
     error: str = "⚠️  An error occurred. Please try again."
     goodbye: str = "Goodbye!  👋"
     invalid_input: str = "⚠️  Invalid input. Please try again."
     loading: str = "Loading data..."
+    main_menu = ("n", "o", "e", "q", "new", "open", "quit")
     main_prompt: str = "[N]ew, [O]pen, [Q]uit"
     no_data: str = "🤨  No data available."
     ord_first: str = "First"
@@ -42,16 +46,6 @@ class Text:
     yes_no_prompt: str = "[Y]es/[N]o"
 
 
-def prompt_for_value(prompt: str) -> str:
-    value = input(prompt).lower().strip()
-    return value
-
-
-def to_pascal_case(text: str) -> str:
-    """Replace underscores with spaces, split into words, capitalize, and join"""
-    return "".join(word.capitalize() for word in text.replace("_", " ").split())
-
-
 @dataclass(frozen=True)
 class Paths:
     """
@@ -62,6 +56,30 @@ class Paths:
     data: Path = Path("..") / "data"
     logs: Path = Path("..") / "data"
     compositions: Path = Path("..") / "data"
+
+
+# ============ User Interface Tools ============
+
+def if_exit_app(prompt: str) -> None:
+    """
+    Handle exit confirmation for the application.
+    If the user inputs 'q' or 'quit', exit the application gracefully.
+    """
+    if prompt.strip().lower() in ("q", "quit"):
+        print(f"\n{Text.goodbye}")
+        exit(0)
+
+
+def prompt_for_value(prompt: str) -> str:
+    value = input(prompt).lower().strip()
+    return value
+
+
+# ============ Data Transforms ============
+
+def to_pascal_case(text: str) -> str:
+    """Replace underscores with spaces, split into words, capitalize, and join"""
+    return "".join(word.capitalize() for word in text.replace("_", " ").split())
 
 
 def set_data_path(path_type: str, data_name: str, ext: str = "json") -> str:

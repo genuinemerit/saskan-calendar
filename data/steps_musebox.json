@@ -1,6 +1,6 @@
 {
-  "1yJ-mnJUsRxgXbWKASoypqrE7y8AU4meYNk-AeaFUEw": {
-    "name": "Daves First Score",
+  "gQlcNnp8mnPNAVmuc-RXB2mMPZV78_3MoIgEHsticDo": {
+    "name": "daves amazing composition",
     "plans": {
       "0": {
         "0": {
@@ -11,11 +11,6 @@
         "1": {
           "step": "open_composition",
           "desc": "Open an existing composition.",
-          "stat": "completed"
-        },
-        "2": {
-          "step": "select_themes",
-          "desc": "Select themes for the composition.",
           "stat": "completed"
         },
         "3": {
@@ -25,24 +20,6 @@
         }
       }
     },
-    "data_name": "CompDavesFirstScore"
-  },
-  "-2lT-SwMS0v06Y37UMjKublZmcV0Nxu7tmL_TRhC2Fs": {
-    "name": "Daves Second Score",
-    "plans": {
-      "0": {
-        "0": {
-          "step": "init_composition",
-          "desc": "Set ID and name of the composition.",
-          "stat": "completed"
-        },
-        "1": {
-          "step": "open_composition",
-          "desc": "Open an existing composition.",
-          "stat": "completed"
-        }
-      }
-    },
-    "data_name": "CompDavesSecondScore"
+    "data_name": "CompDavesAmazingComposition"
   }
 }

@@ -17,7 +17,7 @@ from pprint import pprint as pp  # noqa: F401
 from typing import Dict
 
 import mb_tools as MBT
-from mb_compose import CompositionEngine, CompositionHistory
+from mb_compose import CompositionEngine, CompositionHistory, CompositionMetadata
 
 
 @dataclass(frozen=True)
@@ -104,6 +104,7 @@ class MuseBox:
         self.comp_id = None  # ID of the open composition.
         self.PLAN = CompositionPlan()
         self.HIST = CompositionHistory()
+        self.META = CompositionMetadata()
 
     def action_is_quit(self, choice: str):
         if choice in ["q", "quit"]:
@@ -130,7 +131,7 @@ class MuseBox:
         Execute the next step in the composition process.
         """
         if choice in ["n", "next"]:
-            last_step = self.HIST.get_last_step_status(self.comp_id)
+            last_step = self.META.get_last_step_status(self.comp_id)
             last_plan_num = int(last_step[0])
             last_step_num = int(last_step[1])
             for n in self.PLAN.plan.keys():
@@ -153,14 +154,15 @@ class MuseBox:
         if choice in ["o", "open"]:
             # print('Executing Plan 0 Step 1: Open a Composition.')
             plan_0 = self.PLAN.plan[0]
-            self.comp_id = plan_0["step"][1]["method"]()
+            self.comp_id = plan_0["step"][1]["method"](self.comp_id)
 
     def action_edit(self, choice: str):
         """
         Execute an available edit step in the composition process.
+        >>> DEV Pick up here. After refactoring, this is not working.
         """
         if choice in ["e", "edit"]:
-            last_step = self.HIST.get_last_step_status(self.comp_id)
+            last_step = self.META.get_last_step_status(self.comp_id)
             last_plan_num = int(last_step[0])
             last_step_num = int(last_step[1])
             steps_available = []
@@ -200,41 +202,23 @@ class MuseBox:
                     if not self.action_is_ok(choice, pick_steps):
                         continue
                     plan = self.PLAN.plan[int(choice[0])]
-                    # print("\nExecuting " +
-                    #       f"{plan['step'][int(choice[2])]['method'].__name__}...")
                     self.comp_id = plan["step"][int(choice[2])]["method"](self.comp_id)
 
     def main_menu_cli(self):
         """
         TODO:
-        - Refactor this to use the CompositionPlan class more fluidly.
-        - Make it more flexible to menu jumping to any step in the plan.
-        - Use sequential flow to choose what to present to the user.
-        - Make use of HIST methods to check status of steps and plans,
-          which should determine what repeatable steps are available and
-          what should be the next unfinished step in the flow.
-        - Think in terms of a single "menu" presentation, which is driven by
-          steps status metadata. Use familiar interactive patterns and text
-          like "New", "Open", "Edit", "Quit".
-        - Consider whether "Save" is appropriate. So far, a step is either
-          completed or not. When it is completed, it is saved. If it is not
-          completed, it has to be started again.
-        MAYBE:
-        - Rather than "Save", might want something more like "Lock". If a
-          user wants to change a composition step that is locked, then the
-          composition needs to forked or unlocked. (Maybe this is for down the road.)
-        - Also consider if a [B]ack option is needed, to go back to the previous step
-          or action within a step.
-        - look into using the click or rich libraries to enhance CLI experience.
+        - Look into using the click or rich libraries to enhance the CLI experience.
+        - Consider adding a [H]elp option to the main menu.
+        - Consider adding a [V]iew current composition option.
         """
         while True:
-            # print("comp_id:", self.comp_id)
             if self.comp_id is None:
-                menu = ["n", "o", "e", "q", "new", "open", "quit"]
-                prompt = f"{MBT.Text.main_prompt}"
+                menu = MBT.Text.main_menu
+                prompt = MBT.Text.main_prompt
             else:
-                menu = ["n", "e", "q", "next", "edit", "quit"]
-                prompt = f"{MBT.Text.edit_prompt}"
+                # If compostion is already open, offer the [E]dit option.
+                menu = MBT.Text.edit_menu
+                prompt = MBT.Text.edit_prompt
             choice = ""
             while choice not in menu:
                 choice = MBT.prompt_for_value(
@@ -274,7 +258,7 @@ class MuseBox:
         # to treat re-naming as a discrete but optional step, rather than as a
         # "sub-step" of plan 0 / step 1. Each step can have a quality of "required"
         # or "optional".
-        (plan, step, status) = self.HIST.get_last_step_status(id)
+        (plan, step, status) = self.META.get_last_step_status(id)
         if status == "completed" and int(plan) == 0 and int(step) in [0, 1]:
             id = self.PLAN.plans[0]["steps"][2](id)
         else:

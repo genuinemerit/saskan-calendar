@@ -301,6 +301,21 @@ class ThemeLibrary:
                 chords.extend(theme.degrees * theme.repeat)
         return chords
 
+    def prompt_theme_categories(self) -> tuple:
+        """
+        Return theme_library, theme_cats, cat_nums and a preformmated
+          prompt string for selecting theme categories.
+        :returns: (ThemeLibrary, List[str], List[int], str)
+        """
+        theme_library = self
+        theme_cats = self.list_categories()
+        cat_nums = []
+        cat_prompt = ""
+        for i, category in enumerate(theme_cats):
+            cat_nums.append(i + 1)
+            cat_prompt += f"  {i + 1}: {category}\n"
+        return (theme_library, theme_cats, cat_nums, cat_prompt)
+
 
 class MuseBoxThemeLibrary(ThemeLibrary):
     """
