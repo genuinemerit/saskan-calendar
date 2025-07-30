@@ -26,7 +26,7 @@ class Text:
     init(autoreset=True)
     comp_id: str = "Composition ID: "
     confirm_exit: str = "Are you sure you want to exit? (Y/N): "
-    edit_menu = ("n", "o", "e", "q", "next", "open" "edit", "quit")
+    edit_menu = ("n", "o", "e", "q", "next", "open", "edit", "quit")
     edit_prompt: str = "[N]ext step, [O]pen, [E]dit, [Q]uit"
     entry_prompt: str = "==> "
     error: str = "⚠️  An error occurred. Please try again."

@@ -5,8 +5,8 @@
 :author:    PQ (pq_rfw @ pm.me)
 
 Define methods to drive interactive use of the MuseBox system.
-This module provides the main entry point for the MuseBox system,
-menuing users to create, open, and manage compositions.
+Composition plans are defined in the CompositionPlan class.
+The MuseBox class provides a command line interface (CLI) to interact with the plans.
 For more information on music21 library, see: https://www.music21.org/music21docs/
 """
 
@@ -24,32 +24,36 @@ from mb_compose import CompositionEngine, CompositionHistory, CompositionMetadat
 class CompositionPlan:
     """
     The CompositionPlan maps tasks to generate a piece of music using MuseBox.
-    It is is similar to an ETL process map. There are multiple plans, which need
-    to be executed in a specific order. Previous plan must be completed before
-    the next one can be started.
+    It is is similar to an ETL process. Multiple plans need to be executed in
+    a specific order. Previous plan must be completed before next one can start.
 
-    Each plan is a sequence of steps, which are methods in the CompositionEngine class.
-    Each step is a method that performs a specific task in the composition process.
-    Some steps are required (non-optional), while others are optional. Non-optional
-    steps must be completed before the next step can be started. All non-optional steps
-    in a plan must be completed before the next plan can be started.
-    Steps are tied to methods defined in the CompositionEngine class.
+    Each plan is a sequence of steps executing methods in the CompositionEngine class.
+    Each step/method performs a specific major task in the composition process.
+    Steps are required or optional.
+    Requried steps must complete before the next required step can start.
+    All required steps in a plan must complete before the next plan can start.
 
-    Many steps are repeatable, meaning they can be executed multiple times, and in
-    any order, as long as its preceding plans and non-optional steps are completed.
+    A repeatable step can be executed multiple times, in any order, as long as
+    preceding required steps and preceding plans are complete.
 
-    The details of each composition are stored in a pickled object. The status
-    of the plans and steps are stored in JSON file.  Most activities are loggged as well.
+    Composition objects are pickled for storage and recall.
+    Plan and setp status metadata are stored in JSON files.
+    Most activities are loggged as well.
 
     The plans are:
     1. Create a new composition. Assign ID, Name and Themes.
     2. Select Motif Grammar, Rules, and Structures to apply to the Themes.
-       In summary: define the Motifs of the composition. Includes key signature(s).
-    3. Select Rhythmic Patterns to apply to the Motifs.
+       In summary: define the Motifs of the composition, including key signature(s).
+    3. Select Rhythmic Patterns to apply to Motifs.
     4. Define Phrases, which are clusters of Motifs.
     5. Define Voices, Roles, and Instrumentation.
     6. Compose scores and music as music21 Stream, MIDI file, JSON, MusicXML file.
     7. Play, publish, print or export the music.
+
+    Possible future plans:
+    8. Add Lyrics, Chords, and other metadata.
+    9. Add more advanced features, such as AI-assisted composition.
+    10. Add more advanced features, such as AI-assisted arrangement.
     """
 
     plan: Dict[str, Dict] = field(
@@ -58,45 +62,41 @@ class CompositionPlan:
 
     @classmethod
     def build_plans(cls):
+        """
+        Build the composition plans.
+        This method defines the plans and their steps.
+        Each plan is a dictionary with a name, description, and steps.
+        Each step is a dictionary with a method to execute, and flags for optional
+        and repeatable steps.
+        """
         ENGINE = CompositionEngine()
-        plan: dict = {}
-        plan[0] = {
-            "name": "Plan 0: Name, ID and Themes",
-            "desc": (
-                "Create a new composition, assign name and ID."
-                + "\nThen select one or two themes."
-            ),
-            "step": {
-                0: {
-                    "method": ENGINE.init_composition,
-                    "optional": False,
-                    "repeatable": False,
-                },
-                1: {
-                    "method": ENGINE.open_composition,
-                    "optional": False,
-                    "repeatable": True,
-                },
-                2: {
-                    "method": ENGINE.rename_composition,
-                    "optional": True,
-                    "repeatable": True,
-                },
-                3: {
-                    "method": ENGINE.select_themes,
-                    "optional": False,
-                    "repeatable": True,
-                },
-            },
+
+        steps = [
+            {"method": ENGINE.init_composition, "optional": False, "repeatable": False},
+            {"method": ENGINE.open_composition, "optional": False, "repeatable": True},
+            {"method": ENGINE.rename_composition, "optional": True, "repeatable": True},
+            {"method": ENGINE.select_themes, "optional": False, "repeatable": True},
+        ]
+
+        plan = {
+            0: {
+                "name": "Plan 0: Name, ID and Themes",
+                "desc": (
+                    "Create a new composition, assign name and ID."
+                    "\nThen select one or two themes."
+                ),
+                "step": {i: step for i, step in enumerate(steps)},
+            }
         }
+
         return plan
 
 
 class MuseBox:
-    """Class for providing user access to various MuseBox components and methods.
-    This class serves as the main entry point for the MuseBox system, menuing users
-    to create, open, and manage compositions. It provides a command line interface
-    (CLI) for interacting with the system, guiding users through the process of
+    """
+    Provide user access to MuseBox Plans, and via the Plans to Compositions.
+    Main CLI entry point for the system. Create, open, and manage compositions
+    via command line interface (CLI), guiding users through the processes for
     creating and managing compositions.
     """
 
@@ -120,34 +120,36 @@ class MuseBox:
             print(f"\n{MBT.Text.invalid_input}")
             return False
 
-    def action_new(self, choice: str):
+    def action_is_new(self, choice: str):
         if choice in ["n", "new"]:
-            # print('Executing Plan 0 Step 0: New Composition.')
             plan_0 = self.PLAN.plan[0]
             self.comp_id = plan_0["step"][0]["method"]()
 
-    def action_next(self, choice: str):
+    def action_is_next(self, choice: str):
         """
-        Execute the next step in the composition process.
+        Execute the next step in the composition process, either in
+        the current plan or in the next plan.
         """
-        if choice in ["n", "next"]:
-            last_step = self.META.get_last_step_status(self.comp_id)
-            last_plan_num = int(last_step[0])
-            last_step_num = int(last_step[1])
-            for n in self.PLAN.plan.keys():
-                if n < last_plan_num:
-                    continue
-                plan = self.PLAN.plan[n]
-                for step_num, step in plan["step"].items():
-                    if step["optional"] is False and step_num > last_step_num:
-                        self.comp_id = step["method"](self.comp_id)
-                        return
-            print(
-                "\nNo next step available. "
-                + "All steps completed. No more plans defined."
-            )
+        if choice not in ["n", "next"]:
+            return
 
-    def action_open(self, choice: str):
+        print("Executing next step in the composition process.")
+
+        last_step = self.META.get_last_step_status(self.comp_id)
+        last_plan_num, last_step_num = map(int, last_step)
+
+        for n, plan in sorted(self.PLAN.plan.items()):
+            if n < last_plan_num:
+                continue
+
+            for step_num, step in sorted(plan["step"].items()):
+                if not step["optional"] and (n > last_plan_num or step_num > last_step_num):
+                    self.comp_id = step["method"](self.comp_id)
+                    return self.comp_id
+
+        print("\nNo next step available. All steps completed. No more plans defined.")
+
+    def action_is_open(self, choice: str):
         """
         Get list of open compositions and user chooses one.
         """
@@ -156,122 +158,95 @@ class MuseBox:
             plan_0 = self.PLAN.plan[0]
             self.comp_id = plan_0["step"][1]["method"](self.comp_id)
 
-    def action_edit(self, choice: str):
+    def action_is_edit(self, choice: str):
         """
-        Execute an available edit step in the composition process.
-        >>> DEV Pick up here. After refactoring, this is not working.
+        Provide choice of available repeatable steps and execute
+        the selected one.
         """
-        if choice in ["e", "edit"]:
-            last_step = self.META.get_last_step_status(self.comp_id)
-            last_plan_num = int(last_step[0])
-            last_step_num = int(last_step[1])
-            steps_available = []
-            for n in self.PLAN.plan.keys():
-                if n > last_plan_num:
-                    break
-                plan = self.PLAN.plan[n]
-                for s, step in plan["step"].items():
-                    if (
-                        step["repeatable"] is True
-                        and n <= last_plan_num
-                        and s <= last_step_num
-                    ):
-                        m = step["method"].__name__.split(".")[-1]
-                        steps_available.append(f"Plan {n}, Step {s}, {m}")
-            if not steps_available:
-                print(
-                    "\nNo edit steps available. "
-                    + "All steps completed or no repeatable steps defined."
-                )
-            else:
-                prompt = (
-                    "\nSelect an edit step by number "
-                    + "(e.g., '0.1' for Plan 0, Step 1): "
-                )
-                pick_steps = []
-                for step in steps_available:
-                    step_p = step.replace('Plan ', '').replace('Step ', '').replace(', ', '.')
-                    pick_steps.append(step_p[:3])
-                    prompt += f"\n{step_p}"
-                prompt += f"\nor {MBT.Text.quit_prompt}"
-                prompt += f"\n{MBT.Text.entry_prompt}"
-                while choice not in pick_steps:
-                    choice = MBT.prompt_for_value(prompt)
-                    if self.action_is_quit(choice):
-                        exit(0)
-                    if not self.action_is_ok(choice, pick_steps):
-                        continue
-                    plan = self.PLAN.plan[int(choice[0])]
-                    self.comp_id = plan["step"][int(choice[2])]["method"](self.comp_id)
+        if choice not in ["e", "edit"]:
+            return
+
+        last_step = self.META.get_last_step_status(self.comp_id)
+        last_plan_num, last_step_num = map(int, last_step)
+
+        steps_available = [
+            (n, s, step["method"].__name__.split(".")[-1])
+            for n, plan in self.PLAN.plan.items()
+            if n <= last_plan_num
+            for s, step in plan["step"].items()
+            if step["repeatable"] and s <= last_step_num
+        ]
+
+        if not steps_available:
+            print(
+                "\nNo edit steps available. All steps completed or no repeatable steps defined."
+            )
+            return
+
+        pick_steps = [f"{n}.{s}" for n, s, _ in steps_available]
+        step_descriptions = "\n".join(f"{n}.{s} {m}" for n, s, m in steps_available)
+
+        prompt = (
+            f"\nSelect an edit step by number (e.g., '0.1' for Plan 0, Step 1):"
+            f"\n{step_descriptions}"
+            f"\nor {MBT.Text.quit_prompt}"
+            f"\n{MBT.Text.entry_prompt}"
+        )
+
+        while choice not in pick_steps:
+            choice = MBT.prompt_for_value(prompt)
+
+            if self.action_is_quit(choice):
+                exit(0)
+
+            if not self.action_is_ok(choice, pick_steps):
+                continue
+
+            n, s = map(int, choice.split("."))
+            plan = self.PLAN.plan[n]
+            self.comp_id = plan["step"][s]["method"](self.comp_id)
 
     def main_menu_cli(self):
         """
+        Main menu for the MuseBox CLI.
         TODO:
         - Look into using the click or rich libraries to enhance the CLI experience.
         - Consider adding a [H]elp option to the main menu.
         - Consider adding a [V]iew current composition option.
         """
         while True:
-            if self.comp_id is None:
-                menu = MBT.Text.main_menu
-                prompt = MBT.Text.main_prompt
-            else:
-                # If compostion is already open, offer the [E]dit option.
-                menu = MBT.Text.edit_menu
-                prompt = MBT.Text.edit_prompt
+            menu, prompt = (
+                (MBT.Text.edit_menu, MBT.Text.edit_prompt)
+                if self.comp_id
+                else (MBT.Text.main_menu, MBT.Text.main_prompt)
+            )
+
             choice = ""
             while choice not in menu:
-                choice = MBT.prompt_for_value(
-                    f"\n{prompt} " + f"\n{MBT.Text.entry_prompt}"
-                )
+                choice = MBT.prompt_for_value(f"\n{prompt} \n{MBT.Text.entry_prompt}")
+
                 if self.action_is_quit(choice):
                     exit(0)
+
                 if not self.action_is_ok(choice, menu):
                     continue
+
                 # Standard main menu actions:
-                if "new" in menu:
-                    self.action_new(choice)
-                if "next" in menu:
-                    self.action_next(choice)
-                if "open" in menu:
-                    self.action_open(choice)
-                if "edit" in menu:
-                    self.action_edit(choice)
+                actions = {
+                    "new": self.action_is_new,
+                    "next": self.action_is_next,
+                    "open": self.action_is_open,
+                    "edit": self.action_is_edit,
+                }
 
-        """
-            yesno = MBT.prompt_for_value(f"\nStart a {MBT.Text.new_prompt} composition, " +
-                                         f"{MBT.Text.open_prompt} existing, or " +
-                                         f"{MBT.Text.quit_prompt}: " +
-                                         f"\n{MBT.Text.entry_prompt}")
-        if yesno.strip()[:1].lower() == 'n':    # new
-            id = self.PLAN.plans[0]["steps"][0]()
-            print(f"\n{MBT.Text.comp_id}", id)
-        elif yesno.strip()[:1].lower() == 'o':  # open
-            id = self.PLAN.plans[0]["steps"][1]()
-            print(f"\n{MBT.Text.comp_id}", id)
-        else:
-            print(f"\n{MBT.Text.goodbye}")
-            exit(0)
-        # This works for a sequential flow. It assumes themes not picked yet.
-        # Need to engineer it so user can jump to either editing any completed
-        # step or move to the next unfinished or not-started step. May make sense
-        # to treat re-naming as a discrete but optional step, rather than as a
-        # "sub-step" of plan 0 / step 1. Each step can have a quality of "required"
-        # or "optional".
-        (plan, step, status) = self.META.get_last_step_status(id)
-        if status == "completed" and int(plan) == 0 and int(step) in [0, 1]:
-            id = self.PLAN.plans[0]["steps"][2](id)
-        else:
-            print("\nNot ready to add a theme yet. ⛔")
-        """
-
-    def run_cli(self):
-        """Run the command line interface for MuseBox."""
-        init(autoreset=True)
-        print(Fore.YELLOW + Style.BRIGHT + f"\n{MBT.Text.welcome}")
-        self.main_menu_cli()
+                for action_key, action_method in actions.items():
+                    if action_key in menu:
+                        action_method(choice)
 
 
 if __name__ == "__main__":
+    """Run the command line interface for MuseBox."""
     MB = MuseBox()
-    MB.run_cli()
+    init(autoreset=True)  # Initialize colorama for colored output
+    print(Fore.YELLOW + Style.BRIGHT + f"\n{MBT.Text.welcome}")
+    MB.main_menu_cli()
