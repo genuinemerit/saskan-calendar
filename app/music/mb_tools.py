@@ -51,11 +51,12 @@ class Paths:
     """
     Immutable paths used in MuseBox.
     Refine more as needed.
+    Eventually move to config file.
     """
 
-    data: Path = Path("..") / "data"
-    logs: Path = Path("..") / "data"
-    compositions: Path = Path("..") / "data"
+    data: Path = Path("..") / ("..") / "data"
+    logs: Path = Path("..") / ("..") / "data"
+    compositions: Path = Path("..") / ("..") / "data"
 
 
 # ============ User Interface Tools ============

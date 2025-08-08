@@ -42,6 +42,9 @@ numbers-parser = "^4.15.1"
 music21 = "^9.7.1"
 tabulate = "^0.9.0"
 colorama = "^0.4.6"
+langdetect = "^1.0.9"
+odfpy = "^1.4.1"
+openpyxl = "^3.1.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
