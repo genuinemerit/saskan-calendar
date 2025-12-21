@@ -116,13 +116,14 @@ the northern provinces, is a more complex calendar that uses a leap day every 4
 years, except every 100 years, when the leap day is skipped, and every 400 years,
 when the leap day is added back. The Fatunik turn (year) is 365 days long, except
 every 4th year, when it is 366 days long, excepting every 100th year, when it is
-365 days long, and every 400th year, when it is 366 days long. The Fatunik Calendar
-uses 12 months of 30 days each, with a 5-day Festival Season in non-leap years and
-a 6-day Festival Season in leap years. The Festival Season is the first month of
-the year, and it starts on the first day of the Summer Solstice, or close to it.
-Ideally, the first day of the first month of the first Fatunik year, about 2,742 turns
-after Year 1 of the Astro Solar Calendar, begins on a day with maxinum number of
-new moons (6 ?).
+365 days long, and every 400th year, when it is 366 days long.
+
+The Fatunik Calendar uses 12 months of 30 days each, with a 5-day Festival Season
+in non-leap years and a 6-day Festival Season in leap years. The Festival Season
+is the first month of the year, and it starts on the first day of the Summer Solstice,
+or close to it. Ideally, the first day of the first month of the first Fatunik year,
+about 2,742 turns after Year 1 of the Astro Solar Calendar, begins on a day with maxinum
+number of new moons (6 ?).
 """
 FATUNIK_EPOCH_DAY = 365434      # current estimate
 """

@@ -167,7 +167,13 @@ class MuseBox:
             return
 
         last_step = self.META.get_last_step_status(self.comp_id)
-        last_plan_num, last_step_num = map(int, last_step)
+        # returns a tuple (plan_num, step_num, status) of the last completed step
+
+        print("Executing an edit step in the composition process.")
+        pp(("Last step status:", last_step))
+        print(f"Last completed step: Plan {last_step[0]} Step {last_step[1]}")
+
+        last_plan_num, last_step_num, last_step_status = (last_step)
 
         steps_available = [
             (n, s, step["method"].__name__.split(".")[-1])

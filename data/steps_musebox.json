@@ -1,6 +1,6 @@
 {
-  "gQlcNnp8mnPNAVmuc-RXB2mMPZV78_3MoIgEHsticDo": {
-    "name": "daves amazing composition",
+  "1eRqiD9uAX8I3Q66RDDCajlSCmujHUo8Bku0XAZt6VY": {
+    "name": "composition one",
     "plans": {
       "0": {
         "0": {
@@ -12,14 +12,9 @@
           "step": "open_composition",
           "desc": "Open an existing composition.",
           "stat": "completed"
-        },
-        "3": {
-          "step": "select_themes",
-          "desc": "Select themes for the composition.",
-          "stat": "completed"
         }
       }
     },
-    "data_name": "CompDavesAmazingComposition"
+    "data_name": "CompCompositionOne"
   }
 }
