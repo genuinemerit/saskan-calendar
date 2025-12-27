@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "saskan-calendar"
 version = "0.1.0"
-description = "A toy app with structured build and release workflow."
+description = "A toy app with semi-structured build and release workflow."
 authors = [
     "Genuine Merit <genuinemerit@pm.me>",
     "David Stitt <david.stitt@pm.me>",
@@ -9,7 +9,10 @@ authors = [
     ]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "app" }]
+packages = [
+    { include = "app" },
+    { include = "experiments" },
+]
 
 # Optional metadata for future PyPI publishing
 homepage = "https://github.com/genuinemerit/saskan-calendar"
@@ -45,6 +48,9 @@ colorama = "^0.4.6"
 langdetect = "^1.0.9"
 odfpy = "^1.4.1"
 openpyxl = "^3.1.5"
+networkx = "^3"
+typer = "^0.20.1"
+matplotlib = "^3.10.8"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
@@ -61,6 +67,7 @@ isort = "^5.13"
 
 [tool.poetry.scripts]
 saskan-calendar = "scripts.manage:cli"
+saskan-experiments = "experiments.cli:app"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::DeprecationWarning"]
