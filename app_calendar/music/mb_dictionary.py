@@ -13,11 +13,10 @@ from pprint import pformat as pf  # noqa: F401
 from pprint import pprint as pp  # noqa: F401
 from tabulate import tabulate  # noqa: F401
 from typing import Union, List, Dict, Optional  # noqa: F401
-
-import method_files as mf  # noqa F401
+from shared.utils.file_io import FileMethods
 import mb_tools as mtools  # noqa F401
 
-FM = mf.FileMethods()
+FM = FileMethods()
 
 
 @dataclass(frozen=True)
@@ -672,7 +671,7 @@ class TempoSet:
             "vivace": "Lively and fast",
             "vivacissimo": "Very lively",
             "presto": "Extremely fast",
-            "prestissimo": "As fast as possible"
+            "prestissimo": "As fast as possible",
         }
 
         for name, duration in m21.tempo.defaultTempoValues.items():

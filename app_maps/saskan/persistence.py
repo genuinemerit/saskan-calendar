@@ -33,4 +33,3 @@ def snapshot_state(
     path = snapshot_dir / f"step_{state.step:04d}.json"
     path.write_text(json.dumps(payload, indent=2))
     return path
-

@@ -1,5 +1,5 @@
 # import pytest
-from app import get_wanderer_report
+from app_calendar import get_wanderer_report
 
 
 def test_wanderer_pos_bounds():

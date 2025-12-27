@@ -17,6 +17,7 @@ from typing import Union, List, Dict, Optional  # noqa: F401
 
 # ============ Constants ============
 
+
 @dataclass(frozen=True)
 class Text:
     """
@@ -61,6 +62,7 @@ class Paths:
 
 # ============ User Interface Tools ============
 
+
 def if_exit_app(prompt: str) -> None:
     """
     Handle exit confirmation for the application.
@@ -77,6 +79,7 @@ def prompt_for_value(prompt: str) -> str:
 
 
 # ============ Data Transforms ============
+
 
 def to_pascal_case(text: str) -> str:
     """Replace underscores with spaces, split into words, capitalize, and join"""

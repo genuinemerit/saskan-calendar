@@ -6,7 +6,12 @@ from itertools import combinations
 from typing import List, Optional, Tuple
 
 from .models import Event, Route, Settlement, SimulationState
-from .settings import SimulationConfig, apply_scenario, default_settlements, region_from_config
+from .settings import (
+    SimulationConfig,
+    apply_scenario,
+    default_settlements,
+    region_from_config,
+)
 
 
 class SaskanEngine:
@@ -145,7 +150,9 @@ class SaskanEngine:
             )
         return events
 
-    def _build_route(self, origin: Settlement, destination: Settlement) -> Optional[Route]:
+    def _build_route(
+        self, origin: Settlement, destination: Settlement
+    ) -> Optional[Route]:
         distance = self._distance(origin.location, destination.location)
         difficulty = 1 + self.random.uniform(0, 0.4)
         return Route(
@@ -155,7 +162,9 @@ class SaskanEngine:
             difficulty=difficulty,
         )
 
-    def _jitter_location(self, location: Tuple[int, int], radius: int = 8) -> Tuple[int, int]:
+    def _jitter_location(
+        self, location: Tuple[int, int], radius: int = 8
+    ) -> Tuple[int, int]:
         x, y = location
         dx = self.random.randint(-radius, radius)
         dy = self.random.randint(-radius, radius)
@@ -163,7 +172,9 @@ class SaskanEngine:
         new_y = max(0, min(self.state.region.height, y + dy))
         return (new_x, new_y)
 
-    def _biased_location(self, origin: Tuple[int, int], bias: Tuple[int, int], radius: int = 8) -> Tuple[int, int]:
+    def _biased_location(
+        self, origin: Tuple[int, int], bias: Tuple[int, int], radius: int = 8
+    ) -> Tuple[int, int]:
         x, y = origin
         dx_bias, dy_bias = bias
         dx = self.random.randint(-radius, radius) + dx_bias
@@ -263,7 +274,8 @@ class SaskanEngine:
                 self.recovery_boost = 0.0
         # Irrigation progress accumulates
         self.irrigation_progress = min(
-            self.irrigation_progress + self.config.irrigation_growth_bonus, self.config.irrigation_bonus_cap
+            self.irrigation_progress + self.config.irrigation_growth_bonus,
+            self.config.irrigation_bonus_cap,
         )
         return events
 
@@ -281,7 +293,9 @@ class SaskanEngine:
         frac = self.random.uniform(frac_low, frac_high)
         migrants = max(20, int(parent.population * frac))
         parent.population = max(0, parent.population - migrants)
-        location = self._biased_location(parent.location, self.config.out_migration_bias, radius=20)
+        location = self._biased_location(
+            parent.location, self.config.out_migration_bias, radius=20
+        )
         growth_low, growth_high = self.config.growth_rate_range
         affinity = self._compute_affinity(parent.location, location)
         new_settlement = Settlement(
@@ -312,8 +326,8 @@ class SaskanEngine:
                         f"Trade path opened between {new_route.origin} and {new_route.destination} "
                         f"({new_route.distance:.1f} units)."
                     ),
+                )
             )
-        )
         return events
 
     def _maybe_force_downriver(self) -> List[Event]:
@@ -321,8 +335,13 @@ class SaskanEngine:
         events: List[Event] = []
         if self.downriver_sent:
             return events
-        if self.config.downriver_migration_step and self.state.step == self.config.downriver_migration_step:
-            parent = next((s for s in self.state.settlements if s.name == "Ingar"), None)
+        if (
+            self.config.downriver_migration_step
+            and self.state.step == self.config.downriver_migration_step
+        ):
+            parent = next(
+                (s for s in self.state.settlements if s.name == "Ingar"), None
+            )
             if not parent:
                 parent = self.state.settlements[0] if self.state.settlements else None
             if not parent:
@@ -330,7 +349,10 @@ class SaskanEngine:
             frac = self.config.downriver_migration_fraction
             migrants = max(200, int(parent.population * frac))
             parent.population = max(0, parent.population - migrants)
-            bias = (self.config.out_migration_bias[0] * 2, self.config.out_migration_bias[1] * 2)
+            bias = (
+                self.config.out_migration_bias[0] * 2,
+                self.config.out_migration_bias[1] * 2,
+            )
             location = self._biased_location(parent.location, bias, radius=40)
             affinity = self._compute_affinity(parent.location, location)
             growth_low, growth_high = self.config.growth_rate_range
@@ -340,7 +362,12 @@ class SaskanEngine:
                 location=location,
                 growth_rate=self.random.uniform(growth_low, growth_high),
                 carrying_capacity=parent.carrying_capacity,
-                metadata={"parent": parent.name, "type": "hamlet", "affinity": affinity, "water": "fresh"},
+                metadata={
+                    "parent": parent.name,
+                    "type": "hamlet",
+                    "affinity": affinity,
+                    "water": "fresh",
+                },
             )
             self.state.settlements.append(new_settlement)
             events.append(
@@ -367,7 +394,9 @@ class SaskanEngine:
             self.downriver_sent = True
         return events
 
-    def _compute_affinity(self, parent_loc: Tuple[int, int], child_loc: Tuple[int, int]) -> float:
+    def _compute_affinity(
+        self, parent_loc: Tuple[int, int], child_loc: Tuple[int, int]
+    ) -> float:
         dist = self._distance(parent_loc, child_loc)
         scale = self.config.affinity_distance_scale
         affinity = max(self.config.affinity_floor, 1 - dist / scale)
@@ -389,7 +418,9 @@ class SaskanEngine:
 
         support = 0
         for h in self.state.settlements:
-            if (h.metadata or {}).get("parent") == settlement.name and (h.metadata or {}).get("type") in {
+            if (h.metadata or {}).get("parent") == settlement.name and (
+                h.metadata or {}
+            ).get("type") in {
                 "hamlet",
                 "market-town",
             }:
@@ -403,7 +434,10 @@ class SaskanEngine:
             meta = s.metadata or {}
             if meta.get("type") == "hamlet":
                 value_score = meta.get("value_score", 0)
-                if s.population >= self.config.market_town_population_threshold or value_score >= self.config.market_value_threshold:
+                if (
+                    s.population >= self.config.market_town_population_threshold
+                    or value_score >= self.config.market_value_threshold
+                ):
                     if not self._market_capacity_available(s):
                         continue
                     meta["type"] = "market-town"

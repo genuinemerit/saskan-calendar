@@ -32,11 +32,21 @@ def graph(kind: str = "shortest"):
 @app.command("saskan-sim")
 def saskan_sim(
     steps: int = typer.Option(8, help="Number of simulation steps to run."),
-    seed: Optional[int] = typer.Option(None, help="Optional seed for deterministic runs."),
-    scenario: Optional[str] = typer.Option(None, help="Named scenario preset (sets seed if provided)."),
-    tick_unit: str = typer.Option("year", help="Label for a time step (year/season/generation/etc.)."),
-    tick_length: float = typer.Option(1.0, help="Length of one tick in the chosen unit."),
-    snapshot_every: int = typer.Option(0, help="Persist a JSON snapshot every N steps (0 to disable)."),
+    seed: Optional[int] = typer.Option(
+        None, help="Optional seed for deterministic runs."
+    ),
+    scenario: Optional[str] = typer.Option(
+        None, help="Named scenario preset (sets seed if provided)."
+    ),
+    tick_unit: str = typer.Option(
+        "year", help="Label for a time step (year/season/generation/etc.)."
+    ),
+    tick_length: float = typer.Option(
+        1.0, help="Length of one tick in the chosen unit."
+    ),
+    snapshot_every: int = typer.Option(
+        0, help="Persist a JSON snapshot every N steps (0 to disable)."
+    ),
     snapshot_dir: Path = typer.Option(
         Path("data/experiments/saskan"),
         help="Directory for JSON snapshots when enabled.",
@@ -61,9 +71,15 @@ def saskan_sim(
 
 @app.command("saskan-map")
 def saskan_map(
-    steps: int = typer.Option(30, help="Number of simulation steps to run before rendering."),
-    seed: Optional[int] = typer.Option(None, help="Optional seed for deterministic runs."),
-    scenario: Optional[str] = typer.Option("great-migration", help="Named scenario preset."),
+    steps: int = typer.Option(
+        30, help="Number of simulation steps to run before rendering."
+    ),
+    seed: Optional[int] = typer.Option(
+        None, help="Optional seed for deterministic runs."
+    ),
+    scenario: Optional[str] = typer.Option(
+        "great-migration", help="Named scenario preset."
+    ),
     col_min: int = typer.Option(30, help="Min column (C#) for coarse map window."),
     col_max: int = typer.Option(38, help="Max column (C#) for coarse map window."),
     row_min: int = typer.Option(8, help="Min row (R#) for coarse map window."),
@@ -89,15 +105,23 @@ def saskan_map(
     ):
         typer.echo(line)
     typer.echo("")
-    for line in summarize_settlements(engine.state, block_size_km=engine.config.block_size_km):
+    for line in summarize_settlements(
+        engine.state, block_size_km=engine.config.block_size_km
+    ):
         typer.echo(line)
 
 
 @app.command("saskan-plot")
 def saskan_plot(
-    steps: int = typer.Option(30, help="Number of simulation steps to run before plotting."),
-    seed: Optional[int] = typer.Option(None, help="Optional seed for deterministic runs."),
-    scenario: Optional[str] = typer.Option("great-migration", help="Named scenario preset."),
+    steps: int = typer.Option(
+        30, help="Number of simulation steps to run before plotting."
+    ),
+    seed: Optional[int] = typer.Option(
+        None, help="Optional seed for deterministic runs."
+    ),
+    scenario: Optional[str] = typer.Option(
+        "great-migration", help="Named scenario preset."
+    ),
     col_min: int = typer.Option(30, help="Min column (C#) for plot window."),
     col_max: int = typer.Option(38, help="Max column (C#) for plot window."),
     row_min: int = typer.Option(8, help="Min row (R#) for plot window."),

@@ -41,7 +41,9 @@ def render_coarse_map(
     row_min: int = 8,
     row_max: int = 20,
 ) -> List[str]:
-    grid = [["." for _ in range(col_min, col_max + 1)] for _ in range(row_min, row_max + 1)]
+    grid = [
+        ["." for _ in range(col_min, col_max + 1)] for _ in range(row_min, row_max + 1)
+    ]
 
     for s in state.settlements:
         col, row = to_block(s.location, block_size_km)
@@ -74,4 +76,3 @@ def to_block(coord: Tuple[int, int], block_size_km: int) -> Tuple[int, int]:
     col = int(x // block_size_km) + 1
     row = int(y // block_size_km) + 1
     return col, row
-

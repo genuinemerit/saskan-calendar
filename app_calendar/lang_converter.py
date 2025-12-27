@@ -87,8 +87,8 @@ def batch_translate_texts(texts, target_lang="en"):
     )
     prompt = (
         f"Translate the following {source_lang} texts into {target_lang.capitalize()}. "
-        "Keep numbers/codes unchanged. Return a numbered list of translations " +
-        "in the same order:\n\n"
+        "Keep numbers/codes unchanged. Return a numbered list of translations "
+        + "in the same order:\n\n"
         f"{numbered_list}"
     )
 

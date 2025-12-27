@@ -1,0 +1,455 @@
+Decisions regarding ADR 001:
+
+Use sqlite for initial implementation.
+Use sqlalchemy for all user and developer interactions via Python. In other words, for define/deploy as well as calls to insert, update, delete and query.
+Future refactoring, if initial builds are successful ,will be to convert to postgresql.
+DBeaver is the preferred DB management tool.
+VS Code is the preferred python (and other languages if needed) IDE.
+Binary DB files are not pushed to git repo. Make sure they are blocked by .gitignore
+Prefer to not use Alembic yet unless really necessary.
+Do not want to use Neo4j unless it becomes necessary at scale.
+Agree with all implementation notes.
+DuckDB, MongoDB, etc. will not be considered; only postgres
+Excellent decisions! Let me summarize your ADR 001 choices:
+
+Database & ORM:
+
+✓ SQLite for initial implementation
+✓ SQLAlchemy for all Python interactions (DDL + DML)
+✓ Future migration path: SQLite → PostgreSQL (not Neo4j, DuckDB, MongoDB, etc.)
+Tooling:
+
+✓ DBeaver for database management
+✓ VS Code for IDE
+✓ No Alembic (keep migrations simple for now)
+Repository:
+
+✓ Binary DB files excluded via .gitignore
+Alignment:
+
+✓ All implementation notes from ADR 001 accepted
+This is a solid, pragmatic approach:
+
+Start simple with SQLite
+Use industry-standard SQLAlchemy ORM
+Keep migration path open to PostgreSQL
+Avoid premature complexity (Alembic, graph databases)
+Use professional tools (DBeaver, VS Code)
+Let me check your current .gitignore to make sure SQLite files are blocked:
+
+Read
+/Users/dave/Library/CloudStorage/Dropbox/Code/saskan-calendar/.gitignore
+Read 183 lines
+Good news - your .gitignore already covers Django SQLite files (lines 64-65):
+
+db.sqlite3
+db.sqlite3-journal
+
+But let me add more comprehensive SQLite coverage to catch all common patterns:
+
+Edit
+/Users/dave/Library/CloudStorage/Dropbox/Code/saskan-calendar/.gitignore
+local_settings.py
+
+db.sqlite3
+
+db.sqlite3-journal
+
+ 
+
+# SQLite databases
+
+*.db
+
+*.sqlite
+
+*.sqlite3
+
+*.db-shm
+
+*.db-wal
+
+*.db-journal
+
+Perfect! Updated .gitignore to block all SQLite database files:
+
+*.db - Generic SQLite databases
+*.sqlite / *.sqlite3 - Standard SQLite extensions
+*.db-shm / *.db-wal - SQLite WAL (Write-Ahead Logging) files
+*.db-journal / db.sqlite3-journal - SQLite journal files
+Your timeline database files will now be automatically excluded from git.
+
+Ready for next steps! When you're ready, let me know your MVP ideas for the first timeline implementation based on the ADRs.
+
+You will come to see that I tend to move a turtle-like pace. I am retired -- or as the Spaniards say, much more gleefully: jubilado! -- and not in any particular hurry. I usually like to take time to consider things and not just "slap it together". Hope that works for you.
+
+That works perfectly for me! I appreciate the thoughtful, deliberate approach. "Slapping it together" leads to technical debt and regret. Taking time to think through decisions, keep things clean and organized, and build solid foundations - that's how you create software that lasts and that you'll still be proud of years from now.
+
+¡Felicidades on being jubilado! That's the ideal circumstance for creative work - no rush, no pressure, just the satisfaction of building something well-crafted at your own pace.
+
+I'm here whenever you're ready - whether that's in five minutes or five days. Take your time reviewing the ADRs and formulating your MVP vision. The turtle wins the race. 🐢
+
+Don't quite have the MVP design notes yet, but I have reviewed ADR 002 since I think our initial block of work will likely cover aspects of both ADR 001 and ADR 002. Only a few notes, decisions relating to ADR 002:
+
+Definitely want time-series snapshots, as described
+Regarding "cities":
+In this world sim, there are no "cities" on the scale of modern, industrial societies. For that reason, I try to avoid referring to them as "cities". We will have urbanized gatherings at various scales:
+-- Large towns, often referred to in the lore as "Ring Towns"
+-- Market towns, the largest satellites of the Ring Towns, typically not more than 2 per Ring Town
+-- Military camps, both large (about the size of a market town) and smaller ones
+-- Hamlets, Villages, Camps, Dens - many are satellites of / feeders into Ring Towns, but in the southern provinces they can be considerable distance from Ring Towns and some are completely autonomous
+So the model may need to take that into account up-front and not just use "cities" generically
+Populations are varied in several ways:
+-- by general species: huum (human), sint (animal-sentients and even a few vegetable-sints), beks (non-sentient animals), mixed (huum-sint), maken (non-organic life forms), extra-terrestrial (huum-appearing, non-huum-appearing)
+-- by habitat: on ground, in sea, under ground, in space
+-- by specific species (various types of animals, of mixed, of maken)
+-- by class/role in production
+-- by language
+-- by religion/politics/tribe (all of which intermingle -- in other words, it is a combination of those characteristics that defines a cultural identity)
+
+Don't want to get TOO deep into the demographics in the timeline app, but it will be useful to be able to acknowledge them
+
+There are likely to be about 50 or fewer Ring Towns, twice as many Market Towns, and thousands of villages. There are also provincial structures, usually centered around a single Ring Town (with exceptions), as well as regional structures that bind together multiple provinces.
+
+Any questions or concerns regarding ADR 002 general notes?
+
+Show more
+Great context! This is exactly the kind of worldbuilding detail that needs to inform the data model from the start. Let me clarify a few things to make sure I understand:
+
+Settlement Hierarchy
+Clear on this:
+
+Ring Towns (top tier, ~50 total)
+Market Towns (satellite to Ring Towns, ~2 per Ring Town = ~100 total)
+Military Camps (large: ~market town size, small: smaller)
+Hamlets/Villages/Camps/Dens (thousands, some autonomous in south)
+Questions:
+
+Military camps: Are these permanent settlements or temporary? Do they have stable populations that need tracking, or are they more like "events" (army present at location X during time period Y)?
+
+Autonomous southern settlements: Do these need a different classification, or just a metadata flag like is_autonomous: true?
+
+Population Demographics
+Clear on this:
+
+Multiple dimensions of classification (species, habitat, role, culture)
+Need acknowledgment but not deep tracking in timeline
+Questions:
+3. Population tracking granularity: For snapshots, do we need:
+
+Just total population per settlement?
+Breakdown by species (huum/sint/beks/mixed/maken/extra-terrestrial)?
+Or even simpler: just "majority species" as metadata?
+Cultural identity (language/religion/politics/tribe): Is this tracked at:
+Settlement level (e.g., "Ring Town X is primarily Fatuni-speaking, follows religion Y")?
+Or individual/group level (multiple cultures coexist in same settlement)?
+Geographic/Administrative Structure
+Clear on this:
+
+Provinces (usually 1 Ring Town each, with exceptions)
+Regions (bind multiple provinces)
+Questions:
+5. Province boundaries: Are these stable over time, or do they shift? Do we need to track province boundary changes as events?
+
+Exceptions to 1-Ring-Town-per-Province: What are the exception cases?
+Provinces with no Ring Town?
+Provinces with multiple Ring Towns?
+Ring Towns that span multiple provinces?
+Data Model Implications
+Based on what you've said, I'm thinking the Settlement model needs:
+
+@dataclass
+class Settlement:
+    name: str
+    settlement_type: str  # "ring_town", "market_town", "military_camp_large", 
+                          # "military_camp_small", "hamlet", "village", "camp", "den"
+    location: Location    # coordinates, region reference
+    parent_settlement: Optional[str]  # For satellites, which Ring/Market town?
+    is_autonomous: bool   # For southern autonomous settlements
+    metadata: dict        # flexible for species mix, culture, etc.
+
+Does this direction feel right, or am I missing something important?
+
+Responses:
+
+We need species and cultural breakdowns for every municipality.
+Military camps are typically long-lasting, in the sense of multiple decades, but not as long-lasting as Ring Towns, which can be hundreds, even thousands of years old.
+The provincial boundaries will grow and shape over time. Especially in the south, they may push up against and expand into "foreign" lands, or vice-versa, as happens during my epic story, when the Lands are invaded (in this case, from the north-east), when borders may (temporarily) "shrink" due to occupation. The only major internal conflicts over borders occur during war time: the Fatunik-Eelani conflict and the Fatunik-Kahila conflict.
+Exceptions: some provinces have two Ring Towns. I don't think I have any with 3 Ring Towns. Some provinces have zero Ring Towns.
+I like the proposed data model extension. Don't want to over-complicate things now, but leave room for expansion.
+A few unrelated technical questions:
+
+Does the current model need to have foreign keys? If so, how are they implemented?
+What kind of update/delete model would you propose? No-delete+de-activate only/No-update+Insert-only? Or active deletes and updates?
+I don't see much point in complicated audit fields (update-timestamps associated with activity flags), do you?
+Show more
+Excellent responses! This clarifies the scope nicely. Let me address your technical questions:
+
+Foreign Keys
+Yes, absolutely need foreign keys. SQLAlchemy makes this clean:
+
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+
+class Settlement(Base):
+    __tablename__ = "settlements"
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    settlement_type = Column(String, nullable=False)
+    parent_settlement_id = Column(Integer, ForeignKey("settlements.id"), nullable=True)
+    province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True)
+    
+    # Relationships (for convenient traversal)
+    parent = relationship("Settlement", remote_side=[id], backref="satellites")
+    province = relationship("Province", back_populates="settlements")
+
+Foreign keys give you:
+
+Referential integrity (can't delete a Ring Town if Market Towns reference it)
+Efficient joins
+Clear relationship modeling
+Update/Delete Strategy
+Recommendation: Hybrid approach based on entity type
+
+For Timeline Events: Insert-only, no updates/deletes
+Events are historical facts - they happened
+Never delete, never modify
+Use flags for corrections: is_deprecated: bool, superseded_by_id: int
+For Entities (Settlements, Provinces): Soft deletes + limited updates
+class Settlement(Base):
+    # ... other fields ...
+    is_active = Column(Boolean, default=True)  # Soft delete flag
+    founded_date = Column(Integer)  # astro_day
+    dissolved_date = Column(Integer, nullable=True)  # astro_day when ceased to exist
+
+Allow updates for:
+
+Metadata corrections (typos, improved data)
+Non-historical attributes (tags, notes)
+Use time-series snapshots for:
+
+Population changes over time
+Boundary changes over time
+Cultural composition shifts
+Soft delete when:
+
+Settlement is destroyed/abandoned → set is_active=False, set dissolved_date
+Never hard-delete to preserve historical references
+For Snapshots: Insert-only
+class SettlementSnapshot(Base):
+    settlement_id = Column(Integer, ForeignKey("settlements.id"))
+    snapshot_date = Column(Integer)  # astro_day
+    population_total = Column(Integer)
+    # ... species/cultural breakdowns ...
+
+Why this approach?
+
+Events are immutable (historical accuracy)
+Entities can be corrected (data quality)
+Snapshots capture change over time (temporal tracking)
+Soft deletes preserve referential integrity
+Audit Fields
+Agree - keep it simple. Propose minimal metadata:
+
+class Base:
+    created_at = Column(DateTime, default=datetime.utcnow)  # When record created
+    # That's it. No updated_at, no updated_by, no activity flags.
+
+Why just created_at?
+
+Useful for debugging ("when did I import this data?")
+No operational value for historical simulation
+Complex audit trails add cognitive load with minimal benefit
+Alternative: Skip even created_at
+
+If you're disciplined about data provenance (version control, import scripts)
+Truly minimalist approach
+My recommendation: Include just created_at for sanity checking during development. Drop it later if unused.
+
+Summary
+# Core pattern
+class Settlement(Base):
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    settlement_type = Column(String, nullable=False)
+    parent_settlement_id = Column(Integer, ForeignKey("settlements.id"), nullable=True)
+    province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True)
+    
+    # Temporal bounds
+    founded_date = Column(Integer)  # astro_day
+    dissolved_date = Column(Integer, nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    # Minimal metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Flexible extension point
+    metadata = Column(JSON)  # For species mix, cultural notes, etc.
+
+Does this align with your vision?
+
+I am good with just created_at [a UT ("Greenwich") timestamp]
+For time-tracking within the lore context, "astro day" or even "galactic pulse count" is the right approach. We will integrate the app_calendar functions later to translate into calendars appropriate to story telling or game play. A day is 24 hours. We can decide when "Day 0 / Astro" is and everything (day, season) will flow from that. Don't need to be concerned with naming. does that make sense? Just Day N. Keeps things simple for now.
+Perfect! That makes total sense and keeps things beautifully simple.
+
+Timestamps Summary
+System metadata (when we touched the database):
+
+created_at: UTC timestamp (when record was created in the database)
+Lore timeline (when things happened in-world):
+
+astro_day: Integer (Day 0, Day 1, Day 2, ... Day N)
+No need for calendar conversion in timeline app - that's app_calendar's job later
+Simple, clean, unambiguous
+Example
+class Settlement(Base):
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    settlement_type = Column(String, nullable=False)
+    
+    # Lore timeline (in-world time)
+    founded_astro_day = Column(Integer)  # Day N when founded
+    dissolved_astro_day = Column(Integer, nullable=True)  # Day N when dissolved/destroyed
+    
+    # System metadata (real-world time)
+    created_at = Column(DateTime, default=datetime.utcnow)  # When we added this record
+    
+    is_active = Column(Boolean, default=True)
+    parent_settlement_id = Column(Integer, ForeignKey("settlements.id"), nullable=True)
+    province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True)
+    metadata = Column(JSON)
+
+class SettlementSnapshot(Base):
+    id = Column(Integer, primary_key=True)
+    settlement_id = Column(Integer, ForeignKey("settlements.id"))
+    
+    # Lore timeline (when we're taking the snapshot)
+    astro_day = Column(Integer)  # "As of Day 12,543, population was..."
+    
+    # Population/demographics data
+    population_total = Column(Integer)
+    population_breakdown = Column(JSON)  # {"huum": 5000, "sint": 200, ...}
+    cultural_breakdown = Column(JSON)  # {"language": "Fatuni", "religion": ...}
+    
+    # System metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+Later, when displaying to users, you can call app_calendar.universal_date_translator(astro_day) to show "Turn 34, Month 5, Day 12 (Fatunik Calendar)" - but internally, everything is just integers.
+
+Clean, simple, works. Ready to proceed?
+
+ADR 001 + 002 / PR 001: "DDL for core timeline database"
+
+Static configuration and secret keys (JSON, Config YAML or classes or env settings)
+SQLalchemy calls to generate/execute DDL, build/deploy the database
+Basic functions for connecting / disconnecting to the database
+If needed, callable functions to create admin users, DML users, read-only users
+A simple, CLI front-end for all major admin-level DB functions. In other words, use command line SQL or DBeaver only for validation, etc.
+Does that look suitable for a first MVP? Implied is generating the correct python module and class structures.
+
+Excellent first MVP! This is a solid, foundational piece of work. Let me clarify scope to make sure we're aligned:
+
+ADR 001 + 002 / PR 001: "DDL for core timeline database"
+In Scope ✓
+1. Configuration Management
+
+Database connection settings (path, dialect, etc.)
+Application config (settlement types, species list, etc.)
+Format: Mix of YAML (human-editable config) + Python dataclasses (type-safe runtime)
+No secrets needed for SQLite (just file path)
+2. SQLAlchemy Models (DDL)
+
+app_timeline/
+  models/
+    __init__.py
+    base.py          # Declarative base, common mixins
+    settlement.py    # Settlement model
+    province.py      # Province, Region models
+    snapshot.py      # SettlementSnapshot, ProvinceSnapshot
+    event.py         # Event model (for ADR 003, but define schema now)
+
+3. Database Management Functions
+
+app_timeline/
+  db/
+    __init__.py
+    connection.py    # get_engine(), get_session(), init_db()
+    schema.py        # create_all_tables(), drop_all_tables()
+
+4. CLI Interface (Typer-based)
+
+app_timeline/
+  cli.py           # Main CLI entry point
+
+Commands:
+
+# Initialize database (create all tables)
+saskan-timeline db init
+
+# Drop all tables (with confirmation)
+saskan-timeline db drop
+
+# Show database info (path, table count, row counts)
+saskan-timeline db info
+
+# Validate database schema
+saskan-timeline db validate
+
+5. Project Structure
+
+pyproject.toml updates:
+  - Add sqlalchemy dependency
+  - Add typer dependency (already there from app_maps)
+  - Add new Poetry script: saskan-timeline
+
+config/
+  timeline/
+    settings.yaml    # DB path, settlement types, species list, etc.
+
+app_timeline/
+  __init__.py
+  cli.py
+  config.py          # Load settings, provide Config object
+  models/            # SQLAlchemy models
+  db/                # Database utilities
+
+Out of Scope (for PR 002+)
+✗ User management (SQLite file-based, no multi-user auth needed)
+✗ Data import/seeding (that's PR 002)
+✗ Query functions beyond basic validation (that's PR 003+)
+✗ Event generation logic (that's ADR 003)
+Questions
+1. User Management: You mentioned "admin users, DML users, read-only users" - but SQLite is file-based with no built-in user auth. Did you mean:
+
+a) Skip user management entirely (just file permissions)?
+b) Add application-level roles for future web interface?
+c) Plan for PostgreSQL migration where this matters?
+My recommendation: Skip for now (option a). SQLite security = file permissions. Add when migrating to PostgreSQL.
+
+2. Schema Scope: For this PR, which entities do we define?
+
+Settlement (yes, obviously)
+Province/Region (yes, per your notes)
+SettlementSnapshot (yes, for time-series)
+Event (define schema now even if unused?)
+Routes/Relationships (defer to later PR?)
+Entities (people, organizations - defer?)
+My recommendation: Settlement, Province, Region, SettlementSnapshot only. Defer Event/Routes/Entities to later PRs when we understand requirements better.
+
+3. Config Format: Preference between:
+
+YAML (human-friendly, widely used)
+TOML (like pyproject.toml, Python-native)
+JSON (structured but verbose)
+My recommendation: YAML for human-editable config (settlement types, species), Python dataclasses for runtime config.
+
+Does this scope look right? Any adjustments needed?
+
+I am ok with skipping user roles for now.
+Please go ahead and define all of the entities now, even if we don't use them right away. That will help me think more clearly about the whole project. We can refactor the events, routes and entities when needed.
+YAML _ Python dataclasses work for me.
+Also implied: modify pyproject.toml to pull in necessary libraries.
+Also implied: we do smoke tests first (interactive, command line, eyeball verifications), then we build suitable unit tests. As we proceed, may also craft "integration" tests.
+Also implied: we always produce a summary document in /docs once the code has been tested
+Questions? Concerns? Feel free to break this down into iterable tasks.

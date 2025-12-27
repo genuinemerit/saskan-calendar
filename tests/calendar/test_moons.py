@@ -1,5 +1,5 @@
 import pytest
-from app import get_moon_phases
+from app_calendar import get_moon_phases
 
 
 @pytest.mark.parametrize("day", [0, 15, 33, 100])

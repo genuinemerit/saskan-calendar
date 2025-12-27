@@ -20,7 +20,9 @@ def render_step(state: SimulationState, events: Iterable[Event]) -> List[str]:
     lines.append(f"  Routes: {len(state.routes)}")
 
     hamlets = [s for s in settlements if (s.metadata or {}).get("type") == "hamlet"]
-    market_candidates = [s for s in settlements if (s.metadata or {}).get("type") == "market-town"]
+    market_candidates = [
+        s for s in settlements if (s.metadata or {}).get("type") == "market-town"
+    ]
     if hamlets:
         lines.append("  Hamlets:")
         hamlets_sorted = sorted(hamlets, key=lambda s: s.population, reverse=True)
@@ -28,7 +30,9 @@ def render_step(state: SimulationState, events: Iterable[Event]) -> List[str]:
             parent = (hamlet.metadata or {}).get("parent", "unknown")
             affinity = (hamlet.metadata or {}).get("affinity")
             affinity_str = f", affinity={affinity}" if affinity is not None else ""
-            lines.append(f"    - {hamlet.name} ({hamlet.population}) parent={parent}{affinity_str}")
+            lines.append(
+                f"    - {hamlet.name} ({hamlet.population}) parent={parent}{affinity_str}"
+            )
 
         cluster_pop = {}
         for hamlet in hamlets:
@@ -45,7 +49,9 @@ def render_step(state: SimulationState, events: Iterable[Event]) -> List[str]:
             core = settlement_map.get(parent)
             rollups.append((parent, core.population if core else 0, pop))
         if rollups:
-            rollup_summary = ", ".join(f"{p} core {core}+hamlets {h}={core+h}" for p, core, h in rollups)
+            rollup_summary = ", ".join(
+                f"{p} core {core}+hamlets {h}={core+h}" for p, core, h in rollups
+            )
             lines.append(f"  Parent rollups: {rollup_summary}")
 
     if market_candidates:

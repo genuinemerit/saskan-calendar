@@ -33,7 +33,9 @@ def plot_state(
     locations = {s.name: s.location for s in state.settlements}
 
     # Plot routes fully inside window
-    for route in _routes_in_window(state.routes, locations, block_size_km, col_min, col_max, row_min, row_max):
+    for route in _routes_in_window(
+        state.routes, locations, block_size_km, col_min, col_max, row_min, row_max
+    ):
         ax.plot(
             [route[0][0], route[1][0]],
             [route[0][1], route[1][1]],
@@ -60,8 +62,18 @@ def plot_state(
         else:
             color = "#1b9e77"
             size = 40
-        ax.scatter(s.location[0], s.location[1], s=size, color=color, alpha=0.9, edgecolors="k", linewidths=0.3)
-        ax.text(s.location[0] + 5, s.location[1] + 5, s.name, fontsize=7, color="#222222")
+        ax.scatter(
+            s.location[0],
+            s.location[1],
+            s=size,
+            color=color,
+            alpha=0.9,
+            edgecolors="k",
+            linewidths=0.3,
+        )
+        ax.text(
+            s.location[0] + 5, s.location[1] + 5, s.name, fontsize=7, color="#222222"
+        )
 
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)

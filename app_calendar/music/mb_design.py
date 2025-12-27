@@ -9,9 +9,9 @@ voices and compositions.
 
 """
 
-import music21 as m21   # noqa: F401
+import music21 as m21  # noqa: F401
 from copy import copy, deepcopy  # noqa: F401
-from dataclasses import dataclass, field   # noqa: F401
+from dataclasses import dataclass, field  # noqa: F401
 from pprint import pformat as pf  # noqa: F401
 from pprint import pprint as pp  # noqa: F401
 from tabulate import tabulate  # noqa: F401

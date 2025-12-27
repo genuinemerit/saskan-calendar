@@ -34,12 +34,14 @@ def load_music21_instruments() -> List[Music21Instrument]:
                 continue
             seen_names.add(key)
 
-            instruments.append(Music21Instrument(
-                m21_class_name=cls.__name__,
-                instrument_name=inst.instrumentName,
-                family=inst.instrumentFamily,
-                midi_program=inst.midiProgram
-            ))
+            instruments.append(
+                Music21Instrument(
+                    m21_class_name=cls.__name__,
+                    instrument_name=inst.instrumentName,
+                    family=inst.instrumentFamily,
+                    midi_program=inst.midiProgram,
+                )
+            )
         except Exception:
             continue  # Skip if instantiation fails
 
@@ -49,6 +51,8 @@ def load_music21_instruments() -> List[Music21Instrument]:
 if __name__ == "__main__":
     all_instruments = load_music21_instruments()
     for inst in all_instruments:
-        print(f"{inst.family:<15} | " +
-              f"{inst.instrument_name:<30} | " +
-              f"{inst.m21_class_name:<25} | MIDI: {inst.midi_program}")
+        print(
+            f"{inst.family:<15} | "
+            + f"{inst.instrument_name:<30} | "
+            + f"{inst.m21_class_name:<25} | MIDI: {inst.midi_program}"
+        )

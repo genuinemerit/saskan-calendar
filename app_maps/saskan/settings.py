@@ -25,12 +25,16 @@ class SimulationConfig:
     arable_fraction: float = 0.4
     arable_support_range: Tuple[int, int] = (60, 200)  # people per km^2
     pollination_penalty: float = -0.01  # manual pollination drag on growth
-    irrigation_growth_bonus: float = 0.002  # incremental bonus per year as canals improve
+    irrigation_growth_bonus: float = (
+        0.002  # incremental bonus per year as canals improve
+    )
     irrigation_bonus_cap: float = 0.02
     fresh_water_capacity_bonus: float = 0.2
     sea_water_capacity_bonus: float = 0.12
     fertile_bonus: float = 0.25
-    hamlet_support_ratio: float = 0.4  # fraction of hamlet pop that can support its parent
+    hamlet_support_ratio: float = (
+        0.4  # fraction of hamlet pop that can support its parent
+    )
     hamlet_max_population: int = 5000
     market_town_population_threshold: int = 1000
     market_value_threshold: int = 10  # placeholder economic score
@@ -175,9 +179,18 @@ def _great_migration_settlements(config: SimulationConfig, rng) -> List[Settleme
 
 SCENARIO_PRESETS: Dict[str, Dict] = {
     "baseline": {"seed": 42, "description": "Default growth and terrain assumptions."},
-    "northern-expansion": {"seed": 7, "description": "Bias toward northern expansions."},
-    "coastal-boom": {"seed": 99, "description": "More eastern/coastal growth variants."},
-    "great-migration": {"seed": 1234, "description": "Arrival of the huum at Ingar after river descent."},
+    "northern-expansion": {
+        "seed": 7,
+        "description": "Bias toward northern expansions.",
+    },
+    "coastal-boom": {
+        "seed": 99,
+        "description": "More eastern/coastal growth variants.",
+    },
+    "great-migration": {
+        "seed": 1234,
+        "description": "Arrival of the huum at Ingar after river descent.",
+    },
 }
 
 

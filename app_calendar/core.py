@@ -1,11 +1,12 @@
-"""
-Saskan_Calendar 0.1.0.a - Core Simulation Engine
+"""Saskan_Calendar 0.1.0.a - Core Simulation Engine.
+
 Includes: Calendar systems, moon phases, wanderers, star context, date translator
 This is a simplified but valid core to bootstrap the prototype package.
 
 The Saskan Calendars are fictional calendar systems for the world of Saskantinon.
 It is designed to be used in a variety of applications, including games,
-  simulations, and storytelling.
+simulations, and storytelling.
+
 The core solar cycle is a 365.25-day year of the planet Gavor around the star Fatune.
 There are eight moons orbiting Gavor, each with its own cycle.
 A variety of lunar and solar calendars are derived from these cycles.
@@ -25,17 +26,18 @@ Dev notes:
 - Record a database of meaningful dates in the Saskan Lore.
   - Start with JSON. Later, consider a database.
 """
+from __future__ import annotations
 
 import json
 import math
 import numpy as np
 import random
-import method_files as mf  # noqa F401
 
-from typing import Union  # , Dict
-from pprint import pprint as pp     # noqa F401
+from typing import Union
+from pprint import pprint as pp
+from shared.utils.file_io import FileMethods
 
-FM = mf.FileMethods()
+file_methods = FileMethods()
 
 """
 The Astronomical Solar calendar is a true solar calendar, one revolution of Gavor
@@ -125,7 +127,7 @@ or close to it. Ideally, the first day of the first month of the first Fatunik y
 about 2,742 turns after Year 1 of the Astro Solar Calendar, begins on a day with maxinum
 number of new moons (6 ?).
 """
-FATUNIK_EPOCH_DAY = 365434      # current estimate
+FATUNIK_EPOCH_DAY = 365434  # current estimate
 """
 There are 8 moons. See moons_data.json for details.
 
@@ -139,8 +141,8 @@ Solar calendar, which is about 1,000 turns after the Astro Solar epoch start. Bu
 one has its own lunar epoch start, which is based on the first full moon, or full moon
 conjunction, after the Spring equinox, which is the first day of the Terpin Solar calendar.
 """
-LUNAR_EPOCH_DAY = 182718      # current estimate
-LUNAR_MONTH_AVG_DAYS = 28     # this is rounded. needs to be adjusted
+LUNAR_EPOCH_DAY = 182718  # current estimate
+LUNAR_MONTH_AVG_DAYS = 28  # this is rounded. needs to be adjusted
 
 
 def ordinal(n: int) -> str:
@@ -152,33 +154,33 @@ def ordinal(n: int) -> str:
     return ordinals[n - 1] if 1 <= n <= 6 else f"{n}th"
 
 
-def sanitize_pulse_count_epoch(p_seconds: int) -> int:
+def sanitize_pulse_count_epoch(seconds: int) -> int:
     """
-    @p_seconds: The pulse count is a positive integer.
+    @seconds: The pulse count is a positive integer.
     Galactic pulse count is equal to a second in a solar day, even though
     Saskans don't use seconds.
     @return: int - the sanitized pulse count, clamped to 1 to n.
     """
-    pulse = 1 if p_seconds < 1 else p_seconds
+    pulse = 1 if seconds < 1 else seconds
     pulse = int(round(pulse, 0))  # Ensure it's an integer
     return pulse
 
 
-def sanitize_pulse_count_day(p_seconds: int) -> int:
+def sanitize_pulse_count_day(seconds: int) -> int:
     """
-    @p_seconds: The pulse count is a positive integer.
+    @seconds: The pulse count is a positive integer.
     Galactic pulse count is equal to a second in a solar day, even though
     Saskans don't use seconds.
     @return: int - the sanitized pulse count, clamped to 1 to 86400.
     """
-    pulse = max(1, min(p_seconds, PULSES_PER_SOLAR_DAY))
+    pulse = max(1, min(seconds, PULSES_PER_SOLAR_DAY))
     pulse = int(round(pulse, 0))  # Ensure it's an integer
     return pulse
 
 
-def sanitize_astro_day(p_day: float) -> float:
+def sanitize_astro_day(day: float) -> float:
     """
-    @p_day: The astro day param is a float.
+    @day: The astro day param is a float.
     An astro day is a day in the Astronomical calendar, which is based on
     Gavor's true orbit around Fatune, the sun. It increases infinitely,
     by one, every Gavoran rotation (solar day).
@@ -186,25 +188,25 @@ def sanitize_astro_day(p_day: float) -> float:
     @return: float - the sanitized astro day,  clamped to valid range
         not < 1.0 and rounded to 4 decimals.
     """
-    astro_day = round(p_day, 4)
+    astro_day = round(day, 4)
     astro_day = float(max(1.0, astro_day))
     return astro_day
 
 
-def sanitize_solar_turn(p_turn) -> int:
+def sanitize_solar_turn(turn) -> int:
     """
-    @param p_turn: The solar turn param is a positive integer.
+    @param turn: The solar turn param is a positive integer.
     A solar turn is a year in the Astronomical calendar, which is based on
     Gavor's true orbit around Fatune, the sun.
     @return: int - the sanitized solar turn, clamped to valid range not < 1.
     """
-    solar_turn = int(round(max(1, p_turn)))
+    solar_turn = int(round(max(1, turn)))
     return solar_turn
 
 
-def sanitize_solar_day(p_day: float) -> float:
+def sanitize_solar_day(day: float) -> float:
     """
-    @param p_day: The solar day param is a float.
+    @param day: The solar day param is a float.
     A true solar day is a day in a solar year based on Gavor's true orbit
     around Fatune, the sun. Unlike the astro day, which increases infinitely,
     the solar day is reset to 1.0 at the start of each solar year.
@@ -212,26 +214,26 @@ def sanitize_solar_day(p_day: float) -> float:
     it only sanitizes the input solar day value.
     @return: float - the sanitized solar day, clamped to valid range and rounded.
     """
-    solar_day = round(p_day, 4)
+    solar_day = round(day, 4)
     solar_day = float(max(1.0, min(solar_day, 365.2422)))
     return solar_day
 
 
-def get_astro_day_from_pulse(p_pulse: int) -> float:
+def get_astro_day_from_pulse(pulse: int) -> float:
     """
-    @param p_pulse: Integer number of pulses since astro epoch start.
+    @param pulse: Integer number of pulses since astro epoch start.
     For the current scenario, the astro epoch start is at pulse 0.
     @return: The sanitized astro day. Number of astro days since
         astronomical epoch start.
     """
-    pulses_since_epoch = abs(p_pulse) - ASTRO_EPOCH_PULSE
+    pulses_since_epoch = abs(pulse) - ASTRO_EPOCH_PULSE
     astro_day = sanitize_astro_day(pulses_since_epoch / PULSES_PER_SOLAR_DAY)
     return astro_day
 
 
-def get_pulses_into_solar_day(p_astro_day: float) -> int:
+def get_pulses_into_solar_day(astro_day: float) -> int:
     """
-    @param p_astro_day: float in form D.DDDD.
+    @param astro_day: float in form D.DDDD.
     Based on the fractional portion, compute integer number of galactic pulses
     (seconds) that have elapsed since start (midnight) of that day.  In other
     words, determine what time it is as a number of elapsed seconds since midnight.
@@ -239,13 +241,13 @@ def get_pulses_into_solar_day(p_astro_day: float) -> int:
     Note that this function ignores the astro day integer portion,
     @return: integer number of galactic pulses (seconds) elapsed since start of the day.
     """
-    astro_day = sanitize_astro_day(p_astro_day)
+    astro_day = sanitize_astro_day(astro_day)
     fractional = astro_day % 1  # Get decimal portion
     pulses_into_day = int(round(fractional * PULSES_PER_SOLAR_DAY))
     return pulses_into_day
 
 
-def get_pulses_to_astro_day(p_astro_day: float) -> int:
+def get_pulses_to_astro_day(astro_day: float) -> int:
     """
     @param astro_day:  float number of an astro day.
     In this lore, a galactic pulse is exactly one true solar second, per
@@ -254,16 +256,19 @@ def get_pulses_to_astro_day(p_astro_day: float) -> int:
         (which is at pulse 0, astro day 1.0) until the start (midnight) of the
         specified astro day.
     """
-    astro_day = sanitize_astro_day(p_astro_day)
+    astro_day = sanitize_astro_day(astro_day)
     fractional = astro_day % 1  # Get decimal portion
-    pulses_to_day = (ASTRO_EPOCH_PULSE +
-                     int(round((astro_day * PULSES_PER_SOLAR_DAY) +
-                               (fractional * PULSES_PER_SOLAR_DAY) -
-                               PULSES_PER_SOLAR_DAY)))
+    pulses_to_day = ASTRO_EPOCH_PULSE + int(
+        round(
+            (astro_day * PULSES_PER_SOLAR_DAY)
+            + (fractional * PULSES_PER_SOLAR_DAY)
+            - PULSES_PER_SOLAR_DAY
+        )
+    )
     return pulses_to_day
 
 
-def get_solar_day_from_pulse(p_pulse: int) -> float:
+def get_solar_day_from_pulse(pulse: int) -> float:
     """
     @param pulse_count: Integer pulses since astro epoch start.
     Given the total number of galactic pulses since the astro epoch began,
@@ -271,7 +276,7 @@ def get_solar_day_from_pulse(p_pulse: int) -> float:
     Note that this function does NOT provide the astro turn (year).
     @return: Solar day float, sanitized.
     """
-    pulse = sanitize_pulse_count_epoch(p_pulse)
+    pulse = sanitize_pulse_count_epoch(pulse)
     PULSES_PER_TURN = PULSES_PER_SOLAR_DAY * DAYS_PER_SOLAR_TURN
     pulses_into_turn = pulse % PULSES_PER_TURN
     solar_day = pulses_into_turn / PULSES_PER_SOLAR_DAY + 1.0
@@ -279,9 +284,9 @@ def get_solar_day_from_pulse(p_pulse: int) -> float:
     return solar_day
 
 
-def get_solar_month(p_solar_day: float) -> int:
+def get_solar_month(solar_day: float) -> int:
     """
-    @param p_solar_day: float in range 1.0 to 365.2422
+    @param solar_day: float in range 1.0 to 365.2422
     Given a solar day (1.0 to 365.2422), return the solar month float,
      from 1.0 to 12.9999. Each month is of equal length: 365.2422 / 12 ≈ 30.43685 days.
     The solar month is used to define the visible houses of the equinox.
@@ -290,28 +295,28 @@ def get_solar_month(p_solar_day: float) -> int:
     the sky, and which ones are rising or setting at that time of month.
     @return: float = solar month, 1.0 to 12.9999
     """
-    solar_day = sanitize_solar_day(p_solar_day)
+    solar_day = sanitize_solar_day(solar_day)
     solar_month = round(((solar_day - 1) / DAYS_PER_SOLAR_MONTH) + 1, 2)
     return solar_month
 
 
-def get_astro_turn(p_astro_day: float) -> int:
+def get_astro_turn(astro_day: float) -> int:
     """
-    @param p_astro_day: float number of an astro day.
+    @param astro_day: float number of an astro day.
     An astro day increments infinitely rather than being reset at 365.2422 the
     end of a solar year. It is a count of days (plantary roations) since
     astro epoch start. Note that this function provides an integer turn (year).
     :return: Integer solar turn (year) number, starting from 1.
     """
-    astro_day = sanitize_astro_day(p_astro_day)
+    astro_day = sanitize_astro_day(astro_day)
     astro_turn = int(round(astro_day // DAYS_PER_SOLAR_TURN)) + 1
     astro_turn = sanitize_solar_turn(astro_turn)
     return astro_turn
 
 
-def get_solar_season(p_solar_day: float) -> dict:
+def get_solar_season(solar_day: float) -> dict:
     """
-    @param p_solar_day: float number of a day in a solar year
+    @param solar_day: float number of a day in a solar year
     Return name of the solar season and, if applicable special event.
     Events are the first day of a season (equinox or solstice) and
         the mid-season dates.
@@ -319,7 +324,7 @@ def get_solar_season(p_solar_day: float) -> dict:
       of the precise astronomical event.
     @return: dict {"solar_season": str, "solar_event": str}
     """
-    solar_day = sanitize_solar_day(p_solar_day)
+    solar_day = sanitize_solar_day(solar_day)
     season_length = DAYS_PER_SOLAR_TURN / 4  # ≈ 91.31055
     event_window = 0.45  # ± quarter day = ~20-hour window
     # Adjusted seasonal boundaries
@@ -334,29 +339,29 @@ def get_solar_season(p_solar_day: float) -> dict:
             "events": [
                 ("Darkening", math.ceil(still_start)),
                 ("Deep Still", round(still_start + season_length / 2, 4)),
-            ]
+            ],
         },
         "Greening": {
             "range": (green_start, blaze_start),
             "events": [
                 ("Green Day", math.ceil(green_start)),
                 ("Leafcrest", round(green_start + season_length / 2, 4)),
-            ]
+            ],
         },
         "Blazing": {
             "range": (blaze_start, wither_start),
             "events": [
                 ("Fatune Day", math.ceil(blaze_start)),
                 ("High Blaze", round(blaze_start + season_length / 2, 4)),
-            ]
+            ],
         },
         "Withering": {
             "range": (wither_start, end_of_year),
             "events": [
                 ("Harvest Festival", math.ceil(wither_start)),
                 ("Mid-Wane", round(wither_start + season_length / 2, 4)),
-            ]
-        }
+            ],
+        },
     }
     season_dict = {"solar_season": "", "solar_event": ""}
     for season_name, info in seasons.items():
@@ -373,9 +378,10 @@ def get_solar_season(p_solar_day: float) -> dict:
 
 #  Pick up refactoring here...
 
-def get_astro_events(p_astro_day: float) -> list:
+
+def get_astro_events(astro_day: float) -> list:
     """
-    @param p_astro_day: float number of an astronomical day
+    @param astro_day: float number of an astronomical day
     Return a list of astronomical events for the given day.
     The events are defined in astro_events.json file.
     The events are based on the true solar progression over epoch and are not
@@ -383,9 +389,9 @@ def get_astro_events(p_astro_day: float) -> list:
     @return: list of dicts with event names.
     """
     events = []
-    astro_day = sanitize_astro_day(p_astro_day)
+    astro_day = sanitize_astro_day(astro_day)
     astro_day = str(int(round(astro_day, 0)))
-    astro_events = FM.get_json_file("./astro_events.json")
+    astro_events = file_methods.get_json_file("./astro_events.json")
     if astro_day in list(astro_events.keys()):
         events = astro_events[astro_day]
     return events
@@ -477,8 +483,7 @@ def get_jembor_faces(offset: float) -> tuple:
     return (name, notes, omen)
 
 
-def get_revolution_data(astro_day: float,
-                        rev_period: float) -> tuple:
+def get_revolution_data(astro_day: float, rev_period: float) -> tuple:
     """
     @param astro_day: float number of an astronomical day since epoch start.
     @param rev_period: float number of the moon's revolution period in days.
@@ -490,8 +495,7 @@ def get_revolution_data(astro_day: float,
     - rev_phase: str - the current phase of the moon.
     """
     rev_day = ((astro_day - 1.0) % rev_period) + 1.0
-    rev_day = 1.0 if rev_day == rev_period else\
-        round(rev_day - 1, 2)
+    rev_day = 1.0 if rev_day == rev_period else round(rev_day - 1, 2)
     offset = round(rev_day / rev_period, 2)
     if offset <= 0.03 or offset >= 0.97:
         rev_phase = "Full"
@@ -512,7 +516,7 @@ def get_revolution_data(astro_day: float,
     return (rev_period, rev_day, offset, rev_phase)
 
 
-def get_moon_phases(p_astro_day: float) -> dict:
+def get_moon_phases(astro_day: float) -> dict:
     """
     @param solar_day: float number of an astronomical day since epoch start.
     Calculate the moon phases and faces for the given day.
@@ -523,21 +527,21 @@ def get_moon_phases(p_astro_day: float) -> dict:
     def set_rotation_data(moon: dict) -> tuple:
         # Compute rotation period and face
         rot_period = round(float(moon["rotation_period_days"]), 2)
-        rot_day = rev_day + 1.0 if rot_period == rev_period else\
-            ((astro_day - 1.0) % rot_period) + 1.0
-        rot_day = 1.0 if rot_day == rot_period else\
-            round(rot_day - 1.0, 2)
+        rot_day = (
+            rev_day + 1.0
+            if rot_period == rev_period
+            else ((astro_day - 1.0) % rot_period) + 1.0
+        )
+        rot_day = 1.0 if rot_day == rot_period else round(rot_day - 1.0, 2)
         name = "Standard"
         notes = moon["notes"]
         omen = ""
         if moon["rotation_type"] != "Synchronous":
             offset = round(rot_day / rot_period, 2)
             if moon["name"] == "Jembor":
-                (name, notes, omen) =\
-                    get_jembor_faces(offset)
+                (name, notes, omen) = get_jembor_faces(offset)
             elif moon["name"] == "Kanka":
-                (name, notes, omen) =\
-                    get_kanka_faces(offset)
+                (name, notes, omen) = get_kanka_faces(offset)
         return (rot_period, rot_day, name, notes, omen)
 
     def set_moon_return_values(phases: dict) -> dict:
@@ -555,24 +559,23 @@ def get_moon_phases(p_astro_day: float) -> dict:
         phases[moon["name"]]["face_omen"] = omen
         return phases
 
-    astro_day = sanitize_astro_day(p_astro_day)
-    moon_defs = FM.get_json_file("./moons_data.json")
+    astro_day = sanitize_astro_day(astro_day)
+    moon_defs = file_methods.get_json_file("./moons_data.json")
     phases = {"astro_day": astro_day}
     for moon in moon_defs:
         phases[moon["name"]] = {}
-        (rev_period, rev_day, offset, rev_phase) =\
-            get_revolution_data(astro_day,
-                                round(float(moon["period_days"]), 2))
-        (rot_period, rot_day, name, notes, omen) =\
-            set_rotation_data(moon)
+        (rev_period, rev_day, offset, rev_phase) = get_revolution_data(
+            astro_day, round(float(moon["period_days"]), 2)
+        )
+        (rot_period, rot_day, name, notes, omen) = set_rotation_data(moon)
         phases = set_moon_return_values(phases)
 
     return phases
 
 
-def seed_kanka_chaos(p_max_years: int = 10000) -> None:
+def seed_kanka_chaos(max_years: int = 10000) -> None:
     """
-    @param p_max_years: int - years to seed Kanka's chaotic rotations.
+    @param max_years: int - years to seed Kanka's chaotic rotations.
     Default = 10,000 astronomical years.
     - Run this function only as part of environment setup.
     - Chaotic event and each aftermath day lasts for 1 full day.
@@ -607,7 +610,7 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
         """
         chaos_days: list = []
         current_day = 1
-        end_day = max_years * DAYS_PER_SOLAR_TURN   # 10,000 years
+        end_day = max_years * DAYS_PER_SOLAR_TURN  # 10,000 years
         while current_day < end_day:
             interval = random.randint(3660, 36500)  # 10 to 100 years
             current_day += interval
@@ -626,30 +629,34 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
             krec: dict = {}
             astro_day = round(day, 4)
             krec["magnitude"] = random.randint(2, 5)
-            krec["event"] = random.choice([
-                "volcanic eruption",
-                "earthquake",
-                "seismic shift",
-                "ash storm",
-                "fire rain",
-                "lava flow"
-            ])
+            krec["event"] = random.choice(
+                [
+                    "volcanic eruption",
+                    "earthquake",
+                    "seismic shift",
+                    "ash storm",
+                    "fire rain",
+                    "lava flow",
+                ]
+            )
             krec["event_day"] = 1.0
             krec["direction"] = random.choice(["forward", "backward"])
-            krec["duration_days"] =\
-                random.randint(int(round(krec["magnitude"] * 3.5)),
-                               int(round(krec["magnitude"] * 4.5)))
+            krec["duration_days"] = random.randint(
+                int(round(krec["magnitude"] * 3.5)), int(round(krec["magnitude"] * 4.5))
+            )
             # Consider using an AI call here to generate a more
             # descriptive note based on the event and direction.
             # For now, use a random choice from a predefined list.
-            krec["note"] = random.choice([
-                "Brimstone Maw seen at dusk in the east",
-                "The sky darkened with ash and fire",
-                "A sudden quake shook the land",
-                "The ground split open, revealing molten rock",
-                "A fiery glow lit the horizon at dawn",
-                "The air was thick with sulfur and smoke"
-            ])
+            krec["note"] = random.choice(
+                [
+                    "Brimstone Maw seen at dusk in the east",
+                    "The sky darkened with ash and fire",
+                    "A sudden quake shook the land",
+                    "The ground split open, revealing molten rock",
+                    "A fiery glow lit the horizon at dawn",
+                    "The air was thick with sulfur and smoke",
+                ]
+            )
             k_data[astro_day] = krec.copy()
         return k_data
 
@@ -666,20 +673,23 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
             # Create a copy of the chaos record to modify
             chaos_out[astro_day] = chaos_rec.copy()
             # Compute last aftermath day
-            last_aftermath_day =\
-                int(round(astro_day + chaos_rec["duration_days"],  4))
+            last_aftermath_day = int(round(astro_day + chaos_rec["duration_days"], 4))
             # Get moon phase data for prior and subsequent days
             pri_day = int(round(astro_day - 1.0, 4))
             sub_day = int(round(last_aftermath_day + 1.0, 4))
             mid_day = int(round((pri_day + sub_day) / 2, 4))
-            print("\nChaos Event on Astro Day:", astro_day, "with midpoint",
-                  mid_day, "and last aftermath day", last_aftermath_day)
-            p_day_phase = get_moon_phases(pri_day)['Kanka']['phase_offset']
-            p_avg_incr = 1 / get_moon_phases(pri_day)['Kanka']['rotation_period']
-            p_day_phase = get_moon_phases(pri_day)['Kanka']['phase_offset']
-            pp(("Prior Day Kanka Phase", pri_day, p_day_phase))
-            s_day_phase = get_moon_phases(sub_day)['Kanka']['phase_offset']
-            pp(("Subsequent Day Kanka Phase", sub_day, s_day_phase))
+            print(
+                "\nChaos Event on Astro Day:",
+                astro_day,
+                "with midpoint",
+                mid_day,
+                "and last aftermath day",
+                last_aftermath_day,
+            )
+            prior_day_phase = get_moon_phases(pri_day)["Kanka"]["phase_offset"]
+            pp(("Prior Day Kanka Phase", pri_day, prior_day_phase))
+            s_prior_day_phase = get_moon_phases(sub_day)["Kanka"]["phase_offset"]
+            pp(("Subsequent Day Kanka Phase", sub_day, s_prior_day_phase))
             # Add spin data for the event day
             # Add spin data for aftermath days
             # Things to consider:
@@ -717,7 +727,7 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
     # Main: seed_kanka_chaos()
     # ==========================================================
     # Set days on which chaos events occur.
-    chaos_days = generate_intervals(p_max_years)
+    chaos_days = generate_intervals(max_years)
     # Generate basic data for the chaos events.
     chaos_data = chaos_trigger(chaos_days)
     # Generate data for spin impact / aftermath.
@@ -754,9 +764,9 @@ def seed_kanka_chaos(p_max_years: int = 10000) -> None:
     # and return the appropriate data, including the extra chaotic data.
     # Write the chaos data to the kanka_spin.json file.
     k_file = "./kanka_spin.json"
-    if FM.is_file_or_dir(k_file):
-        FM.delete_file(k_file)
-    FM.write_file(k_file, json.dumps(chaos_data))
+    if file_methods.is_file_or_dir(k_file):
+        file_methods.delete_file(k_file)
+    file_methods.write_file(k_file, json.dumps(chaos_data))
 
 
 def count_moon_phases(moon_data: dict) -> dict:
@@ -766,16 +776,17 @@ def count_moon_phases(moon_data: dict) -> dict:
     :return: dict with counts of 'New' and 'Full' phases
     """
     from collections import Counter
-    phase_counter = Counter(moon['phase'] for moon in moon_data.values())
+
+    phase_counter = Counter(moon["phase"] for moon in moon_data.values())
     return {
         "New Moons": phase_counter.get("New", 0),
-        "Full Moons": phase_counter.get("Full", 0)
+        "Full Moons": phase_counter.get("Full", 0),
     }
 
 
-def find_full_moons(solar_year_start: int,
-                    solar_year_end: int,
-                    full_moons_count: int) -> dict:
+def find_full_moons(
+    solar_year_start: int, solar_year_end: int, full_moons_count: int
+) -> dict:
     """
     List full moons in a given solar year range, for days when there is a
       specified number of them (zero to 8).
@@ -815,15 +826,23 @@ def find_full_moons(solar_year_start: int,
         solar_day = get_solar_day_from_pulse(pulses)
         moons = get_moon_phases(solar_day)
         m_count = count_moon_phases(moons)
-        print(f"astro_day: {astro_day}, solar_day: {solar_day}, {get_astro_turn(astro_day)}")
+        print(
+            f"astro_day: {astro_day}, solar_day: {solar_day}, {get_astro_turn(astro_day)}"
+        )
         if m_count["Full Moons"] == full_moons_count:
-            moon_days.append([astro_day,
-                              solar_day,
-                              get_solar_month(solar_day),
-                              get_astro_turn(astro_day)])
+            moon_days.append(
+                [
+                    astro_day,
+                    solar_day,
+                    get_solar_month(solar_day),
+                    get_astro_turn(astro_day),
+                ]
+            )
 
-    return ({"count": full_moons_count, "start": solar_year_start, "end": solar_year_end},
-            {"full moon days": moon_days})
+    return (
+        {"count": full_moons_count, "start": solar_year_start, "end": solar_year_end},
+        {"full moon days": moon_days},
+    )
 
 
 def get_star_context(solar_day: float) -> dict:
@@ -868,7 +887,11 @@ def get_star_context(solar_day: float) -> dict:
         ("Mirrest", "Blazing", "in the south-southeast, blazing over the old hills"),
         ("Krenna", "Withering", "in the west, near the horizon where the sun lingers"),
         ("Tursin", "Greening", "in the northeast, halfway to the pole star"),
-        ("Boreth", "Stillness", "high in the northern sky, just east of the North Watch"),
+        (
+            "Boreth",
+            "Stillness",
+            "high in the northern sky, just east of the North Watch",
+        ),
         ("Zomel", "Blazing", "low in the southwest, near the veil of clouds"),
         ("Ethranel", "Withering", "in the east-northeast, just before dawn"),
         ("Velkora", "Greening", "in the west-northwest, between the Split Peaks"),
@@ -923,6 +946,66 @@ def get_saskan_time_from_pulse(pulse_count: int) -> dict:
     }
 
 
+class AstroCalendar:
+    """
+    Compute date information for the Rosetta (Canonical/Astronomical) calendar system.
+    The Rosetta calendar is the astronomical reference calendar,
+    counting days from the astro epoch.
+
+    :param astro_day: The number of days since the astro epoch, counting from zero.
+                     Negative values are set to zero.
+    """
+
+    def __init__(self, astro_day: float):
+        """Initialize the AstroCalendar with a given astro day."""
+        self.astro_day = max(0, float(astro_day))
+
+    def get_astro_date(self) -> dict:
+        """
+        Get comprehensive astro date information.
+
+        :return: Dictionary containing astro_day, turn, turn_day, season, and events
+        """
+        turn = get_astro_turn(self.astro_day)
+        turn_day = int(self.astro_day % DAYS_PER_SOLAR_TURN)
+        solar_day = self.astro_day % DAYS_PER_SOLAR_TURN
+        season = get_solar_season(solar_day)
+        events = get_astro_events(self.astro_day)
+
+        return {
+            "astro_day": self.astro_day,
+            "Astro": {
+                "turn": turn,
+                "turn_day": turn_day,
+                "season": season,
+                "events": events
+            }
+        }
+
+    def get_turn_day(self) -> dict:
+        """
+        Get turn (year) and day count information.
+
+        :return: Dictionary with ros_turn and ros_day_cnt
+        """
+        turn = get_astro_turn(self.astro_day)
+        day_cnt = int(self.astro_day % DAYS_PER_SOLAR_TURN) + 1
+
+        return {
+            "ros_turn": turn,
+            "ros_day_cnt": day_cnt
+        }
+
+    def get_solar_season(self) -> dict:
+        """
+        Get solar season information for the current astro day.
+
+        :return: Dictionary with season information
+        """
+        solar_day = self.astro_day % DAYS_PER_SOLAR_TURN
+        return get_solar_season(solar_day)
+
+
 class Wanderer:
     """
     A class representing a wanderer (planet) in the Saskan calendar system.
@@ -938,6 +1021,7 @@ class Wanderer:
     See get_wanderers() function for an example of how to use this class.
 
     """
+
     def __init__(self, name, period, phase=0.0):
         self.name = name
         self.period = period
@@ -1008,8 +1092,10 @@ def get_wanderers(solar_day: float) -> dict:
     ]
     # Get phase and visibility for each wanderer for the given solar day
     wdict = {
-        wobj.name: {"Phase": round(wobj.pos(solar_day), 4),
-                    "Visible": wobj.vis(wobj.pos(solar_day))}
+        wobj.name: {
+            "Phase": round(wobj.pos(solar_day), 4),
+            "Visible": wobj.vis(wobj.pos(solar_day)),
+        }
         for wobj in wolist
     }
     # Get visibility of the Spark and Rare Comet
@@ -1045,6 +1131,7 @@ class FatunikCalendar:
     :return: dict (turn, turn-day, month, month-day, leap year, astro info)
     @TODO: Add month names, perhaps based on a language param.
     """
+
     def __init__(self, astro_day):
         """
         :param astro_day: (int) number of days since epoch start.
@@ -1080,9 +1167,9 @@ class FatunikCalendar:
                 day_of_year = day_in_cycle - 1095 + 1
 
             calendar_year = full_cycles * 4 + year_in_cycle + 1
-            is_leap_year = (year_in_cycle == 3)
+            is_leayear = year_in_cycle == 3
 
-            return calendar_year, day_of_year, is_leap_year
+            return calendar_year, day_of_year, is_leayear
 
         if self.fat_astro_day >= FATUNIK_EPOCH_DAY:
             flabel = "Fatunik Epoch"
@@ -1099,12 +1186,14 @@ class FatunikCalendar:
                 fmo = (adjust_dy - 1) // 30 + 2
                 fmo_dy = (adjust_dy - 1) % 30 + 1
 
-        return {"fatunik_turn": fyr,
-                "fatunik_turn_day": fyr_dy,
-                "fatunik_month_number": fmo,
-                "fatunik_month_day": fmo_dy,
-                "is_leap_turn": fleap,
-                "label": flabel} | self.astro.get_astro_date()
+        return {
+            "fatunik_turn": fyr,
+            "fatunik_turn_day": fyr_dy,
+            "fatunik_month_number": fmo,
+            "fatunik_month_day": fmo_dy,
+            "is_leaturn": fleap,
+            "label": flabel,
+        } | self.astro.get_astro_date()
 
 
 class StrictLunarCalendar:
@@ -1117,18 +1206,17 @@ class StrictLunarCalendar:
     :param: days: the number of days since the Rosetta epoch.
     :return: dict (turn, month, day)
     """
+
     def __init__(self, ros_day):
         self.rosdy = ros_day
 
     def get_date(self):
-        dros = self.rosdy - LUNAR_EPOCH_DAY        # days since lunar epoch start
+        dros = self.rosdy - LUNAR_EPOCH_DAY  # days since lunar epoch start
         lyr = int(dros // (LUNAR_MONTH_AVG * 12))  # lunar year (turn)
-        ldtz = dros % (LUNAR_MONTH_AVG * 12)       # lunar day from zero
-        lmo = int(ldtz // LUNAR_MONTH_AVG) + 1     # lunar month from one
-        ldy = int(ldtz % LUNAR_MONTH_AVG) + 1      # lunar day from one
-        return {"turn": lyr,
-                "month": lmo,
-                "day": ldy}
+        ldtz = dros % (LUNAR_MONTH_AVG * 12)  # lunar day from zero
+        lmo = int(ldtz // LUNAR_MONTH_AVG) + 1  # lunar month from one
+        ldy = int(ldtz % LUNAR_MONTH_AVG) + 1  # lunar day from one
+        return {"turn": lyr, "month": lmo, "day": ldy}
 
 
 class LunarSolarCalendar:
@@ -1144,22 +1232,20 @@ class LunarSolarCalendar:
     :param: days: the number of days since the Rosetta epoch.
     :return: dict (turn, month, day, is_leap)
     """
+
     def __init__(self, ros_day):
         self.rosdy = ros_day
 
     def get_date(self):
         dros = self.rosdy - LUNAR_EPOCH_DAY  # days since lunar epoch start
         lyr = int(dros // 365.25)
-        lleap = lyr % 5 == 0            # is lunar leap year
+        lleap = lyr % 5 == 0  # is lunar leap year
         days = LUNAR_MONTH_AVG * 12 + (LUNAR_MONTH_AVG if lleap else 0)
-        lyr = int(dros // days)         # lunar year (turn)
-        ldtz = dros % days              # lunar day from zero
+        lyr = int(dros // days)  # lunar year (turn)
+        ldtz = dros % days  # lunar day from zero
         lmo = int(ldtz // LUNAR_MONTH_AVG) + 1
         ldy = int(ldtz % LUNAR_MONTH_AVG) + 1
-        return {"turn": lyr,
-                "month": lmo,
-                "day": ldy,
-                "is_leap": lleap}
+        return {"turn": lyr, "month": lmo, "day": ldy, "is_leap": lleap}
 
 
 def universal_date_translator(day: int, time: Union[int, float] = 12.0):

@@ -1,21 +1,21 @@
-#!/usr/bin/python3.9
-"""
-:module:    method_shell.py
-:class:     ShellMethods/0
-:author:    GM (genuinemerit @ pm.me)
+"""Shell services and utilities.
 
-Shell services and utilities.
-- Service Activator / Deactivator class for Data Schema services.
-- Generic system command runner.
-- Some basic IO utilities so we don't have to import FileIO everywhere.
+Provides system command execution, datetime handling, hash generation,
+and other shell-related operations.
+
+:module:    shell.py
+:class:     ShellMethods
+:author:    GM (genuinemerit @ pm.me)
 """
-import hashlib  # generate hash keys
-import inspect  # getdoc
-import pendulum  # Handle datetime with timezone
+from __future__ import annotations
+
+import hashlib
+import inspect
+import pendulum
 import platform
 import secrets
 import subprocess as shl
-import traceback  # Exception trace
+import traceback
 
 from collections import OrderedDict
 from os import environ, path, system
@@ -23,7 +23,7 @@ from pathlib import Path
 
 
 class ShellMethods(object):
-    """Run Controller-related commands."""
+    """Shell and system utilities for command execution and common operations."""
 
     def __init__(self):
         """Initialize the object."""
@@ -61,35 +61,35 @@ class ShellMethods(object):
         return pendulum.now(timezone).to_iso8601_string()
 
     @classmethod
-    def get_date_string(cls, p_date=None, p_date_format: str = "") -> str:
+    def get_date_string(cls, date=None, date_format: str = "") -> str:
         """Get a date string in YYYY-MM-DD format.
-        :param p_date: Date object or string
-        :param p_date_format: Date format string
+        :param date: Date object or string
+        :param date_format: Date format string
         """
-        p_date = p_date or pendulum.now()
-        if p_date_format:
-            p_date = pendulum.from_format(p_date, p_date_format)
-        return p_date.to_date_string()
+        date = date or pendulum.now()
+        if date_format:
+            date = pendulum.from_format(date, date_format)
+        return date.to_date_string()
 
     @classmethod
-    def get_hash(cls, p_data_in: str) -> str:
+    def get_hash(cls, data_in: str) -> str:
         """Create a SHA-512 hash of the input string.
-        :param p_data_in: Input string to hash
+        :param data_in: Input string to hash
         """
         v_hash = hashlib.sha512()
-        v_hash.update(p_data_in.encode("utf-8"))
+        v_hash.update(data_in.encode("utf-8"))
         return v_hash.hexdigest()
 
     @classmethod
-    def get_uid(cls, p_uid_length: int = 32) -> str:
+    def get_uid(cls, uid_length: int = 32) -> str:
         """Generate a URL-safe, cryptographically strong random value.
         Must be at least 32 characters long.
-        :param p_uid_length: Length of the UID
+        :param uid_length: Length of the UID
         """
-        p_uid_length = max(p_uid_length, 32)
+        uid_length = max(uid_length, 32)
         exclude = {";", ":", "/", '"', "\\", "'", "?", "#", "|"}
         while True:
-            uid_val = secrets.token_urlsafe(p_uid_length)
+            uid_val = secrets.token_urlsafe(uid_length)
             if not any(char in uid_val for char in exclude):
                 return uid_val
 
@@ -204,13 +204,13 @@ class ShellMethods(object):
         return path.join("/home", cwd_parts[2]) if len(cwd_parts) > 2 else ""
 
     @classmethod
-    def get_help(cls, p_class_obj: object, p_command: str):
+    def get_help(cls, class_obj: object, command: str):
         """Return docstring for a specific method within a class.
-        :param p_class_obj: Class object
-        :param p_command: Command/method within the Class object for which to get help
+        :param class_obj: Class object
+        :param command: Command/method within the Class object for which to get help
         """
-        method = getattr(p_class_obj, p_command, None)
-        return inspect.getdoc(method) if method else f"Command '{p_command}' not found."
+        method = getattr(class_obj, command, None)
+        return inspect.getdoc(method) if method else f"Command '{command}' not found."
 
     @classmethod
     def continue_prompt(cls) -> str:
@@ -221,15 +221,15 @@ class ShellMethods(object):
         return response
 
     @classmethod
-    def convert_dict_to_ordered_dict(cls, p_dict: dict) -> OrderedDict:
+    def convert_dict_to_ordered_dict(cls, dict_in: dict) -> OrderedDict:
         """
         Convert a dictionary to an ordered dictionary sorted by the 'order' key.
 
-        :param p_dict: The input dictionary where each value is expected
+        :param dict_in: The input dictionary where each value is expected
                        to be a dictionary containing an 'order' key.
         :return: An OrderedDict sorted by the 'order' key of the inner dictionaries.
         """
-        sorted_items = sorted(p_dict.items(), key=lambda item: item[1]["order"])
+        sorted_items = sorted(dict_in.items(), key=lambda item: item[1]["order"])
         return OrderedDict(sorted_items)
 
     @classmethod
@@ -241,21 +241,21 @@ class ShellMethods(object):
         error_msg += "\n" + ("".join(formatted_tb))
         return error_msg
 
-    def rpt_running_jobs(self, p_job_nm: str):
+    def rpt_running_jobs(self, job_name: str):
         """Return display of running jobs matching grep param.
-        :param p_job_nm: Job name to grep
+        :param job_name: Job name to grep
         """
-        ok, result = self.run_cmd(f"ps -ef | grep {p_job_nm}")
+        ok, result = self.run_cmd(f"ps -ef | grep {job_name}")
         if not ok:
             raise Exception(result)
         running_jobs = result.split("\n")
         return result, running_jobs
 
-    def kill_jobs(self, p_job_nm: str):
+    def kill_jobs(self, job_name: str):
         """Kill jobs matching job name param.
-        :param p_job_nm: Job name to grep
+        :param job_name: Job name to grep
         """
-        _, running_jobs = self.rpt_running_jobs(p_job_nm.strip())
+        _, running_jobs = self.rpt_running_jobs(job_name.strip())
         for job in running_jobs:
             job_pid = job.split()[1].strip()
             self.run_cmd(f"kill -9 {job_pid}")

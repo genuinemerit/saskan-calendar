@@ -12,13 +12,13 @@ import music21 as m21  # noqa: F401
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 
-import method_files
-import method_shell
+from shared.utils.file_io import FileMethods
+from shared.utils.shell import ShellMethods
 import mb_tools as MBT
 from mb_themes import MuseBoxThemeLibrary
 
-FIL = method_files.FileMethods()
-SHL = method_shell.ShellMethods()
+FIL = FileMethods()
+SHL = ShellMethods()
 THEMES = MuseBoxThemeLibrary()
 
 

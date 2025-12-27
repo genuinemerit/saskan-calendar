@@ -143,7 +143,9 @@ class MuseBox:
                 continue
 
             for step_num, step in sorted(plan["step"].items()):
-                if not step["optional"] and (n > last_plan_num or step_num > last_step_num):
+                if not step["optional"] and (
+                    n > last_plan_num or step_num > last_step_num
+                ):
                     self.comp_id = step["method"](self.comp_id)
                     return self.comp_id
 
@@ -173,7 +175,7 @@ class MuseBox:
         pp(("Last step status:", last_step))
         print(f"Last completed step: Plan {last_step[0]} Step {last_step[1]}")
 
-        last_plan_num, last_step_num, last_step_status = (last_step)
+        last_plan_num, last_step_num, last_step_status = last_step
 
         steps_available = [
             (n, s, step["method"].__name__.split(".")[-1])

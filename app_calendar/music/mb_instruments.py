@@ -17,10 +17,9 @@ from pprint import pformat as pf  # noqa: F401
 from pprint import pprint as pp  # noqa: F401
 from tabulate import tabulate  # noqa: F401
 from typing import Union, List, Dict, Optional  # noqa: F401
+from shared.utils.file_io import FileMethods
 
-import method_files as mf  # noqa F401
-
-FM = mf.FileMethods()
+FM = FileMethods()
 
 
 @dataclass(frozen=True)

@@ -130,12 +130,15 @@ def batch_translate_texts(texts, target_lang="en"):
 
     # Process output, strip blanks
     translated_lines = [
-        line for line in response.choices[0].message.content.strip().split("\n")
+        line
+        for line in response.choices[0].message.content.strip().split("\n")
         if line.strip()
     ]
 
     if len(translated_lines) != len(index_map):
-        print(f"⚠️ Warning: expected {len(index_map)} translations, got {len(translated_lines)}")
+        print(
+            f"⚠️ Warning: expected {len(index_map)} translations, got {len(translated_lines)}"
+        )
         print("   → Raw output:")
         print("\n".join(translated_lines))
 
@@ -171,7 +174,8 @@ def translate_column(col_name, target_lang):
 
             # Skip batch if already translated
             if all(
-                (isinstance(text, str) and detect(text) == target_lang) or not str(text).strip()
+                (isinstance(text, str) and detect(text) == target_lang)
+                or not str(text).strip()
                 for text in texts[start:end]
             ):
                 pbar.update(1)

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-
 from pprint import pprint as pp
-import core as cal
+
 import numpy as np
+
+import core as cal
 
 
 def smooth_decay_split(V, D):
@@ -39,13 +40,11 @@ def smooth_decay_split(V, D):
     return values
 
 
-def compute_phase(p_direction: str,
-                  p_duration: int,
-                  p_magnitude: int) -> None:
+def compute_phase(direction: str, duration: int, magnitude: int) -> None:
     """
-    @param p_direction: str - Direction of the chaos event, either 'B' or 'F'.
-    @param p_duration: int - Duration of the chaos event in days.
-    @param p_magnitude: int - Magnitude of the chaos event.
+    @param direction: str - Direction of the chaos event, either 'B' or 'F'.
+    @param duration: int - Duration of the chaos event in days.
+    @param magnitude: int - Magnitude of the chaos event.
     if offset <= 0.03 or offset >= 0.97:
         name = "Grin Without Cause, Laughter in the Dust"
         notes = "A toothy curve of craters, askew. Surprising luck. Unwanted guests."
@@ -82,34 +81,35 @@ def compute_phase(p_direction: str,
     @return: None - Prints the adjusted moon phase offsets for the chaos event.
     """
     astro_date = 40  # Date of the chaos event
-    duration = p_duration
+    duration_days = duration
     # Magnitude and direction of the chaos event
-    magnitude = round((1 / p_magnitude), 2)
-    magnitude = magnitude * -1 if p_direction == "B" else magnitude
-    decay = smooth_decay_split(magnitude, duration)
-    print("duration", duration,
-          "| magnitude", magnitude,
-          "| decay", decay)
+    magnitude_val = round((1 / magnitude), 2)
+    magnitude_val = magnitude_val * -1 if direction == "B" else magnitude_val
+    decay = smooth_decay_split(magnitude_val, duration_days)
+    print("duration", duration_days, "| magnitude", magnitude_val, "| decay", decay)
     offsets: dict = {}
-    for astro in range(astro_date, astro_date + duration):
-        moon = cal.get_moon_phases(astro)['Kanka']
-        offsets[astro] =\
-            {"offset": moon['phase_offset'],
-             "period": round(float(moon["rotation_period"]), 2),
-             "phase": moon['phase'],
-             "faces": moon['face_name'] +
-             " | " + moon['face_notes'] + " | " + moon['face_omen']}
+    for astro in range(astro_date, astro_date + duration_days):
+        moon = cal.get_moon_phases(astro)["Kanka"]
+        offsets[astro] = {
+            "offset": moon["phase_offset"],
+            "period": round(float(moon["rotation_period"]), 2),
+            "phase": moon["phase"],
+            "faces": moon["face_name"]
+            + " | "
+            + moon["face_notes"]
+            + " | "
+            + moon["face_omen"],
+        }
     for day, (astro, data) in enumerate(offsets.items()):
-        adj_offset = \
-            round(offsets[astro]['offset'] + decay[day], 2)
-        adj_offset = 1.0 + adj_offset if adj_offset < 0.0 else \
-            adj_offset
+        adj_offset = round(offsets[astro]["offset"] + decay[day], 2)
+        adj_offset = 1.0 + adj_offset if adj_offset < 0.0 else adj_offset
         # N.B. -- If the offset is not changed, then we do not
         # need to write data to the chaos record.
-        if adj_offset != data['offset']:
-            offsets[astro]['offset'] = adj_offset
-            offsets[astro]['phase'] =\
-                "Strange " + cal.get_revolution_data(astro, data['period'])[3]
+        if adj_offset != data["offset"]:
+            offsets[astro]["offset"] = adj_offset
+            offsets[astro]["phase"] = (
+                "Strange " + cal.get_revolution_data(astro, data["period"])[3]
+            )
             faces = cal.get_kanka_faces(adj_offset)
             faces = " | ".join(faces)
             faces = faces.replace("Grin", "Grimace").replace("Wink", "Stare")
@@ -121,13 +121,10 @@ def compute_phase(p_direction: str,
             faces = faces.replace("Jester", "Demon").replace("Challenge", "Change")
             faces = faces.replace("Bleeding", "Smashed").replace("Smile", "Frown")
             faces = faces.replace("Wheel", "Bones").replace("Cause", "Meaning")
-            offsets[astro]['face'] = faces
+            offsets[astro]["face"] = faces
     pp((offsets))
 
 
 if __name__ == "__main__":
-    for dirt, dur, mag in (("B", 9, 2),
-                           ("F", 11, 3),
-                           ("B", 13, 4),
-                           ("F", 21, 6)):
+    for dirt, dur, mag in (("B", 9, 2), ("F", 11, 3), ("B", 13, 4), ("F", 21, 6)):
         compute_phase(dirt, dur, mag)

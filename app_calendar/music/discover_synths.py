@@ -2,11 +2,8 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
-
-import os
 import platform
-from dataclasses import dataclass, field
-from typing import List
+
 
 @dataclass
 class SynthPlugin:
@@ -15,6 +12,7 @@ class SynthPlugin:
     type: str  # e.g., "VST2", "VST3", "LV2", "AU"
     categories: List[str] = field(default_factory=list)
     is_installed: bool = True
+
 
 def get_default_plugin_dirs() -> List[str]:
     system = platform.system()
@@ -28,7 +26,7 @@ def get_default_plugin_dirs() -> List[str]:
             "/usr/lib/vst3",
             "/usr/local/lib/vst3",
             "/usr/lib/lv2",
-            "/usr/local/lib/lv2"
+            "/usr/local/lib/lv2",
         ]
     elif system == "Darwin":  # macOS
         return [
@@ -37,17 +35,18 @@ def get_default_plugin_dirs() -> List[str]:
             "/Library/Audio/Plug-Ins/Components",  # AU
             os.path.expanduser("~/Library/Audio/Plug-Ins/VST"),
             os.path.expanduser("~/Library/Audio/Plug-Ins/VST3"),
-            os.path.expanduser("~/Library/Audio/Plug-Ins/Components")
+            os.path.expanduser("~/Library/Audio/Plug-Ins/Components"),
         ]
     elif system == "Windows":
         return [
             os.path.expandvars("%PROGRAMFILES%\\VSTPlugins"),
             os.path.expandvars("%PROGRAMFILES%\\Steinberg\\VSTPlugins"),
             os.path.expandvars("%PROGRAMFILES%\\Common Files\\VST2"),
-            os.path.expandvars("%PROGRAMFILES%\\Common Files\\VST3")
+            os.path.expandvars("%PROGRAMFILES%\\Common Files\\VST3"),
         ]
     else:
         return []
+
 
 def discover_synth_plugins(base_dirs: List[str] = None) -> List[SynthPlugin]:
     if base_dirs is None:
@@ -61,7 +60,9 @@ def discover_synth_plugins(base_dirs: List[str] = None) -> List[SynthPlugin]:
             continue
         for root, _, files in os.walk(base_dir):
             for f in files:
-                if f.endswith(('.so', '.dll', '.dylib')) or any(base_dir.endswith(tag) for tag in ['lv2', 'Components']):
+                if f.endswith((".so", ".dll", ".dylib")) or any(
+                    base_dir.endswith(tag) for tag in ["lv2", "Components"]
+                ):
                     full_path = os.path.join(root, f)
                     if full_path in seen_paths:
                         continue
@@ -76,13 +77,16 @@ def discover_synth_plugins(base_dirs: List[str] = None) -> List[SynthPlugin]:
                         plugin_type = "AU"
                     else:
                         plugin_type = "Unknown"
-                    found_plugins.append(SynthPlugin(
-                        name=os.path.splitext(f)[0],
-                        path=full_path,
-                        type=plugin_type
-                    ))
+                    found_plugins.append(
+                        SynthPlugin(
+                            name=os.path.splitext(f)[0],
+                            path=full_path,
+                            type=plugin_type,
+                        )
+                    )
 
     return found_plugins
+
 
 if __name__ == "__main__":
     plugins = discover_synth_plugins()

@@ -1,49 +1,49 @@
 #!python
-"""
-:module:    music_core.py
-
-:author:    PQ (pq_rfw @ pm.me)
+"""Music generation core for Saskan game.
 
 Use music21 to assign parts, phrases, pitches, notes, durations, etc.
- to nodes, then to generate scores and midi files.
+to nodes, then to generate scores and midi files.
+
+:module:    music_core.py
+:author:    PQ (pq_rfw @ pm.me)
 """
+from __future__ import annotations
 
-import music21 as m21
 import random
-
 from copy import copy
-from dataclasses import dataclass   # fields
+from dataclasses import dataclass
 from pathlib import Path
-from pprint import pformat as pf        # noqa: F401
 from pprint import pprint as pp
-from tabulate import tabulate
 from typing import Union
 
-import method_files as mf  # noqa F401
+import music21 as m21
+from tabulate import tabulate
 
-FM = mf.FileMethods()
+from shared.utils.file_io import FileMethods
+
+file_methods = FileMethods()
 
 
-class MusicCore():
+class MusicCore:
     """Class for managing music data, generating scores
-       and other music-related methods for the Saskan game.
+    and other music-related methods for the Saskan game.
     """
-    def __init__(self,
-                 p_data: list = None):
+
+    def __init__(self, data: list = None):
         """
-        :args: p_data: list
+        :args: data: list
         - High-level names of JSON data file(s) to load from disk.
         - Assume they are stored in the app's data directory and
            have a ".json" extension.
         - Example: "moons_data" --> ../data/moons_data.json
         """
-        p_data = [] if p_data is None else p_data
-        self.DB: dict = self.load_data(p_data)
+        data = [] if data is None else data
+        self.DB: dict = self.load_data(data)
 
-    def load_data(self, p_data: Union[str, list[str]]) -> dict[str, dict]:
+    def load_data(self, data: Union[str, list[str]]) -> dict[str, dict]:
         """
         :args:
-        - p_data: list or str
+        - data: list or str
         Load data from JSON files into the DB dictionary.
         :returns:
         - db: dict
@@ -53,21 +53,20 @@ class MusicCore():
         - Add a .describe() method that prints schema-ish summaries of your loaded files.
         """
         db = {}
-        p_data = [p_data.strip()] if isinstance(p_data, str) else p_data
-        for d in p_data:
-            f = Path('..') / 'data' / f"{d}.json"
-            if not FM.is_file_or_dir(f):
+        data = [data.strip()] if isinstance(data, str) else data
+        for d in data:
+            f = Path("..") / "data" / f"{d}.json"
+            if not file_methods.is_file_or_dir(f):
                 print(f"File {f} does not exist. Skipping.")
                 continue
-            db[d] = FM.get_json_file(f)
+            db[d] = file_methods.get_json_file(f)
         if len(db) > 0:
-            print("Loaded data files into the DB: "
-                  f"{pf(list(db.keys()))}")
+            print("Loaded data files into the DB: " f"{pf(list(db.keys()))}")
         return db
 
     def get_data_by_type(self, data_type: str) -> list:
         """Return key(s) to DB entries that match the specified data type,
-           that is, the file name starts with <data_type>."""
+        that is, the file name starts with <data_type>."""
         return [v for k, v in self.DB.items() if k.startswith(data_type)]
 
     def get_data_by_key(self, data_key: str) -> dict:
@@ -79,7 +78,11 @@ class MusicCore():
 
     def list_db(self) -> None:
         """Print summary of DB contents."""
-        print(tabulate([[k, len(v)] for k, v in self.DB.items()], headers=["Data", "Entries"]))
+        print(
+            tabulate(
+                [[k, len(v)] for k, v in self.DB.items()], headers=["Data", "Entries"]
+            )
+        )
 
     @dataclass
     class CANON:
@@ -183,37 +186,64 @@ class MusicCore():
 
         Whitespace removed from analysis. Only here used to ease display.
         """
+
         NOTES = dict()
-        for nty in ('full', 'rest', 'dotted', 'tuplet'):
+        for nty in ("full", "rest", "dotted", "tuplet"):
             NOTES[nty] = dict()
-        NOTES['full'] = {'breve': 8.0, 'whole': 4.0, 'half': 2.0,
-                         'quarter': 1.0, 'eighth': 0.5, '16th': 0.25,
-                         '32nd': 0.125, '64th': 0.0625}
-        for n, d in NOTES['full'].items():
+        NOTES["full"] = {
+            "breve": 8.0,
+            "whole": 4.0,
+            "half": 2.0,
+            "quarter": 1.0,
+            "eighth": 0.5,
+            "16th": 0.25,
+            "32nd": 0.125,
+            "64th": 0.0625,
+        }
+        for n, d in NOTES["full"].items():
             dur = copy(d)
-            NOTES['full'][n] = m21.duration.Duration(dur)
-            NOTES['rest'][n] = m21.note.Rest(quarterLength=dur)
-            NOTES['dotted'][n] = m21.duration.Duration(dur + (dur / 2))
+            NOTES["full"][n] = m21.duration.Duration(dur)
+            NOTES["rest"][n] = m21.note.Rest(quarterLength=dur)
+            NOTES["dotted"][n] = m21.duration.Duration(dur + (dur / 2))
         # May want to add triplets for eighths also.
-        NOTES['tuplet'] = {
+        NOTES["tuplet"] = {
             # duration of one half note:
-            'tripletQtrs': m21.duration.Tuplet(3, 4),
-            'quintupletQtrs': m21.duration.Tuplet(5, 4),
+            "tripletQtrs": m21.duration.Tuplet(3, 4),
+            "quintupletQtrs": m21.duration.Tuplet(5, 4),
             # duration of one quarter note:
-            'triplet8ths': m21.duration.Tuplet(3, 2),
-            'quintuplet8ths': m21.duration.Tuplet(5, 2),
+            "triplet8ths": m21.duration.Tuplet(3, 2),
+            "quintuplet8ths": m21.duration.Tuplet(5, 2),
             # duration of one eighth note:
-            'triplet16ths': m21.duration.Tuplet(3, 1),
-            'quintuplet16ths': m21.duration.Tuplet(5, 1)}
+            "triplet16ths": m21.duration.Tuplet(3, 1),
+            "quintuplet16ths": m21.duration.Tuplet(5, 1),
+        }
 
         SCALE = dict()
-        for k in ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#',
-                  'F', 'B-', 'E-', 'A-', 'D-', 'G-', 'C-', 'F-']:
+        for k in [
+            "C",
+            "G",
+            "D",
+            "A",
+            "E",
+            "B",
+            "F#",
+            "C#",
+            "G#",
+            "F",
+            "B-",
+            "E-",
+            "A-",
+            "D-",
+            "G-",
+            "C-",
+            "F-",
+        ]:
             SCALE[k] = {
-                'major': m21.scale.MajorScale(k),
-                'minor': m21.scale.MinorScale(k),
-                'harmonicMinor': m21.scale.HarmonicMinorScale(k),
-                'melodicMinor': m21.scale.MelodicMinorScale(k)}
+                "major": m21.scale.MajorScale(k),
+                "minor": m21.scale.MinorScale(k),
+                "harmonicMinor": m21.scale.HarmonicMinorScale(k),
+                "melodicMinor": m21.scale.MelodicMinorScale(k),
+            }
 
         KEYSIG = dict()
         for k in SCALE.keys():
@@ -221,126 +251,141 @@ class MusicCore():
             for mode, m_obj in SCALE[k].items():
                 a_cnt = 0
                 for p in m_obj.pitches:
-                    a_cnt = a_cnt + 1 if '#' in p.name\
-                        else a_cnt - 1 if '-' in p.name else a_cnt
+                    a_cnt = (
+                        a_cnt + 1
+                        if "#" in p.name
+                        else a_cnt - 1 if "-" in p.name else a_cnt
+                    )
                 KEYSIG[k][mode] = m21.key.KeySignature(a_cnt)
 
         TIMESIG = dict()
-        for sig in ('2/2', '3/4', '4/4', '6/8'):
+        for sig in ("2/2", "3/4", "4/4", "6/8"):
             TIMESIG[sig] = m21.meter.TimeSignature(sig)
 
         THEME = dict()
-        THEME[0] = ['ii', 'V', 'I']
-        THEME[1] = ['I', 'V', 'vi', 'IV']
-        THEME[2] = ['I', 'V', 'vi', 'ii']
-        THEME[3] = ['I', 'iii', 'vi', 'IV']
-        THEME[4] = ['I', 'iii', 'vi', 'ii']
-        THEME[5] = ['I', 'vi', 'IV', 'V']
-        THEME[6] = ['I', 'IV', 'vi', 'V']
-        THEME[7] = ['I', 'vi', 'ii', 'V']
-        THEME[8] = ['I', 'ii', 'vi', 'V']
-        THEME[9] = ['I', 'IV', 'I', 'IV', 'V']
-        THEME[10] = ['I', 'IV', 'I', 'IV']
-        THEME[11] = ['vi', 'IV', 'vi', 'IV']
-        THEME[12] = ['ii', 'V', 'IV', 'V']
-        THEME[13] = ['ii', 'V', 'vi', 'IV']
-        THEME[14] = ['I', 'iii', 'IV', 'V']
-        THEME[15] = ['I', 'ii', 'iii', 'IV', 'V']
-        THEME[16] = ['I', 'V', 'vi', 'iii']
-        THEME[17] = ['IV', 'I', 'IV', 'V']
-        THEME[18] = ['I', 'I', 'I', 'I']
-        THEME[19] = ['IV', 'IV', 'I', 'I']
-        THEME[20] = ['V', 'IV', 'I', 'V']
-        THEME[21] = ['I', 'IV', 'I', 'I']
-        THEME[22] = ['V', 'IV', 'I', 'I']
+        THEME[0] = ["ii", "V", "I"]
+        THEME[1] = ["I", "V", "vi", "IV"]
+        THEME[2] = ["I", "V", "vi", "ii"]
+        THEME[3] = ["I", "iii", "vi", "IV"]
+        THEME[4] = ["I", "iii", "vi", "ii"]
+        THEME[5] = ["I", "vi", "IV", "V"]
+        THEME[6] = ["I", "IV", "vi", "V"]
+        THEME[7] = ["I", "vi", "ii", "V"]
+        THEME[8] = ["I", "ii", "vi", "V"]
+        THEME[9] = ["I", "IV", "I", "IV", "V"]
+        THEME[10] = ["I", "IV", "I", "IV"]
+        THEME[11] = ["vi", "IV", "vi", "IV"]
+        THEME[12] = ["ii", "V", "IV", "V"]
+        THEME[13] = ["ii", "V", "vi", "IV"]
+        THEME[14] = ["I", "iii", "IV", "V"]
+        THEME[15] = ["I", "ii", "iii", "IV", "V"]
+        THEME[16] = ["I", "V", "vi", "iii"]
+        THEME[17] = ["IV", "I", "IV", "V"]
+        THEME[18] = ["I", "I", "I", "I"]
+        THEME[19] = ["IV", "IV", "I", "I"]
+        THEME[20] = ["V", "IV", "I", "V"]
+        THEME[21] = ["I", "IV", "I", "I"]
+        THEME[22] = ["V", "IV", "I", "I"]
 
-        DEGREES = {
-            'I': 1,
-            'ii': 2,
-            'iii': 3,
-            'IV': 4,
-            'V': 5,
-            'vi': 6,
-            'vii': 7}
+        DEGREES = {"I": 1, "ii": 2, "iii": 3, "IV": 4, "V": 5, "vi": 6, "vii": 7}
 
         PROG = dict()
-        PROG[0] = {"phrases": 4, 'chords': THEME[0] * 4}
-        PROG[1] = {"phrases": 3,  'chords': THEME[1] * 3}
-        PROG[2] = {"phrases": 3,  'chords': THEME[2] * 3}
-        PROG[3] = {"phrases": 3,  'chords': THEME[3] * 3}
-        PROG[4] = {"phrases": 3,  'chords': THEME[4] * 3}
-        PROG[5] = {"phrases": 3,  'chords': THEME[5] * 3}
-        PROG[6] = {"phrases": 3,  'chords': THEME[6] * 3}
-        PROG[7] = {"phrases": 3,  'chords': THEME[7] * 3}
-        PROG[8] = {"phrases": 3,  'chords': THEME[8] * 3}
-        PROG[9] = {"phrases": 3,  'chords': THEME[9] * 3}
-        PROG[10] = {"phrases": 3,  'chords': THEME[10] * 2 + THEME[11]}
-        PROG[11] = {"phrases": 4,  'chords': THEME[11] + THEME[12] +
-                    THEME[11] + THEME[12]}
-        PROG[12] = {"phrases": 4,  'chords': THEME[10] + THEME[13] +
-                    THEME[10] + THEME[13]}
-        PROG[13] = {"phrases": 3,  'chords': THEME[14] * 3}
-        PROG[14] = {"phrases": 3,  'chords': THEME[15] * 3}
-        PROG[15] = {"phrases": 4,  'chords': THEME[16] + THEME[17] +
-                    THEME[16] + THEME[17]}
-        PROG[16] = {"phrases": 3,  'chords': THEME[18] + THEME[19] +
-                    THEME[20]}
-        PROG[17] = {"phrases": 3,  'chords': THEME[21] + THEME[19] +
-                    THEME[20]}
-        PROG[18] = {"phrases": 3,  'chords': THEME[18] + THEME[19] +
-                    THEME[22]}
+        PROG[0] = {"phrases": 4, "chords": THEME[0] * 4}
+        PROG[1] = {"phrases": 3, "chords": THEME[1] * 3}
+        PROG[2] = {"phrases": 3, "chords": THEME[2] * 3}
+        PROG[3] = {"phrases": 3, "chords": THEME[3] * 3}
+        PROG[4] = {"phrases": 3, "chords": THEME[4] * 3}
+        PROG[5] = {"phrases": 3, "chords": THEME[5] * 3}
+        PROG[6] = {"phrases": 3, "chords": THEME[6] * 3}
+        PROG[7] = {"phrases": 3, "chords": THEME[7] * 3}
+        PROG[8] = {"phrases": 3, "chords": THEME[8] * 3}
+        PROG[9] = {"phrases": 3, "chords": THEME[9] * 3}
+        PROG[10] = {"phrases": 3, "chords": THEME[10] * 2 + THEME[11]}
+        PROG[11] = {
+            "phrases": 4,
+            "chords": THEME[11] + THEME[12] + THEME[11] + THEME[12],
+        }
+        PROG[12] = {
+            "phrases": 4,
+            "chords": THEME[10] + THEME[13] + THEME[10] + THEME[13],
+        }
+        PROG[13] = {"phrases": 3, "chords": THEME[14] * 3}
+        PROG[14] = {"phrases": 3, "chords": THEME[15] * 3}
+        PROG[15] = {
+            "phrases": 4,
+            "chords": THEME[16] + THEME[17] + THEME[16] + THEME[17],
+        }
+        PROG[16] = {"phrases": 3, "chords": THEME[18] + THEME[19] + THEME[20]}
+        PROG[17] = {"phrases": 3, "chords": THEME[21] + THEME[19] + THEME[20]}
+        PROG[18] = {"phrases": 3, "chords": THEME[18] + THEME[19] + THEME[22]}
 
         MOTIF = dict()
 
         # 4 total beats per motif - check
-        MOTIF['4/4'] = {
-            "MO1": {'1st': "S~S~B^        | S~S~Bv",
-                    '2nd': "T~B~          | T~B~",
-                    '3rd': "",
-                    'Change': "S~S~S~S~      | SrS~B~",
-                    'Turn': 'Q~QvQ~QvQ~QvQ~Qv  | SvS^S^S^',
-                    'End': 'B~B~          | D~'}}
+        MOTIF["4/4"] = {
+            "MO1": {
+                "1st": "S~S~B^        | S~S~Bv",
+                "2nd": "T~B~          | T~B~",
+                "3rd": "",
+                "Change": "S~S~S~S~      | SrS~B~",
+                "Turn": "Q~QvQ~QvQ~QvQ~Qv  | SvS^S^S^",
+                "End": "B~B~          | D~",
+            }
+        }
 
         # 3 total beats per motif - check
-        MOTIF['3/4'] = {
-            "MO2": {'1st': "D~        | S^S^",
-                    '2nd': "D~        | SvSv",
-                    '3rd': "",
-                    'Change': "T~        | D~",
-                    'Turn': "",
-                    'End': 'S~S~      | D~'},
-            "MO3": {'1st': "S~Q~Q~    | D^",
-                    '2nd': "S~Q~Q~    | Dv",
-                    '3rd': "",
-                    'Change': "T~        | D~",
-                    'Turn': "",
-                    'End': 'S~        | B~B~'}}
+        MOTIF["3/4"] = {
+            "MO2": {
+                "1st": "D~        | S^S^",
+                "2nd": "D~        | SvSv",
+                "3rd": "",
+                "Change": "T~        | D~",
+                "Turn": "",
+                "End": "S~S~      | D~",
+            },
+            "MO3": {
+                "1st": "S~Q~Q~    | D^",
+                "2nd": "S~Q~Q~    | Dv",
+                "3rd": "",
+                "Change": "T~        | D~",
+                "Turn": "",
+                "End": "S~        | B~B~",
+            },
+        }
 
         # 2 total beats per motif - check
-        MOTIF['2/2'] = {
-            "MO4": {'1st': "B~B~",
-                    '2nd': "D~",
-                    '3rd': "",
-                    'Change': "S~S~S~Sr",
-                    'Turn': "",
-                    'End': 'Dv'}}
+        MOTIF["2/2"] = {
+            "MO4": {
+                "1st": "B~B~",
+                "2nd": "D~",
+                "3rd": "",
+                "Change": "S~S~S~Sr",
+                "Turn": "",
+                "End": "Dv",
+            }
+        }
 
         # 6 total beats per motif - check
-        MOTIF['6/8'] = {
-            "MO4": {'1st': "B~B^B^       | B~BvBv",
-                    '2nd': "B~BvBv       | B~B~B~",
-                    '3rd': "B~B~B~       | DvB~",
-                    'Change': "B^B^B^       | DvB~",
-                    'Turn': "",
-                    'End': 'SvSvSvSvSvSv | D~B~'}}
+        MOTIF["6/8"] = {
+            "MO4": {
+                "1st": "B~B^B^       | B~BvBv",
+                "2nd": "B~BvBv       | B~B~B~",
+                "3rd": "B~B~B~       | DvB~",
+                "Change": "B^B^B^       | DvB~",
+                "Turn": "",
+                "End": "SvSvSvSvSvSv | D~B~",
+            }
+        }
 
-    def set_bar_pitches(self,
-                        nnm: str,
-                        p_barx: int,
-                        p_degree: dict,
-                        p_pattern: dict,
-                        p_scale: dict,
-                        p_chords: dict):
+    def set_bar_pitches(
+        self,
+        nnm: str,
+        barx: int,
+        degree: dict,
+        pattern: dict,
+        scale: dict,
+        chords: dict,
+    ):
         """Assign pitches for one measure.
 
         Rules:
@@ -359,25 +404,25 @@ class MusicCore():
         - This is being replaced by refactored code...
         """
         pitches = list()
-        rhythm_notes = self.SCORE[nnm]["notes"][1]["rhythm"][p_barx]
+        rhythm_notes = self.SCORE[nnm]["notes"][1]["rhythm"][barx]
         chrd_x = 0
         scal_x = 0
-        chords = None
+        chords_local = None
         scales = None
         pitch = None
 
         for dur_x, _ in enumerate(rhythm_notes):
-            if p_pattern["rule"] == "tonic" and len(rhythm_notes) == 1:
+            if pattern["rule"] == "tonic" and len(rhythm_notes) == 1:
                 if random.randint(0, 100) < 30:
-                    pitches = p_chords["main"]      # 7 chord
+                    pitches = chords["main"]  # 7 chord
                 else:
-                    pitches = p_chords["main"][:2]  # triad
+                    pitches = chords["main"][:2]  # triad
             else:
-                if dur_x == 0:                      # first note in bar
+                if dur_x == 0:  # first note in bar
                     chrd_x = 0
                     tone = ""
                     chord_pick = random.randint(0, 100)
-                    if chord_pick < 60 or p_pattern["rule"] == "tonic":
+                    if chord_pick < 60 or pattern["rule"] == "tonic":
                         tone = "main"
                     elif chord_pick < 80:
                         tone = "rel"
@@ -387,41 +432,37 @@ class MusicCore():
                         tone = "V"
                     else:
                         tone = "parl"
-                    chords = p_chords[tone]
-                    scales = p_scale[tone]
-                    pitch = chords[chrd_x]
+                    chords_local = chords[tone]
+                    scales = scale[tone]
+                    pitch = chords_local[chrd_x]
                     scal_x = scales.index(pitch)
-                else:                               # subsequent notes
-                    if p_pattern["direction"] == "asc":
-                        chrd_x += 1\
-                            if (chrd_x + 1) < (len(chords) - 1) else 0
-                        pitch = chords[chrd_x]
-                    elif p_pattern["direction"] == "desc":
+                else:  # subsequent notes
+                    if pattern["direction"] == "asc":
+                        chrd_x += 1 if (chrd_x + 1) < (len(chords_local) - 1) else 0
+                        pitch = chords_local[chrd_x]
+                    elif pattern["direction"] == "desc":
                         if chrd_x > 0:
                             chrd_x = chrd_x - 1
                         else:
-                            chrd_x = (len(chords) - 1)
-                        pitch = chords[chrd_x]
+                            chrd_x = len(chords_local) - 1
+                        pitch = chords_local[chrd_x]
                     else:
                         pick_interval = random.randint(0, 100)
                         if pick_interval > 75:
-                            scal_x += 1\
-                                if (scal_x + 1) < (len(scales) - 1) else 0
+                            scal_x += 1 if (scal_x + 1) < (len(scales) - 1) else 0
                         elif pick_interval > 50:
                             if scal_x > 0:
                                 scal_x = scal_x - 1
                             else:
-                                scal_x = (len(scales) - 1)
+                                scal_x = len(scales) - 1
                         pitch = scales[scal_x]
                 # pp(("chrd_x: ", chrd_x,
                 #     "scal_x: ", scal_x, "pitch: ", pitch))
                 pitches.append(pitch)
             # pp(("pitches", pitches))
-        self.SCORE[nnm]["notes"][1]["pitch"][p_barx] = pitches
+        self.SCORE[nnm]["notes"][1]["pitch"][barx] = pitches
 
-    def get_sevens(self,
-                   p_note: str,
-                   p_scale: list):
+    def get_sevens(self, note: str, scale: list):
         """Return a list containing triad plus dominant 7th
         for notes in designated key. Dominant means flat the 7th.
 
@@ -429,32 +470,28 @@ class MusicCore():
 
         May not need this but hold onto it for now.
         """
-        notex = p_scale.index(p_note)
+        notex = scale.index(note)
         # chord_range = 4
         chord_range = ""
-        chord = [p_note + str(chord_range)]
+        chord = [note + str(chord_range)]
         for n in range(3):
-            if notex < (len(p_scale) - 2):
+            if notex < (len(scale) - 2):
                 notex = notex + 2
             else:
                 notex = 0
                 # chord_range += 1
-            note = p_scale[notex]
+            note_local = scale[notex]
             if n == 2:
-                if note[-1:] == "#":
-                    note = note[:1]
+                if note_local[-1:] == "#":
+                    note_local = note_local[:1]
                 else:
-                    note += "-"
-            chord.append(note + str(chord_range))
+                    note_local += "-"
+            chord.append(note_local + str(chord_range))
         return chord
 
-    def set_start_or_end_bar(self,
-                             nnm: str,
-                             bar_nm: str,
-                             bar_x: int,
-                             degree: int,
-                             scale: object,
-                             bars: dict):
+    def set_start_or_end_bar(
+        self, nnm: str, bar_nm: str, bar_x: int, degree: int, scale: object, bars: dict
+    ):
         """Assign pitches to bars for which no specific motif is defined,
         but they start or end a phrase.
         - Set a middle probability for tonal work (chords) in these bars.
@@ -484,11 +521,12 @@ class MusicCore():
 
         :returns: (list) Pitches for selected bar, organized by parts.
         """
+
         def set_model_bar(bar_nm):
             """Set bar's notes and directions to model bar."""
             bar_model = "End" if bar_nm == "End" else "1st"
-            vary_n = self.SCORE[nnm]['motif'][bar_model]['notes']
-            vary_d = self.SCORE[nnm]['motif'][bar_model]['dirs']
+            vary_n = self.SCORE[nnm]["motif"][bar_model]["notes"]
+            vary_d = self.SCORE[nnm]["motif"][bar_model]["dirs"]
             return (vary_n, vary_d)
 
         def apply_variations(vary_n, vary_d):
@@ -508,7 +546,7 @@ class MusicCore():
 
         def set_long_note(vary_n, vary_d):
             """Assign a note half bar_dur length to ending bar-part."""
-            bar_dur = self.SCORE[nnm]['_beat']['bar_dur'].quarterLength
+            bar_dur = self.SCORE[nnm]["_beat"]["bar_dur"].quarterLength
             vary_n[0] = [m21.duration.Duration(bar_dur / 2)]
             vary_d[0] = [0]
             return (vary_n, vary_d)
@@ -521,8 +559,7 @@ class MusicCore():
                 set_long = True
             if not set_long or random.randint(0, 100) > 50:
                 vary_n, vary_d = set_long_note(vary_n, vary_d)
-            force_tonic = False if self.SCORE[nnm]['_chords'][bar_x] == 'I'\
-                else True
+            force_tonic = False if self.SCORE[nnm]["_chords"][bar_x] == "I" else True
             return (vary_n, vary_d, force_tonic)
 
         # set_start_or_end_bar() MAIN
@@ -548,34 +585,37 @@ class MusicCore():
                 if force_tonic:
                     degree = 1
                     force_tonic = False
-                if (random.randint(0, 100) < 30 or
-                        ("End" in bar_nm and random.randint(0, 100) < 70)):
-                    pitch = m21.chord.Chord([
-                        scale.pitchFromDegree(degree),
-                        scale.pitchFromDegree(degree + 2),
-                        scale.pitchFromDegree(degree + 4)])
+                if random.randint(0, 100) < 30 or (
+                    "End" in bar_nm and random.randint(0, 100) < 70
+                ):
+                    pitch = m21.chord.Chord(
+                        [
+                            scale.pitchFromDegree(degree),
+                            scale.pitchFromDegree(degree + 2),
+                            scale.pitchFromDegree(degree + 4),
+                        ]
+                    )
                 elif random.randint(0, 100) < 20:
-                    pitch = m21.chord.Chord([
-                        scale.pitchFromDegree(degree),
-                        scale.pitchFromDegree(degree + 2),
-                        scale.pitchFromDegree(degree + 4),
-                        scale.pitchFromDegree(degree + 6)])
+                    pitch = m21.chord.Chord(
+                        [
+                            scale.pitchFromDegree(degree),
+                            scale.pitchFromDegree(degree + 2),
+                            scale.pitchFromDegree(degree + 4),
+                            scale.pitchFromDegree(degree + 6),
+                        ]
+                    )
                 else:
                     pitch = scale.pitchFromDegree(degree)
                 pitches.append(pitch)
             this_bar.append(pitches)
-        bars[bar_x]['notes'] = vary_n
-        bars[bar_x]['pitches'] = this_bar
+        bars[bar_x]["notes"] = vary_n
+        bars[bar_x]["pitches"] = this_bar
         del bars[bar_nm]
         return bars
 
-    def set_specific_motif(self,
-                           nnm: str,
-                           bar_nm: str,
-                           bar_x: int,
-                           degree: int,
-                           scale: object,
-                           bars: dict):
+    def set_specific_motif(
+        self, nnm: str, bar_nm: str, bar_x: int, degree: int, scale: object, bars: dict
+    ):
         """Assign pitches to bars for which a specific motif is defined.
         - Set a high probability for tonal work (chords) in these bars.
 
@@ -591,33 +631,37 @@ class MusicCore():
         """
         this_bar = list()
         print(f"1. Processing bar: {bar_nm} / {bar_x}")
-        for dirs in self.SCORE[nnm]['motif'][bar_nm]['dirs']:
+        for dirs in self.SCORE[nnm]["motif"][bar_nm]["dirs"]:
             pitches = list()
             for dir in dirs:
                 degree += dir
                 if random.randint(0, 100) < 70:
-                    pitch = m21.chord.Chord([
-                        scale.pitchFromDegree(degree),
-                        scale.pitchFromDegree(degree + 2),
-                        scale.pitchFromDegree(degree + 4)])
+                    pitch = m21.chord.Chord(
+                        [
+                            scale.pitchFromDegree(degree),
+                            scale.pitchFromDegree(degree + 2),
+                            scale.pitchFromDegree(degree + 4),
+                        ]
+                    )
                 elif random.randint(0, 100) < 30:
-                    pitch = m21.chord.Chord([
-                        scale.pitchFromDegree(degree),
-                        scale.pitchFromDegree(degree + 2),
-                        scale.pitchFromDegree(degree + 4),
-                        scale.pitchFromDegree(degree + 6)])
+                    pitch = m21.chord.Chord(
+                        [
+                            scale.pitchFromDegree(degree),
+                            scale.pitchFromDegree(degree + 2),
+                            scale.pitchFromDegree(degree + 4),
+                            scale.pitchFromDegree(degree + 6),
+                        ]
+                    )
                 else:
                     pitch = scale.pitchFromDegree(degree)
                 pitches.append(pitch)
             this_bar.append(pitches)
-        bars[bar_x]['notes'] = self.SCORE[nnm]['motif'][bar_nm]['notes']
-        bars[bar_x]['pitches'] = this_bar
+        bars[bar_x]["notes"] = self.SCORE[nnm]["motif"][bar_nm]["notes"]
+        bars[bar_x]["pitches"] = this_bar
         del bars[bar_nm]
         return bars
 
-    def pick_a_pitch(self,
-                     nnm: str,
-                     bars: dict):
+    def pick_a_pitch(self, nnm: str, bars: dict):
         """Assign a pitch for every interval in a measure.
 
         Pass thru the bars dictionary multiple times:
@@ -632,23 +676,31 @@ class MusicCore():
 
         return: (dict) : Bars data with pitches and notes.
         """
+
         def get_bar_name(bar_x: int, bars: dict):
-            """Return a bar name, if there is one, based on current bar number.
-            """
-            mi = list(bars.values()).index(bar_x)\
-                if bar_x in list(bars.values()) else None
+            """Return a bar name, if there is one, based on current bar number."""
+            mi = (
+                list(bars.values()).index(bar_x)
+                if bar_x in list(bars.values())
+                else None
+            )
             bar_nm = list(bars.keys())[mi] if mi is not None else None
             return bar_nm
 
         # First pass --> handle bar names that match motif names.
-        for bar_x, roman in enumerate(self.SCORE[nnm]['_chords']):
+        for bar_x, roman in enumerate(self.SCORE[nnm]["_chords"]):
             bars[bar_x] = dict()
             bar_nm = get_bar_name(bar_x, bars)
             if bar_nm is not None:
-                if bar_nm in self.SCORE[nnm]['motif'].keys():
+                if bar_nm in self.SCORE[nnm]["motif"].keys():
                     bars = self.set_specific_motif(
-                        nnm, bar_nm, bar_x, self.CANON.DEGREES[roman],
-                        self.SCORE[nnm]['_scale'], bars)
+                        nnm,
+                        bar_nm,
+                        bar_x,
+                        self.CANON.DEGREES[roman],
+                        self.SCORE[nnm]["_scale"],
+                        bars,
+                    )
 
         # Second pass --> handle bars that start or end a phrase.
         # Something is getting messed up. I have more pitches
@@ -691,29 +743,27 @@ class MusicCore():
         return: (dict) : initialized set of bar names and indexes.
         """
         bars = {
-            '1st': 0,
-            '2nd': int(round(self.SCORE[nnm]['_t_bar'] * .25)),
-            'Change': int(round(self.SCORE[nnm]['_t_bar'] * .67)),
-            'End': self.SCORE[nnm]['_t_bar'] - 1
+            "1st": 0,
+            "2nd": int(round(self.SCORE[nnm]["_t_bar"] * 0.25)),
+            "Change": int(round(self.SCORE[nnm]["_t_bar"] * 0.67)),
+            "End": self.SCORE[nnm]["_t_bar"] - 1,
         }
         # Compute size of phrases
-        p_sz = int(round(
-            self.SCORE[nnm]['_t_bar'] / self.SCORE[nnm]['_t_phrase']))
+        phrase_sz = int(round(self.SCORE[nnm]["_t_bar"] / self.SCORE[nnm]["_t_phrase"]))
         # Determine where is the 3rd motif, if one is defined.
-        if self.SCORE[nnm]['motif']['3rd'] != '':
-            bars['3rd'] = int(round(self.SCORE[nnm]['_t_bar'] * .75))
+        if self.SCORE[nnm]["motif"]["3rd"] != "":
+            bars["3rd"] = int(round(self.SCORE[nnm]["_t_bar"] * 0.75))
         # Determine where is the turnaround, if one is defined.
-        if self.SCORE[nnm]['motif']['Turn'] != '':
-            bars['Turn'] = bars['End'] - 1
+        if self.SCORE[nnm]["motif"]["Turn"] != "":
+            bars["Turn"] = bars["End"] - 1
         # Identify first and last bar of each phrase.
-        for p in range(0, self.SCORE[nnm]['_t_phrase']):
-            bars[f'End phrase {p + 1}'] = ((p + 1) * p_sz) - 1
-            if ((p + 1) * p_sz) < self.SCORE[nnm]['_t_bar']:
-                bars[f'Start phrase {p + 2}'] = ((p + 1) * p_sz)
+        for p in range(0, self.SCORE[nnm]["_t_phrase"]):
+            bars[f"End phrase {p + 1}"] = ((p + 1) * phrase_sz) - 1
+            if ((p + 1) * phrase_sz) < self.SCORE[nnm]["_t_bar"]:
+                bars[f"Start phrase {p + 2}"] = (p + 1) * phrase_sz
         return bars
 
-    def set_pitches(self,
-                    nnm: str):
+    def set_pitches(self, nnm: str):
         """For each measure, set the pitch for each motif-note.
 
         :args:
@@ -724,102 +774,124 @@ class MusicCore():
         """
         bars = self.identify_bars(nnm)
         bars = self.pick_a_pitch(nnm, bars)
-        self.SCORE[nnm]['bars'] = bars
+        self.SCORE[nnm]["bars"] = bars
 
         print("\n\n")
         pp(("nnm, score: ", nnm, self.SCORE[nnm]))
 
-    def translate_direction(self,
-                            p_meta: str,):
+    def translate_direction(
+        self,
+        meta: str,
+    ):
         """Translate motif direction metadata into an integer representing
            number of interval steps up (postive) or down (negative).
 
         :args:
-        - p_meta (char) : one-byte meta-character being analyzed
+        - meta (char) : one-byte meta-character being analyzed
 
         :returns: (int) : indicating number of interval steps up or down
         """
-        intervals = random.choice([-1, 0, 1]) if p_meta == '~' else\
-            random.choice([-3, -2, 11]) if p_meta == 'v' else\
-            random.choice([3, 2, 1]) if p_meta == '^' else 0
+        intervals = (
+            random.choice([-1, 0, 1])
+            if meta == "~"
+            else (
+                random.choice([-3, -2, 11])
+                if meta == "v"
+                else random.choice([3, 2, 1]) if meta == "^" else 0
+            )
+        )
         return intervals
 
-    def translate_duration(self,
-                           p_meta: str,
-                           p_next: str,
-                           p_denom: int):
+    def translate_duration(self, meta: str, next_char: str, denom: int):
         """Translate motif duration metadata into music21 durations, rests.
 
         :args:
-        - p_meta (char) : one-byte meta-character being analyzed
-        - p_next_meta (char) : one-byte meta-character following p_meta
-        - p_denom (int) : time signature denominator
+        - meta (char) : one-byte meta-character being analyzed
+        - next_char (char) : one-byte meta-character following meta
+        - denom (int) : time signature denominator
                         elif (denom == 2 and meta == 'W'):
                             n.append(no['full']['breve'])\
         """
         cnot = self.CANON.NOTES
-        rules = (([(8, 'Q')], '32nd'),
-                 ([(4, 'Q'), (8, 'S')], '16th'),
-                 ([(4, 'S'), (8, 'B'), (2, 'Q')], 'eighth'),
-                 ([(4, 'B'), (8, 'D'), (2, 'S')], 'quarter'),
-                 ([(4, 'D'), (8, 'W'), (2, 'B')], 'half'),
-                 ([(4, 'W'), (2, 'D')], 'whole'),
-                 ([(2, 'W')], 'breve'))
+        rules = (
+            ([(8, "Q")], "32nd"),
+            ([(4, "Q"), (8, "S")], "16th"),
+            ([(4, "S"), (8, "B"), (2, "Q")], "eighth"),
+            ([(4, "B"), (8, "D"), (2, "S")], "quarter"),
+            ([(4, "D"), (8, "W"), (2, "B")], "half"),
+            ([(4, "W"), (2, "D")], "whole"),
+            ([(2, "W")], "breve"),
+        )
 
-        def translate_triplet(p_denom):
-            note = cnot['tuplet']['triplet8ths'] if p_denom == 4 else \
-                cnot['tuplet']['triplet16ths'] if p_denom == 8 else \
-                cnot['tuplet']['tripletQtrs'] if p_denom == 2 else \
-                cnot['full']['quarter'] if p_denom == 4 else\
-                cnot['full']['eighth'] if p_denom == 8 else\
-                cnot['full']['half'] if p_denom == 2 else\
-                cnot['full']['quarter']
+        def translate_triplet(denom):
+            note = (
+                cnot["tuplet"]["triplet8ths"]
+                if denom == 4
+                else (
+                    cnot["tuplet"]["triplet16ths"]
+                    if denom == 8
+                    else (
+                        cnot["tuplet"]["tripletQtrs"]
+                        if denom == 2
+                        else (
+                            cnot["full"]["quarter"]
+                            if denom == 4
+                            else (
+                                cnot["full"]["eighth"]
+                                if denom == 8
+                                else (
+                                    cnot["full"]["half"]
+                                    if denom == 2
+                                    else cnot["full"]["quarter"]
+                                )
+                            )
+                        )
+                    )
+                )
+            )
             return note
 
-        def translate_note(p_meta, p_denom, p_rest_or_full):
+        def translate_note(meta, denom, rest_or_full):
             for r in rules:
                 for dm in r[0]:
-                    if p_denom == dm[0] and p_meta == dm[1]:
-                        return cnot[p_rest_or_full][r[1]]
+                    if denom == dm[0] and meta == dm[1]:
+                        return cnot[rest_or_full][r[1]]
             return None
 
-        if p_meta == 'T':
-            note = translate_triplet(p_denom)
-        elif p_next == 'r':
-            note = translate_note(p_meta, p_denom, 'rest')
+        if meta == "T":
+            note = translate_triplet(denom)
+        elif next_char == "r":
+            note = translate_note(meta, denom, "rest")
         else:
-            note = translate_note(p_meta, p_denom, 'full')
+            note = translate_note(meta, denom, "full")
 
         return note
 
-    def translate_motif(self,
-                        p_mots: list,
-                        p_denom: int):
+    def translate_motif(self, mots: list, denom: int):
         """Translate metadata from one motif into music21 objects.
 
         :args:
-        - p_mot (list) : list of one or two motif metadata strings
-        - p_denom (int) : time signature denominator
+        - mots (list) : list of one or two motif metadata strings
+        - denom (int) : time signature denominator
 
         :returns: (dict) : {'notes': [list-1 of durations and rests][list-2],
                             'dirs': [list-1 of directional integers][list-2]}
         """
-        if p_mots == [""]:
+        if mots == [""]:
             return ""
         notes = list()
         dirs = list()
-        for mot in p_mots:
+        for mot in mots:
             no = list()
             dr = list()
             for mi, meta in enumerate(mot):
-                if meta in ('Q', 'S', 'B', 'D', 'W', 'T'):
-                    no.append(
-                        self.translate_duration(meta, mot[mi + 1], p_denom))
-                elif meta in ('^', 'v', '~'):
+                if meta in ("Q", "S", "B", "D", "W", "T"):
+                    no.append(self.translate_duration(meta, mot[mi + 1], denom))
+                elif meta in ("^", "v", "~"):
                     dr.append(self.translate_direction(meta))
             notes.append(no)
             dirs.append(dr)
-        return {'notes': notes, 'dirs': dirs}
+        return {"notes": notes, "dirs": dirs}
 
     def set_motif(self, nnm: str):
         """Select motif for the score + timesig combo.
@@ -830,15 +902,14 @@ class MusicCore():
         :sets:
         - (class attribute): self.SCORE
         """
-        ts = self.SCORE[nnm]['_beat']['time_sig'].ratioString
-        denom = self.SCORE[nnm]['_beat']['time_sig'].denominator
-        mot_raw = self.CANON.MOTIF[ts][random.choice(
-            list(self.CANON.MOTIF[ts].keys()))]
+        ts = self.SCORE[nnm]["_beat"]["time_sig"].ratioString
+        denom = self.SCORE[nnm]["_beat"]["time_sig"].denominator
+        mot_raw = self.CANON.MOTIF[ts][random.choice(list(self.CANON.MOTIF[ts].keys()))]
         motif = dict()
         for mot_nm, mot_str in mot_raw.items():
-            mots = mot_str.split('|') if '|' in mot_str else [mot_str]
+            mots = mot_str.split("|") if "|" in mot_str else [mot_str]
             motif[mot_nm] = self.translate_motif(mots, denom)
-        self.SCORE[nnm]['motif'] = motif
+        self.SCORE[nnm]["motif"] = motif
 
     def set_meter(self, nnm: str):
         """Select random time signature and tempo.
@@ -850,12 +921,13 @@ class MusicCore():
         - (class attribute): self.SCORE
         """
         ts = random.choice(list(self.CANON.TIMESIG.keys()))
-        self.SCORE[nnm]['_beat'] = {
-            'bar_dur': self.CANON.TIMESIG[ts].barDuration,
-            'beat_dur': self.CANON.TIMESIG[ts].beatDuration,
-            'beat_cnt': self.CANON.TIMESIG[ts].beatCount,
-            'metronome': m21.tempo.MetronomeMark(random.randint(60, 160)),
-            'time_sig': self.CANON.TIMESIG[ts]}
+        self.SCORE[nnm]["_beat"] = {
+            "bar_dur": self.CANON.TIMESIG[ts].barDuration,
+            "beat_dur": self.CANON.TIMESIG[ts].beatDuration,
+            "beat_cnt": self.CANON.TIMESIG[ts].beatCount,
+            "metronome": m21.tempo.MetronomeMark(random.randint(60, 160)),
+            "time_sig": self.CANON.TIMESIG[ts],
+        }
 
     def set_node_scores(self):
         """Assign a score to each unique Node.
@@ -869,14 +941,15 @@ class MusicCore():
         dbug = 0
         for nnm, nd in self.NODES.items():
             dbug += 1
-            label = self.PALETTE['labels'][nd['L']]
-            topic = self.PALETTE['topics'][nd['T']]
+            label = self.PALETTE["labels"][nd["L"]]
+            topic = self.PALETTE["topics"][nd["T"]]
             self.SCORE[nnm] = {
-                '_chords': label['chords'],
-                '_keysig': topic['keysig'],
-                '_scale': topic['scale'],
-                '_t_bar': label['bar_cnt'],
-                '_t_phrase': label['phr_cnt']}
+                "_chords": label["chords"],
+                "_keysig": topic["keysig"],
+                "_scale": topic["scale"],
+                "_t_bar": label["bar_cnt"],
+                "_t_phrase": label["phr_cnt"],
+            }
             self.set_meter(nnm)
             self.set_motif(nnm)
             self.set_pitches(nnm)
@@ -890,14 +963,15 @@ class MusicCore():
         :sets:
         - (class attribute): self.PALETTE
         """
-        self.PALETTE['labels'] = dict()
-        labels = set([data['L'] for _, data in self.NODES.items()])
+        self.PALETTE["labels"] = dict()
+        labels = set([data["L"] for _, data in self.NODES.items()])
         for label in labels:
-            p_x = random.choice(list(self.CANON.PROG.keys()))
-            self.PALETTE['labels'][label] =\
-                {'chords': self.CANON.PROG[p_x]['chords'],
-                 'phr_cnt': self.CANON.PROG[p_x]['phrases'],
-                 'bar_cnt': len(self.CANON.PROG[p_x]['chords'])}
+            prog_index = random.choice(list(self.CANON.PROG.keys()))
+            self.PALETTE["labels"][label] = {
+                "chords": self.CANON.PROG[prog_index]["chords"],
+                "phr_cnt": self.CANON.PROG[prog_index]["phrases"],
+                "bar_cnt": len(self.CANON.PROG[prog_index]["chords"]),
+            }
 
     def set_topic_modes(self):
         """Assign a key and scale for each unique Node Topic.
@@ -907,8 +981,8 @@ class MusicCore():
         :sets:
         - (class attribute): self.PALETTE
         """
-        self.PALETTE['topics'] = dict()
-        topics = set([data['T'] for _, data in self.NODES.items()])
+        self.PALETTE["topics"] = dict()
+        topics = set([data["T"] for _, data in self.NODES.items()])
         # 67% chance to use major, else minor
         for topic in topics:
             k = random.choice(list(self.CANON.SCALE.keys()))
@@ -917,15 +991,15 @@ class MusicCore():
             else:
                 got_it = False
                 while not got_it:
-                    m = random.choice(
-                        ["minor", "harmonicMinor", "melodicMinor"])
+                    m = random.choice(["minor", "harmonicMinor", "melodicMinor"])
                     if m in self.CANON.SCALE[k]:
                         got_it = True
                     else:
                         k = random.choice(list(self.CANON.SCALE.keys()))
-            self.PALETTE['topics'][topic] =\
-                {'keysig': self.CANON.KEYSIG[k][m],
-                 'scale': self.CANON.SCALE[k][m]}
+            self.PALETTE["topics"][topic] = {
+                "keysig": self.CANON.KEYSIG[k][m],
+                "scale": self.CANON.SCALE[k][m],
+            }
 
     def set_music_data(self):
         """Generate music data from the graph data.
@@ -963,16 +1037,12 @@ class MusicCore():
               "_scores.pickle")
         """
 
-    def parse_score(self,
-                    nnm: str,
-                    p_key_sig: str,
-                    p_beat: dict,
-                    p_notes: dict):
+    def parse_score(self, nnm: str, key_sig: str, beat: dict, notes: dict):
         """Parse a score into music21 note objects.
         :args:
         - nnm (str): name of the Node
-        - p_beat (dict): the beat data for one node
-        - p_notes (dict): the voice #1 notes data for one Node
+        - beat (dict): the beat data for one node
+        - notes (dict): the voice #1 notes data for one Node
 
         :returns:
         - music21.stream.Score object (a midi file, basically)
@@ -1010,27 +1080,25 @@ class MusicCore():
         Should be able to remove this function after refactoring.
         """
         print(f"\n\n========  {nnm}  ============")
-        # pp((("key signature", p_key_sig), ('beat', p_beat)))
+        # pp((("key signature", key_sig), ('beat', beat)))
         score = m21.stream.Stream()
         score.clef = m21.clef.TrebleClef()
-        score.timeSignature = m21.meter.TimeSignature(p_beat["time_sig"])
-        for m, pitches in p_notes['pitch'].items():
+        score.timeSignature = m21.meter.TimeSignature(beat["time_sig"])
+        for m, pitches in notes["pitch"].items():
             measure = m21.stream.Stream()
             range = 4
             used = set()
-            rhythms = p_notes['rhythm'][m]
-            pp((("\nmeasure: ", m), ("pitches", pitches),
-                ("rhythms", rhythms)))
+            rhythms = notes["rhythm"][m]
+            pp((("\nmeasure: ", m), ("pitches", pitches), ("rhythms", rhythms)))
             if len(rhythms) == 1:
                 # handle chords here
                 pass
             else:
                 for px, pit in enumerate(pitches):
-                    rhy = rhythms[px].replace('r', '').replace('.', '')
+                    rhy = rhythms[px].replace("r", "").replace(".", "")
                     dur = self.CANON.NOTES[rhy][1]
                     if pit[:1] in used:
-                        range = random.choice([3, 4, 5])\
-                            if range == 4 else 4
+                        range = random.choice([3, 4, 5]) if range == 4 else 4
                     else:
                         used.add(pit[:1])
                     pit += str(range)
@@ -1070,15 +1138,16 @@ class MusicCore():
         """
         # with open(self.file_nm + "_scores.pickle", 'rb') as f:
         #     self.SCORE = pickle.load(f)
-        m21.environment.set('midiPath', '/usr/bin/timidity')
+        m21.environment.set("midiPath", "/usr/bin/timidity")
         print("\n\nMelodic and harmonic assignments ==============")
         dbug_max = 2
         dbug = 0
         book = m21.stream.Stream()
         for n_name, n_data in self.SCORE.items():
             dbug += 1
-            score = self.parse_score(n_name, n_data["modes"]["key_sig"],
-                                     n_data['_beat'], n_data["notes"][1])
+            score = self.parse_score(
+                n_name, n_data["modes"]["key_sig"], n_data["_beat"], n_data["notes"][1]
+            )
             book.append(score)
             if dbug >= dbug_max:
                 break

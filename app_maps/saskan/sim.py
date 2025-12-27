@@ -34,7 +34,9 @@ def run_simulation(
         events = engine.step()
         output.extend(render_step(engine.state, events))
         if snapshot_every and snapshot_path and engine.state.step % snapshot_every == 0:
-            snapshot_state(engine.state, events, engine.config, snapshot_path, scenario=scenario)
+            snapshot_state(
+                engine.state, events, engine.config, snapshot_path, scenario=scenario
+            )
     return output
 
 

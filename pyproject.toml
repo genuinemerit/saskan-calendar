@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "saskan-calendar"
+name = "saskan-calendar"   # This is a project name, but not an app name
 version = "0.1.0"
-description = "A toy app with semi-structured build and release workflow."
+description = "Experimental sub-apps for the Saskan Lands."
 authors = [
     "Genuine Merit <genuinemerit@pm.me>",
     "David Stitt <david.stitt@pm.me>",
@@ -10,34 +10,20 @@ authors = [
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "app" },
-    { include = "experiments" },
+    { include = "app_calendar" },
+    { include = "app_maps" },
+    { include = "app_timeline" },
 ]
 
 # Optional metadata for future PyPI publishing
 homepage = "https://github.com/genuinemerit/saskan-calendar"
 repository = "https://github.com/genuinemerit/saskan-calendar"
-keywords = ["flask", "ledger", "postgresql", "sqlite", "poetry", "build", "release"]
+keywords = ["calendar", "simulation", "worldbuilding", "astronomy", "music", "maps", "timeline"]
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.13"
-flask = "^2.3"
-flask-login = "^0.6"
-flask-bcrypt = "^1.0"
-flask-wtf = "^0.14"
-flask-cors = "^6.0"
-flask-sqlalchemy = "^3.1"
-flask-babel = "^3.1"
 numpy = "^1.26"
-sqlalchemy = "^2.0"
-sqlalchemy-utils = "^0.41"
-wtforms = "^2.3"
-requests = "^2.32"
 openai = "^1.64"
-python-slugify = "^8.0"
-prettyprinter = "^0.18"
-markdown = "^3.7"
-bcrypt = "^3.1"
 python-dotenv = "^1.1.0"
 pandas = "^2.3.0"
 pendulum = "^3.1.0"
@@ -54,14 +40,8 @@ matplotlib = "^3.10.8"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
-pytest-flask = "^1.3"
 pytest-html = "^4.1"
-pytest-sqlalchemy = "^0.2"
-pytest-playwright = "^0.7"
 pytest-mock = "^3.14"
-flask-testing = "^0.8"
-playwright = "^1.50"
-locust = "^2.32"
 black = "^24.4"
 isort = "^5.13"
 

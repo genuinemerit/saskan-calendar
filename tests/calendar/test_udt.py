@@ -1,5 +1,5 @@
 import pytest
-from app import universal_date_translator
+from app_calendar import universal_date_translator
 
 
 @pytest.mark.parametrize("day", [0, 799875, 1455000])
