@@ -1,4 +1,4 @@
-Decisions regarding ADR 001:
+# Decisions regarding ADR 001
 
 Use sqlite for initial implementation.
 Use sqlalchemy for all user and developer interactions via Python. In other words, for define/deploy as well as calls to insert, update, delete and query.
@@ -55,9 +55,7 @@ db.sqlite3
 
 db.sqlite3-journal
 
- 
-
-# SQLite databases
+## SQLite databases
 
 *.db
 
@@ -193,7 +191,7 @@ from sqlalchemy.orm import relationship
 
 class Settlement(Base):
     __tablename__ = "settlements"
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     settlement_type = Column(String, nullable=False)
@@ -268,14 +266,16 @@ Truly minimalist approach
 My recommendation: Include just created_at for sanity checking during development. Drop it later if unused.
 
 Summary
-# Core pattern
+
+## Core pattern
+
 class Settlement(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     settlement_type = Column(String, nullable=False)
     parent_settlement_id = Column(Integer, ForeignKey("settlements.id"), nullable=True)
     province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True)
-    
+
     # Temporal bounds
     founded_date = Column(Integer)  # astro_day
     dissolved_date = Column(Integer, nullable=True)
@@ -307,7 +307,7 @@ class Settlement(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     settlement_type = Column(String, nullable=False)
-    
+
     # Lore timeline (in-world time)
     founded_astro_day = Column(Integer)  # Day N when founded
     dissolved_astro_day = Column(Integer, nullable=True)  # Day N when dissolved/destroyed
@@ -323,7 +323,7 @@ class Settlement(Base):
 class SettlementSnapshot(Base):
     id = Column(Integer, primary_key=True)
     settlement_id = Column(Integer, ForeignKey("settlements.id"))
-    
+
     # Lore timeline (when we're taking the snapshot)
     astro_day = Column(Integer)  # "As of Day 12,543, population was..."
     
@@ -352,13 +352,15 @@ Excellent first MVP! This is a solid, foundational piece of work. Let me clarify
 
 ADR 001 + 002 / PR 001: "DDL for core timeline database"
 In Scope ✓
+
 1. Configuration Management
 
 Database connection settings (path, dialect, etc.)
 Application config (settlement types, species list, etc.)
 Format: Mix of YAML (human-editable config) + Python dataclasses (type-safe runtime)
 No secrets needed for SQLite (just file path)
-2. SQLAlchemy Models (DDL)
+
+1. SQLAlchemy Models (DDL)
 
 app_timeline/
   models/
@@ -369,7 +371,7 @@ app_timeline/
     snapshot.py      # SettlementSnapshot, ProvinceSnapshot
     event.py         # Event model (for ADR 003, but define schema now)
 
-3. Database Management Functions
+1. Database Management Functions
 
 app_timeline/
   db/
@@ -377,31 +379,36 @@ app_timeline/
     connection.py    # get_engine(), get_session(), init_db()
     schema.py        # create_all_tables(), drop_all_tables()
 
-4. CLI Interface (Typer-based)
+1. CLI Interface (Typer-based)
 
 app_timeline/
   cli.py           # Main CLI entry point
 
 Commands:
 
-# Initialize database (create all tables)
+### Initialize database (create all tables)
+
 saskan-timeline db init
 
-# Drop all tables (with confirmation)
+### Drop all tables (with confirmation)
+
 saskan-timeline db drop
 
-# Show database info (path, table count, row counts)
+### Show database info (path, table count, row counts)
+
 saskan-timeline db info
 
-# Validate database schema
+### Validate database schema
+
 saskan-timeline db validate
 
-5. Project Structure
+1. Project Structure
 
 pyproject.toml updates:
-  - Add sqlalchemy dependency
-  - Add typer dependency (already there from app_maps)
-  - Add new Poetry script: saskan-timeline
+
+- Add sqlalchemy dependency
+- Add typer dependency (already there from app_maps)
+- Add new Poetry script: saskan-timeline
 
 config/
   timeline/
@@ -420,6 +427,7 @@ Out of Scope (for PR 002+)
 ✗ Query functions beyond basic validation (that's PR 003+)
 ✗ Event generation logic (that's ADR 003)
 Questions
+
 1. User Management: You mentioned "admin users, DML users, read-only users" - but SQLite is file-based with no built-in user auth. Did you mean:
 
 a) Skip user management entirely (just file permissions)?
@@ -427,7 +435,7 @@ b) Add application-level roles for future web interface?
 c) Plan for PostgreSQL migration where this matters?
 My recommendation: Skip for now (option a). SQLite security = file permissions. Add when migrating to PostgreSQL.
 
-2. Schema Scope: For this PR, which entities do we define?
+1. Schema Scope: For this PR, which entities do we define?
 
 Settlement (yes, obviously)
 Province/Region (yes, per your notes)
@@ -437,7 +445,7 @@ Routes/Relationships (defer to later PR?)
 Entities (people, organizations - defer?)
 My recommendation: Settlement, Province, Region, SettlementSnapshot only. Defer Event/Routes/Entities to later PRs when we understand requirements better.
 
-3. Config Format: Preference between:
+1. Config Format: Preference between:
 
 YAML (human-friendly, widely used)
 TOML (like pyproject.toml, Python-native)

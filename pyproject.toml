@@ -37,6 +37,9 @@ openpyxl = "^3.1.5"
 networkx = "^3"
 typer = "^0.20.1"
 matplotlib = "^3.10.8"
+sqlalchemy = "^2.0"
+pyyaml = "^6.0"
+rich = "^13.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
@@ -48,6 +51,7 @@ isort = "^5.13"
 [tool.poetry.scripts]
 saskan-calendar = "scripts.manage:cli"
 saskan-experiments = "experiments.cli:app"
+saskan-timeline = "app_timeline.cli:app"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore::DeprecationWarning"]

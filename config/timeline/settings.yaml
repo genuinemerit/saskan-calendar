@@ -1,0 +1,87 @@
+# Saskan Timeline Configuration
+# Settings for the timeline database and application
+
+database:
+  # SQLite database file location (relative to project root)
+  path: "data/timeline/saskan_timeline.db"
+
+  # Database dialect (sqlite or postgresql for future migration)
+  dialect: "sqlite"
+
+  # Echo SQL statements to console (useful for debugging)
+  echo: false
+
+# Settlement type definitions
+settlement_types:
+  - ring_town
+  - market_town
+  - military_camp_large
+  - military_camp_small
+  - hamlet
+  - village
+  - camp
+  - den
+
+# Species classifications
+species:
+  - huum                              # Human
+  - sint                              # Animal/vegetable sentients
+  - beks                              # Non-sentient animals
+  - mixed                             # Huum-sint mixed
+  - maken                             # Non-organic life forms
+  - extra_terrestrial_huum_appearing  # Extra-terrestrial huum-appearing
+  - extra_terrestrial_non_huum        # Extra-terrestrial non-huum
+
+# Habitat types
+habitats:
+  - on_ground
+  - in_sea
+  - under_ground
+  - in_space
+
+# Entity type classifications (for people, organizations, groups)
+entity_types:
+  - person
+  - organization
+  - group
+  - collective
+
+# Event type classifications (for future use)
+event_types:
+  - founding
+  - dissolution
+  - battle
+  - treaty
+  - migration
+  - natural_disaster
+  - cultural
+  - political
+  - economic
+  - other
+
+# Route difficulty levels
+route_difficulties:
+  - trivial
+  - easy
+  - moderate
+  - difficult
+  - very_difficult
+  - extreme
+
+# Route type classifications
+route_types:
+  - trail              # Basic path, possibly unmarked
+  - road               # Maintained dirt road, packed earth
+  - paved_road         # Engineered, paved surface
+  - ring_road          # Major road connecting ring towns
+  - river              # Water route along river
+  - sea_route          # Maritime route
+  - mountain_pass      # High-altitude route through mountains
+
+# Application settings
+app:
+  # Version
+  version: "0.1.0"
+
+  # Default astro_day for "present day" queries (can be overridden)
+  default_astro_day: 0
