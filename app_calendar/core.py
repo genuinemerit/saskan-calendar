@@ -26,6 +26,7 @@ Dev notes:
 - Record a database of meaningful dates in the Saskan Lore.
   - Start with JSON. Later, consider a database.
 """
+
 from __future__ import annotations
 
 import json
@@ -978,8 +979,8 @@ class AstroCalendar:
                 "turn": turn,
                 "turn_day": turn_day,
                 "season": season,
-                "events": events
-            }
+                "events": events,
+            },
         }
 
     def get_turn_day(self) -> dict:
@@ -991,10 +992,7 @@ class AstroCalendar:
         turn = get_astro_turn(self.astro_day)
         day_cnt = int(self.astro_day % DAYS_PER_SOLAR_TURN) + 1
 
-        return {
-            "ros_turn": turn,
-            "ros_day_cnt": day_cnt
-        }
+        return {"ros_turn": turn, "ros_day_cnt": day_cnt}
 
     def get_solar_season(self) -> dict:
         """

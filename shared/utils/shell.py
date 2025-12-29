@@ -7,6 +7,7 @@ and other shell-related operations.
 :class:     ShellMethods
 :author:    GM (genuinemerit @ pm.me)
 """
+
 from __future__ import annotations
 
 import hashlib

@@ -30,9 +30,13 @@ update_app = typer.Typer(help="Update and delete timeline data")
 def update_epoch(
     epoch_id: int = typer.Argument(..., help="ID of epoch to update"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="New epoch name"),
-    start_day: Optional[int] = typer.Option(None, "--start", "-s", help="New start day"),
+    start_day: Optional[int] = typer.Option(
+        None, "--start", "-s", help="New start day"
+    ),
     end_day: Optional[int] = typer.Option(None, "--end", "-e", help="New end day"),
-    description: Optional[str] = typer.Option(None, "--description", "-d", help="New description"),
+    description: Optional[str] = typer.Option(
+        None, "--description", "-d", help="New description"
+    ),
 ):
     """Update an existing epoch."""
     try:
@@ -105,7 +109,9 @@ def update_region(
 def update_province(
     province_id: int = typer.Argument(..., help="ID of province to update"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="New province name"),
-    region_id: Optional[int] = typer.Option(None, "--region", "-r", help="New region ID"),
+    region_id: Optional[int] = typer.Option(
+        None, "--region", "-r", help="New region ID"
+    ),
 ):
     """Update an existing province."""
     try:
@@ -126,7 +132,9 @@ def update_province(
             rprint(f"[red]✗ Province {province_id} not found.[/red]")
             raise typer.Exit(code=1)
 
-        rprint(f"[green]✓ Updated province '{province.name}' (ID: {province.id})[/green]")
+        rprint(
+            f"[green]✓ Updated province '{province.name}' (ID: {province.id})[/green]"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -139,11 +147,21 @@ def update_province(
 @update_app.command("settlement")
 def update_settlement(
     settlement_id: int = typer.Argument(..., help="ID of settlement to update"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="New settlement name"),
-    settlement_type: Optional[str] = typer.Option(None, "--type", "-t", help="New settlement type"),
-    province_id: Optional[int] = typer.Option(None, "--province", "-p", help="New province ID"),
-    grid_x: Optional[int] = typer.Option(None, "--grid-x", help="New grid X coordinate"),
-    grid_y: Optional[int] = typer.Option(None, "--grid-y", help="New grid Y coordinate"),
+    name: Optional[str] = typer.Option(
+        None, "--name", "-n", help="New settlement name"
+    ),
+    settlement_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="New settlement type"
+    ),
+    province_id: Optional[int] = typer.Option(
+        None, "--province", "-p", help="New province ID"
+    ),
+    grid_x: Optional[int] = typer.Option(
+        None, "--grid-x", help="New grid X coordinate"
+    ),
+    grid_y: Optional[int] = typer.Option(
+        None, "--grid-y", help="New grid Y coordinate"
+    ),
 ):
     """Update an existing settlement."""
     try:
@@ -170,7 +188,9 @@ def update_settlement(
             rprint(f"[red]✗ Settlement {settlement_id} not found.[/red]")
             raise typer.Exit(code=1)
 
-        rprint(f"[green]✓ Updated {settlement.settlement_type} '{settlement.name}' (ID: {settlement.id})[/green]")
+        rprint(
+            f"[green]✓ Updated {settlement.settlement_type} '{settlement.name}' (ID: {settlement.id})[/green]"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -184,10 +204,18 @@ def update_settlement(
 def update_entity(
     entity_id: int = typer.Argument(..., help="ID of entity to update"),
     name: Optional[str] = typer.Option(None, "--name", "-n", help="New entity name"),
-    entity_type: Optional[str] = typer.Option(None, "--type", "-t", help="New entity type"),
-    founded: Optional[int] = typer.Option(None, "--founded", "-f", help="New founded day"),
-    dissolved: Optional[int] = typer.Option(None, "--dissolved", "-d", help="New dissolved day"),
-    description: Optional[str] = typer.Option(None, "--description", help="New description"),
+    entity_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="New entity type"
+    ),
+    founded: Optional[int] = typer.Option(
+        None, "--founded", "-f", help="New founded day"
+    ),
+    dissolved: Optional[int] = typer.Option(
+        None, "--dissolved", "-d", help="New dissolved day"
+    ),
+    description: Optional[str] = typer.Option(
+        None, "--description", help="New description"
+    ),
 ):
     """Update an existing entity."""
     try:
@@ -214,7 +242,9 @@ def update_entity(
             rprint(f"[red]✗ Entity {entity_id} not found.[/red]")
             raise typer.Exit(code=1)
 
-        rprint(f"[green]✓ Updated {entity.entity_type} '{entity.name}' (ID: {entity.id})[/green]")
+        rprint(
+            f"[green]✓ Updated {entity.entity_type} '{entity.name}' (ID: {entity.id})[/green]"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -230,9 +260,15 @@ def update_event(
     title: Optional[str] = typer.Option(None, "--title", "-t", help="New event title"),
     event_type: Optional[str] = typer.Option(None, "--type", help="New event type"),
     day: Optional[int] = typer.Option(None, "--day", "-d", help="New event day"),
-    description: Optional[str] = typer.Option(None, "--description", help="New description"),
-    settlement_id: Optional[int] = typer.Option(None, "--settlement", "-s", help="New settlement ID"),
-    entity_id: Optional[int] = typer.Option(None, "--entity", "-e", help="New entity ID"),
+    description: Optional[str] = typer.Option(
+        None, "--description", help="New description"
+    ),
+    settlement_id: Optional[int] = typer.Option(
+        None, "--settlement", "-s", help="New settlement ID"
+    ),
+    entity_id: Optional[int] = typer.Option(
+        None, "--entity", "-e", help="New entity ID"
+    ),
 ):
     """Update an existing event."""
     try:
@@ -261,7 +297,9 @@ def update_event(
             rprint(f"[red]✗ Event {event_id} not found.[/red]")
             raise typer.Exit(code=1)
 
-        rprint(f"[green]✓ Updated {event.event_type} event '{event.title}' (ID: {event.id})[/green]")
+        rprint(
+            f"[green]✓ Updated {event.event_type} event '{event.title}' (ID: {event.id})[/green]"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -274,11 +312,21 @@ def update_event(
 @update_app.command("route")
 def update_route(
     route_id: int = typer.Argument(..., help="ID of route to update"),
-    origin: Optional[int] = typer.Option(None, "--origin", help="New origin settlement ID"),
-    destination: Optional[int] = typer.Option(None, "--destination", help="New destination settlement ID"),
-    distance: Optional[float] = typer.Option(None, "--distance", "-d", help="New distance in km"),
-    route_type: Optional[str] = typer.Option(None, "--type", "-t", help="New route type"),
-    difficulty: Optional[str] = typer.Option(None, "--difficulty", help="New difficulty level"),
+    origin: Optional[int] = typer.Option(
+        None, "--origin", help="New origin settlement ID"
+    ),
+    destination: Optional[int] = typer.Option(
+        None, "--destination", help="New destination settlement ID"
+    ),
+    distance: Optional[float] = typer.Option(
+        None, "--distance", "-d", help="New distance in km"
+    ),
+    route_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="New route type"
+    ),
+    difficulty: Optional[str] = typer.Option(
+        None, "--difficulty", help="New difficulty level"
+    ),
 ):
     """Update an existing route."""
     try:
@@ -306,7 +354,9 @@ def update_route(
             raise typer.Exit(code=1)
 
         rprint(f"[green]✓ Updated route (ID: {route.id})[/green]")
-        rprint(f"  From: Settlement {route.origin_settlement_id} → Settlement {route.destination_settlement_id}")
+        rprint(
+            f"  From: Settlement {route.origin_settlement_id} → Settlement {route.destination_settlement_id}"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -320,7 +370,9 @@ def update_route(
 def update_snapshot(
     snapshot_id: int = typer.Argument(..., help="ID of snapshot to update"),
     day: Optional[int] = typer.Option(None, "--day", "-d", help="New snapshot day"),
-    population: Optional[int] = typer.Option(None, "--population", "-p", help="New population total"),
+    population: Optional[int] = typer.Option(
+        None, "--population", "-p", help="New population total"
+    ),
 ):
     """Update an existing settlement snapshot."""
     try:
@@ -342,7 +394,9 @@ def update_snapshot(
             raise typer.Exit(code=1)
 
         rprint(f"[green]✓ Updated snapshot (ID: {snapshot.id})[/green]")
-        rprint(f"  Settlement: {snapshot.settlement_id}, Day: {snapshot.astro_day}, Population: {snapshot.population_total:,}")
+        rprint(
+            f"  Settlement: {snapshot.settlement_id}, Day: {snapshot.astro_day}, Population: {snapshot.population_total:,}"
+        )
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")
@@ -356,14 +410,18 @@ def update_snapshot(
 @update_app.command("delete-epoch")
 def delete_epoch(
     epoch_id: int = typer.Argument(..., help="ID of epoch to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete an epoch (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} epoch {epoch_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} epoch {epoch_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -379,7 +437,9 @@ def delete_epoch(
 
         if success:
             delete_msg = "Permanently deleted" if hard else "Deactivated"
-            rprint(f"[green]✓ {delete_msg} epoch '{epoch_name}' (ID: {epoch_id})[/green]")
+            rprint(
+                f"[green]✓ {delete_msg} epoch '{epoch_name}' (ID: {epoch_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete epoch {epoch_id}.[/red]")
             raise typer.Exit(code=1)
@@ -395,14 +455,18 @@ def delete_epoch(
 @update_app.command("delete-region")
 def delete_region(
     region_id: int = typer.Argument(..., help="ID of region to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete a region (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} region {region_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} region {region_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -417,7 +481,9 @@ def delete_region(
 
         if success:
             delete_msg = "Permanently deleted" if hard else "Deactivated"
-            rprint(f"[green]✓ {delete_msg} region '{region_name}' (ID: {region_id})[/green]")
+            rprint(
+                f"[green]✓ {delete_msg} region '{region_name}' (ID: {region_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete region {region_id}.[/red]")
             raise typer.Exit(code=1)
@@ -433,14 +499,18 @@ def delete_region(
 @update_app.command("delete-province")
 def delete_province(
     province_id: int = typer.Argument(..., help="ID of province to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete a province (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} province {province_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} province {province_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -455,7 +525,9 @@ def delete_province(
 
         if success:
             delete_msg = "Permanently deleted" if hard else "Deactivated"
-            rprint(f"[green]✓ {delete_msg} province '{province_name}' (ID: {province_id})[/green]")
+            rprint(
+                f"[green]✓ {delete_msg} province '{province_name}' (ID: {province_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete province {province_id}.[/red]")
             raise typer.Exit(code=1)
@@ -471,14 +543,18 @@ def delete_province(
 @update_app.command("delete-settlement")
 def delete_settlement(
     settlement_id: int = typer.Argument(..., help="ID of settlement to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete a settlement (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} settlement {settlement_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} settlement {settlement_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -493,7 +569,9 @@ def delete_settlement(
 
         if success:
             delete_msg = "Permanently deleted" if hard else "Deactivated"
-            rprint(f"[green]✓ {delete_msg} settlement '{settlement_name}' (ID: {settlement_id})[/green]")
+            rprint(
+                f"[green]✓ {delete_msg} settlement '{settlement_name}' (ID: {settlement_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete settlement {settlement_id}.[/red]")
             raise typer.Exit(code=1)
@@ -509,14 +587,18 @@ def delete_settlement(
 @update_app.command("delete-entity")
 def delete_entity(
     entity_id: int = typer.Argument(..., help="ID of entity to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete an entity (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} entity {entity_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} entity {entity_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -531,7 +613,9 @@ def delete_entity(
 
         if success:
             delete_msg = "Permanently deleted" if hard else "Deactivated"
-            rprint(f"[green]✓ {delete_msg} entity '{entity_name}' (ID: {entity_id})[/green]")
+            rprint(
+                f"[green]✓ {delete_msg} entity '{entity_name}' (ID: {entity_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete entity {entity_id}.[/red]")
             raise typer.Exit(code=1)
@@ -567,7 +651,9 @@ def delete_event(
             success = service.delete(event_id, soft=True)
 
         if success:
-            rprint(f"[green]✓ Deprecated event '{event_title}' (ID: {event_id})[/green]")
+            rprint(
+                f"[green]✓ Deprecated event '{event_title}' (ID: {event_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete event {event_id}.[/red]")
             raise typer.Exit(code=1)
@@ -583,14 +669,18 @@ def delete_event(
 @update_app.command("delete-route")
 def delete_route(
     route_id: int = typer.Argument(..., help="ID of route to delete"),
-    hard: bool = typer.Option(False, "--hard", help="Permanently delete (default: soft delete)"),
+    hard: bool = typer.Option(
+        False, "--hard", help="Permanently delete (default: soft delete)"
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
     """Delete a route (soft delete by default)."""
     try:
         if not yes:
             delete_type = "permanently delete" if hard else "deactivate"
-            if not Confirm.ask(f"Are you sure you want to {delete_type} route {route_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to {delete_type} route {route_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -600,7 +690,9 @@ def delete_route(
                 rprint(f"[red]✗ Route {route_id} not found.[/red]")
                 raise typer.Exit(code=1)
 
-            route_info = f"{route.origin_settlement_id} → {route.destination_settlement_id}"
+            route_info = (
+                f"{route.origin_settlement_id} → {route.destination_settlement_id}"
+            )
             success = service.delete(route_id, soft=not hard)
 
         if success:
@@ -626,7 +718,9 @@ def delete_snapshot(
     """Delete a settlement snapshot (permanent deletion)."""
     try:
         if not yes:
-            if not Confirm.ask(f"Are you sure you want to permanently delete snapshot {snapshot_id}?"):
+            if not Confirm.ask(
+                f"Are you sure you want to permanently delete snapshot {snapshot_id}?"
+            ):
                 rprint("[yellow]Cancelled.[/yellow]")
                 raise typer.Exit(code=0)
 
@@ -636,12 +730,16 @@ def delete_snapshot(
                 rprint(f"[red]✗ Snapshot {snapshot_id} not found.[/red]")
                 raise typer.Exit(code=1)
 
-            snapshot_info = f"Settlement {snapshot.settlement_id}, Day {snapshot.astro_day}"
+            snapshot_info = (
+                f"Settlement {snapshot.settlement_id}, Day {snapshot.astro_day}"
+            )
             # Snapshots don't have is_active, so always hard delete
             success = service.delete(snapshot_id, soft=False)
 
         if success:
-            rprint(f"[green]✓ Deleted snapshot {snapshot_info} (ID: {snapshot_id})[/green]")
+            rprint(
+                f"[green]✓ Deleted snapshot {snapshot_info} (ID: {snapshot_id})[/green]"
+            )
         else:
             rprint(f"[red]✗ Failed to delete snapshot {snapshot_id}.[/red]")
             raise typer.Exit(code=1)

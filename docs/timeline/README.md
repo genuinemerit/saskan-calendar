@@ -196,14 +196,160 @@ saskan-timeline version
 
 ## Data Management
 
-**Current Status:** The MVP provides database schema and management commands. Data import/export and CRUD operations will be added in future iterations.
+The timeline system provides comprehensive CLI commands for creating, querying, updating, and deleting timeline data.
 
-**Planned Features:**
+### Creating Data
 
-- CLI commands for adding/editing settlements, events, entities
-- CSV/JSON import for bulk data loading
-- Query commands for searching and filtering
-- Export to various formats (JSON, CSV, markdown)
+Use the `data` command group to add new records:
+
+```bash
+# Add a new epoch
+saskan-timeline data add-epoch --name "Early Era" --start 0 --end 1000
+
+# Add a new region
+saskan-timeline data add-region --name "Northlands"
+
+# Add a new province
+saskan-timeline data add-province --name "North Province" --region 1
+
+# Add a new settlement
+saskan-timeline data add-settlement --name "Ingar" --type city --province 1 --grid-x 20 --grid-y 15
+
+# Add a new entity
+saskan-timeline data add-entity --name "King Aldric" --type person --founded 100
+
+# Add a new event
+saskan-timeline data add-event --title "Founding of Ingar" --type founding --day 50 --settlement 1
+
+# Add a new route
+saskan-timeline data add-route --origin 1 --destination 2 --distance 50 --type road
+
+# Add a demographic snapshot
+saskan-timeline data add-snapshot --settlement 1 --day 100 --population 5000
+```
+
+### Querying Data
+
+Use the `list` command group to query records:
+
+```bash
+# List all epochs
+saskan-timeline list epochs
+
+# List all regions
+saskan-timeline list regions
+
+# List all provinces (or filter by region)
+saskan-timeline list provinces
+saskan-timeline list provinces --region 1
+
+# List all settlements (or filter by type/province)
+saskan-timeline list settlements
+saskan-timeline list settlements --type city
+saskan-timeline list settlements --province 1
+
+# List all entities (or filter by type/day)
+saskan-timeline list entities
+saskan-timeline list entities --type person
+saskan-timeline list entities --day 500
+
+# List all events (or filter by type/day/settlement/entity/range)
+saskan-timeline list events
+saskan-timeline list events --type founding
+saskan-timeline list events --settlement 1
+saskan-timeline list events --start-day 0 --end-day 1000
+
+# List all routes (or filter by settlement/type)
+saskan-timeline list routes
+saskan-timeline list routes --settlement 1
+saskan-timeline list routes --type road
+
+# List all snapshots (or filter by settlement/range)
+saskan-timeline list snapshots
+saskan-timeline list snapshots --settlement 1
+saskan-timeline list snapshots --start-day 0 --end-day 1000
+
+# Include inactive records
+saskan-timeline list regions --all
+```
+
+### Updating Data
+
+Use the `update` command group to modify records:
+
+```bash
+# Update an epoch
+saskan-timeline update epoch 1 --name "New Name" --start 5 --end 2000
+
+# Update a region
+saskan-timeline update region 1 --name "Updated Region"
+
+# Update a province
+saskan-timeline update province 1 --name "Updated Province" --region 2
+
+# Update a settlement
+saskan-timeline update settlement 1 --name "New Name" --type town --grid-x 25
+
+# Update an entity
+saskan-timeline update entity 1 --name "Updated Name" --dissolved 500
+
+# Update an event
+saskan-timeline update event 1 --title "Updated Event" --day 75
+
+# Update a route
+saskan-timeline update route 1 --distance 75 --type trail
+
+# Update a snapshot
+saskan-timeline update snapshot 1 --population 6000
+```
+
+### Deleting Data
+
+Use the `delete-*` commands within the `update` group:
+
+```bash
+# Delete records (soft delete for entities with is_active field)
+saskan-timeline update delete-region 1
+saskan-timeline update delete-province 1
+saskan-timeline update delete-settlement 1
+saskan-timeline update delete-entity 1
+saskan-timeline update delete-event 1
+saskan-timeline update delete-route 1
+
+# Hard delete (permanent removal)
+saskan-timeline update delete-region 1 --hard
+
+# Skip confirmation prompt
+saskan-timeline update delete-region 1 --yes
+
+# Note: Epochs and snapshots always use hard delete (no soft delete)
+saskan-timeline update delete-epoch 1
+saskan-timeline update delete-snapshot 1
+```
+
+### Import/Export
+
+Use the `io` command group for bulk operations:
+
+```bash
+# Export all data to JSON
+saskan-timeline io export output.json
+
+# Export specific entity type
+saskan-timeline io export epochs.json --type epochs
+
+# Include inactive records in export
+saskan-timeline io export all_data.json --include-inactive
+
+# Import data from JSON
+saskan-timeline io import data.json
+
+# Preview import without making changes
+saskan-timeline io import data.json --dry-run
+
+# Skip existing records (match by name)
+saskan-timeline io import data.json --skip-existing
+```
 
 ---
 
@@ -220,16 +366,27 @@ saskan-timeline version
    saskan-timeline db validate
    ```
 
-2. **Data Entry** (future)
+2. **Data Entry**
 
    ```bash
-   # Add data via CLI or Python API
+   # Add data via CLI
+   saskan-timeline data add-epoch --name "Early Era" --start 0 --end 1000
+   saskan-timeline data add-region --name "Northlands"
+   saskan-timeline data add-province --name "North Province" --region 1
+
+   # Or import from JSON file
+   saskan-timeline io import initial_data.json
    ```
 
-3. **Query and Export** (future)
+3. **Query and Export**
 
    ```bash
-   # Query data, generate reports
+   # Query data
+   saskan-timeline list epochs
+   saskan-timeline list settlements --type city
+
+   # Export for backup or sharing
+   saskan-timeline io export backup.json
    ```
 
 ### Testing
@@ -315,15 +472,47 @@ poetry install
 
 ---
 
+## Temporal Conversion Utilities
+
+The system includes utility functions for converting between different time units in the Saskan calendar:
+
+**Time Units:**
+- pulse: 1 second (86,400 pulses per day)
+- turn: 365.25 days (synonym for solar year)
+- decade: 10 turns (3,652.5 days)
+- century: 100 turns (36,525 days)
+- shell: 132 turns (48,213 days - average Terpin lifespan)
+
+**Available Functions:**
+- `days_to_turns()`, `turns_to_days()` - Convert between days and turns
+- `days_to_decades()`, `decades_to_days()` - Convert between days and decades
+- `days_to_centuries()`, `centuries_to_days()` - Convert between days and centuries
+- `days_to_shells()`, `shells_to_days()` - Convert between days and shells
+- `format_duration()` - Format duration in human-readable form
+- `format_lifespan()` - Format entity lifespan with duration
+
+**Example:**
+```python
+from app_timeline.utils import days_to_turns, format_duration
+
+# Convert 1000 days to turns
+turns = days_to_turns(1000)  # ~2.74 turns
+
+# Format a duration
+duration = format_duration(1000)  # "2.74 turns"
+```
+
+---
+
 ## Next Steps
 
-With the database foundation in place, upcoming work includes:
+With the CLI implementation complete, upcoming work includes:
 
-1. **Data Entry CLI** - Commands to add/edit settlements, events, entities
-2. **Query System** - Search and filter capabilities
-3. **Import/Export** - CSV/JSON data loading and export
-4. **Reporting** - Generate timeline reports and visualizations
-5. **Integration** - Connect with app_calendar for date conversion
+1. **Validation Integration** - Apply validation utilities across all data entry points
+2. **Reporting** - Generate timeline reports and visualizations
+3. **Integration** - Connect with app_calendar for date conversion
+4. **Parquet Export** - Add Parquet format export for OLAP/DuckDB analysis
+5. **Advanced Queries** - Additional filtering and search capabilities
 
 ---
 
@@ -336,6 +525,17 @@ With the database foundation in place, upcoming work includes:
 ---
 
 ## Version History
+
+**v0.2.0** (2025-12-29) - PR-002: CLI Implementation
+
+- Complete CLI command implementation (data, list, update, io groups)
+- Create, query, update, and delete operations for all entity types
+- JSON import/export functionality with dry-run and skip-existing modes
+- Temporal conversion utilities (turns, decades, centuries, shells)
+- Validation utility functions for all data types
+- Soft delete support (is_active field) with hard delete option
+- Rich-formatted table output for list commands
+- Comprehensive test suite (150 tests total for CLI features)
 
 **v0.1.0** (2025-12-29)
 

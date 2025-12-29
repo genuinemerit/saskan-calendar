@@ -35,7 +35,9 @@ def setup_test_data():
             "--no-interactive",
         ],
     )
-    runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+    runner.invoke(
+        app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+    )
     runner.invoke(
         app,
         [
@@ -154,7 +156,9 @@ class TestEpochUpdateCommands:
 
     def test_update_epoch_dates(self):
         """Test updating epoch date range."""
-        result = runner.invoke(app, ["update", "epoch", "1", "--start", "10", "--end", "200"])
+        result = runner.invoke(
+            app, ["update", "epoch", "1", "--start", "10", "--end", "200"]
+        )
         assert result.exit_code == 0
         assert "Day 10 → 200" in result.stdout
 
@@ -215,7 +219,9 @@ class TestProvinceUpdateCommands:
 
     def test_update_province(self):
         """Test updating province."""
-        result = runner.invoke(app, ["update", "province", "1", "--name", "New Province"])
+        result = runner.invoke(
+            app, ["update", "province", "1", "--name", "New Province"]
+        )
         assert result.exit_code == 0
         assert "Updated province 'New Province'" in result.stdout
 
@@ -238,13 +244,17 @@ class TestSettlementUpdateCommands:
 
     def test_update_settlement_type(self):
         """Test updating settlement type."""
-        result = runner.invoke(app, ["update", "settlement", "1", "--type", "metropolis"])
+        result = runner.invoke(
+            app, ["update", "settlement", "1", "--type", "metropolis"]
+        )
         assert result.exit_code == 0
         assert "metropolis" in result.stdout
 
     def test_update_settlement_grid(self):
         """Test updating settlement grid coordinates."""
-        result = runner.invoke(app, ["update", "settlement", "1", "--grid-x", "25", "--grid-y", "30"])
+        result = runner.invoke(
+            app, ["update", "settlement", "1", "--grid-x", "25", "--grid-y", "30"]
+        )
         assert result.exit_code == 0
         assert "Updated" in result.stdout
 
@@ -267,7 +277,9 @@ class TestEntityUpdateCommands:
 
     def test_update_entity_dates(self):
         """Test updating entity lifespan dates."""
-        result = runner.invoke(app, ["update", "entity", "1", "--founded", "10", "--dissolved", "100"])
+        result = runner.invoke(
+            app, ["update", "entity", "1", "--founded", "10", "--dissolved", "100"]
+        )
         assert result.exit_code == 0
         assert "Updated" in result.stdout
 

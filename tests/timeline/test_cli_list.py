@@ -38,7 +38,9 @@ def setup_test_data():
     )
 
     # Add region
-    runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+    runner.invoke(
+        app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+    )
 
     # Add province
     runner.invoke(
@@ -351,7 +353,8 @@ class TestSnapshotListCommands:
     def test_list_snapshots_by_range(self):
         """Test listing snapshots within a date range."""
         result = runner.invoke(
-            app, ["list", "snapshots", "--settlement", "1", "--start", "0", "--end", "100"]
+            app,
+            ["list", "snapshots", "--settlement", "1", "--start", "0", "--end", "100"],
         )
         assert result.exit_code == 0
         assert "1,000" in result.stdout

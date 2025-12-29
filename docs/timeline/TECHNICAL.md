@@ -13,7 +13,7 @@ The timeline system follows a layered architecture with clear separation of conc
 ### Layers
 
 1. **CLI Layer** - Typer + Rich for user interaction
-2. **Business Logic** - Future application logic
+2. **Service Layer** - Business logic and data operations
 3. **Database Layer** - SQLAlchemy ORM
 4. **Storage** - SQLite (development) / PostgreSQL (production)
 
@@ -33,15 +33,35 @@ The timeline system follows a layered architecture with clear separation of conc
 app_timeline/
   __init__.py           # Package exports
   cli.py                # Typer CLI application
+  cli_data.py           # CLI commands for creating data
+  cli_list.py           # CLI commands for querying data
+  cli_update.py         # CLI commands for updating/deleting data
+  cli_import_export.py  # CLI commands for import/export
   config.py             # Configuration management
   models/               # SQLAlchemy models
     __init__.py
     base.py            # Base classes and mixins
     entity.py          # Entity model
+    epoch.py           # Epoch model
     event.py           # Event model
     province.py        # Province and Region models
     route.py           # Route model
     settlement.py      # Settlement and SettlementSnapshot models
+  services/             # Business logic layer
+    __init__.py
+    base_service.py    # Base service class
+    entity_service.py  # Entity operations
+    epoch_service.py   # Epoch operations
+    event_service.py   # Event operations
+    province_service.py # Province operations
+    region_service.py  # Region operations
+    route_service.py   # Route operations
+    settlement_service.py # Settlement operations
+    snapshot_service.py # Snapshot operations
+  utils/                # Utility functions
+    __init__.py
+    temporal.py        # Temporal conversion utilities
+    validation.py      # Validation utilities
   db/                   # Database utilities
     __init__.py
     connection.py      # Engine and session management
@@ -55,6 +75,13 @@ tests/timeline/
   test_config.py       # Configuration tests
   test_db.py           # Database tests
   test_models.py       # Model tests
+  test_services.py     # Service layer tests
+  test_cli_data.py     # CLI create command tests
+  test_cli_list.py     # CLI query command tests
+  test_cli_update.py   # CLI update/delete command tests
+  test_cli_import_export.py # CLI import/export tests
+  test_validation.py   # Validation utility tests
+  test_temporal.py     # Temporal utility tests
 ```
 
 ---
@@ -727,11 +754,17 @@ saskan-timeline db init
 
 ### Adding a CLI Command
 
-1. Add command function in `app_timeline/cli.py`
-2. Use Typer decorators for arguments/options
-3. Use Rich library for formatted output
-4. Test manually
-5. Update documentation
+1. Determine appropriate command group (data, list, update, io)
+2. Add command function in corresponding CLI module:
+   - `cli_data.py` for create operations
+   - `cli_list.py` for query operations
+   - `cli_update.py` for update/delete operations
+   - `cli_import_export.py` for bulk operations
+3. Use appropriate service layer class for business logic
+4. Use Typer decorators for arguments/options
+5. Use Rich library for formatted output (tables, prompts, etc.)
+6. Write tests in `tests/timeline/test_cli_*.py`
+7. Update documentation
 
 ### Schema Changes (MVP Phase)
 
@@ -743,6 +776,156 @@ saskan-timeline db init
 6. Commit changes with descriptive message
 
 **Note:** Once schema stabilizes, add Alembic for proper migrations.
+
+---
+
+## Service Layer
+
+The service layer provides business logic and data access patterns for all entities.
+
+### Base Service Pattern
+
+All services inherit from `BaseService` which provides:
+
+- Context manager support (`with` statement) for automatic session management
+- Common CRUD operations (`create`, `get_by_id`, `update`, `delete`)
+- Soft delete support (sets `is_active=False`)
+- Hard delete support (permanent removal)
+- List operations with filtering
+
+### Service Classes
+
+Each entity type has a dedicated service class:
+
+- `EpochService` - Epoch management
+- `RegionService` - Region operations
+- `ProvinceService` - Province operations with region filtering
+- `SettlementService` - Settlement operations with type/province filtering
+- `EntityService` - Entity operations with type/temporal filtering
+- `EventService` - Event operations with multiple filter options
+- `RouteService` - Route operations with settlement/type filtering
+- `SnapshotService` - Snapshot operations with settlement/temporal filtering
+
+### Usage Pattern
+
+```python
+from app_timeline.services import EpochService
+
+# Context manager ensures proper session cleanup
+with EpochService() as service:
+    epoch = service.create_epoch(
+        name="Early Era",
+        start_astro_day=0,
+        end_astro_day=1000,
+        description="The beginning"
+    )
+
+    # Query operations
+    all_epochs = service.list_all()
+    epoch = service.get_by_id(1)
+    epoch = service.get_by_name("Early Era")
+
+    # Update operations
+    updated = service.update(1, name="Updated Name")
+
+    # Delete operations
+    service.delete(1, hard=False)  # Soft delete (if supported)
+    service.delete(1, hard=True)   # Hard delete
+```
+
+---
+
+## CLI Implementation
+
+The CLI is organized into four command groups, each in its own module.
+
+### Command Groups
+
+**data** - Create operations (`cli_data.py`)
+- Commands: `add-epoch`, `add-region`, `add-province`, `add-settlement`, `add-entity`, `add-event`, `add-route`, `add-snapshot`
+- Pattern: Collect parameters, call service layer, display success/error
+
+**list** - Query operations (`cli_list.py`)
+- Commands: `epochs`, `regions`, `provinces`, `settlements`, `entities`, `events`, `routes`, `snapshots`
+- Pattern: Query via service layer, format as Rich table, display results
+- Features: Filtering by type/region/province/settlement/entity/temporal range, `--all` flag for inactive records
+
+**update** - Update/Delete operations (`cli_update.py`)
+- Commands: `epoch`, `region`, `province`, `settlement`, `entity`, `event`, `route`, `snapshot` (for updates)
+- Commands: `delete-epoch`, `delete-region`, etc. (for deletions)
+- Pattern: Collect parameters, call service layer, display success/error
+- Features: Partial updates (only specified fields), soft delete (default), `--hard` flag for permanent deletion, `--yes` flag to skip confirmation
+
+**io** - Import/Export operations (`cli_import_export.py`)
+- Commands: `export`, `import`
+- Export features: `--type` filter, `--include-inactive` flag
+- Import features: `--dry-run` preview, `--skip-existing` flag
+- Format: JSON (structured data interchange)
+
+### Delete Behavior
+
+**Soft Delete** (models with `is_active` field):
+- Sets `is_active=False`
+- Record preserved in database
+- Excluded from default queries
+- Applies to: Region, Province, Settlement, Entity, Route
+
+**Hard Delete** (always):
+- Permanent removal from database
+- No `is_active` field or conceptually immutable
+- Applies to: Epoch (definitional), Snapshot (observational)
+
+**Special Case** (Event):
+- Uses `is_deprecated` field instead of `is_active`
+- Soft delete sets `is_deprecated=True`
+
+---
+
+## Utility Functions
+
+### Temporal Conversion (`utils/temporal.py`)
+
+Provides functions for converting between Saskan temporal units:
+
+**Constants:**
+- `PULSES_PER_DAY = 86400` (1 pulse = 1 second)
+- `DAYS_PER_TURN = 365.25` (1 turn = 1 solar year)
+- `DAYS_PER_DECADE = 3652.5` (10 turns)
+- `DAYS_PER_CENTURY = 36525` (100 turns)
+- `DAYS_PER_SHELL = 48213` (132 turns, Terpin lifespan)
+
+**Conversion Functions:**
+- `days_to_turns(days)`, `turns_to_days(turns)`
+- `days_to_decades(days)`, `decades_to_days(decades)`
+- `days_to_centuries(days)`, `centuries_to_days(centuries)`
+- `days_to_shells(days)`, `shells_to_days(shells)`
+
+**Formatting Functions:**
+- `format_duration(days, use_turns=True)` - Human-readable duration string
+- `format_lifespan(founded_day, dissolved_day)` - Entity lifespan with duration
+
+### Validation (`utils/validation.py`)
+
+Provides reusable validation functions for data integrity:
+
+**Constants:**
+- `VALID_SETTLEMENT_TYPES` - Allowed settlement types
+- `VALID_ENTITY_TYPES` - Allowed entity types
+- `VALID_EVENT_TYPES` - Allowed event types
+- `VALID_ROUTE_TYPES` - Allowed route types
+- `VALID_ROUTE_DIFFICULTIES` - Allowed difficulty levels
+- `GRID_X_MIN`, `GRID_X_MAX`, `GRID_Y_MIN`, `GRID_Y_MAX` - Grid bounds
+
+**Validation Functions:**
+- `validate_date_range(start, end, allow_equal=False)` - Temporal range validation
+- `validate_grid_coordinates(x, y)` - Geographic coordinate validation
+- `validate_settlement_type(type)` - Settlement type validation
+- `validate_entity_type(type)` - Entity type validation
+- `validate_event_type(type)` - Event type validation
+- `validate_route_type(type)` - Route type validation
+- `validate_route_difficulty(difficulty)` - Difficulty validation
+- `validate_positive(value, field_name)` - Value > 0 validation
+- `validate_non_negative(value, field_name)` - Value >= 0 validation
 
 ---
 
@@ -781,6 +964,19 @@ saskan-timeline db init
 ---
 
 ## Version History
+
+**v0.2.0** (2025-12-29) - PR-002: CLI Implementation
+
+- Service layer with 8 service classes and base service pattern
+- Four CLI command groups (data, list, update, io) across 4 modules
+- Complete CRUD operations for all 8 entity types
+- JSON import/export with dry-run and skip-existing modes
+- Soft delete (is_active) and hard delete support
+- Temporal conversion utilities (turns, decades, centuries, shells)
+- Validation utility functions with constants for all data types
+- Rich-formatted table output for all list commands
+- Comprehensive test suite (150 tests for CLI, 100% pass rate)
+- Updated documentation with full CLI reference
 
 **v0.1.0** (2025-12-29)
 

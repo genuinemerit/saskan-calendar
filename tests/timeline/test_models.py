@@ -41,9 +41,7 @@ class TestRegionModel:
     def test_region_province_relationship(self, db_session: Session):
         """Test relationship between regions and provinces."""
         region = Region(name="Test Region", founded_astro_day=0)
-        province = Province(
-            name="Test Province", founded_astro_day=0, region=region
-        )
+        province = Province(name="Test Province", founded_astro_day=0, region=region)
 
         db_session.add(region)
         db_session.add(province)

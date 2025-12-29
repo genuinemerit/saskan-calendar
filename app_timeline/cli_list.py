@@ -37,14 +37,20 @@ def list_epochs(
     """List all epochs (named time periods)."""
     try:
         with EpochService() as service:
-            epochs = service.list_all(active_only=not all_records, order_by="start_astro_day")
+            epochs = service.list_all(
+                active_only=not all_records, order_by="start_astro_day"
+            )
 
         if not epochs:
             rprint("[yellow]No epochs found.[/yellow]")
             return
 
         # Create table
-        table = Table(title=f"\nEpochs ({len(epochs)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nEpochs ({len(epochs)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
         table.add_column("Start Day", justify="right")
@@ -85,7 +91,11 @@ def list_regions(
             return
 
         # Create table
-        table = Table(title=f"\nRegions ({len(regions)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nRegions ({len(regions)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
 
@@ -101,7 +111,9 @@ def list_regions(
 
 @list_app.command("provinces")
 def list_provinces(
-    region_id: Optional[int] = typer.Option(None, "--region", "-r", help="Filter by region ID"),
+    region_id: Optional[int] = typer.Option(
+        None, "--region", "-r", help="Filter by region ID"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include inactive records"
     ),
@@ -110,16 +122,24 @@ def list_provinces(
     try:
         with ProvinceService() as service:
             if region_id is not None:
-                provinces = service.get_provinces_by_region(region_id, active_only=not all_records)
+                provinces = service.get_provinces_by_region(
+                    region_id, active_only=not all_records
+                )
             else:
-                provinces = service.list_all(active_only=not all_records, order_by="name")
+                provinces = service.list_all(
+                    active_only=not all_records, order_by="name"
+                )
 
         if not provinces:
             rprint("[yellow]No provinces found.[/yellow]")
             return
 
         # Create table
-        table = Table(title=f"\nProvinces ({len(provinces)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nProvinces ({len(provinces)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
         table.add_column("Region ID", justify="right")
@@ -140,8 +160,12 @@ def list_provinces(
 
 @list_app.command("settlements")
 def list_settlements(
-    province_id: Optional[int] = typer.Option(None, "--province", "-p", help="Filter by province ID"),
-    settlement_type: Optional[str] = typer.Option(None, "--type", "-t", help="Filter by type (city/town/village)"),
+    province_id: Optional[int] = typer.Option(
+        None, "--province", "-p", help="Filter by province ID"
+    ),
+    settlement_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by type (city/town/village)"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include inactive records"
     ),
@@ -150,18 +174,28 @@ def list_settlements(
     try:
         with SettlementService() as service:
             if province_id is not None:
-                settlements = service.get_settlements_by_province(province_id, active_only=not all_records)
+                settlements = service.get_settlements_by_province(
+                    province_id, active_only=not all_records
+                )
             elif settlement_type is not None:
-                settlements = service.get_settlements_by_type(settlement_type, active_only=not all_records)
+                settlements = service.get_settlements_by_type(
+                    settlement_type, active_only=not all_records
+                )
             else:
-                settlements = service.list_all(active_only=not all_records, order_by="name")
+                settlements = service.list_all(
+                    active_only=not all_records, order_by="name"
+                )
 
         if not settlements:
             rprint("[yellow]No settlements found.[/yellow]")
             return
 
         # Create table
-        table = Table(title=f"\nSettlements ({len(settlements)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nSettlements ({len(settlements)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
         table.add_column("Type")
@@ -190,8 +224,12 @@ def list_settlements(
 
 @list_app.command("entities")
 def list_entities(
-    entity_type: Optional[str] = typer.Option(None, "--type", "-t", help="Filter by type (person/organization/faction)"),
-    day: Optional[int] = typer.Option(None, "--day", "-d", help="Filter entities alive at this day"),
+    entity_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by type (person/organization/faction)"
+    ),
+    day: Optional[int] = typer.Option(
+        None, "--day", "-d", help="Filter entities alive at this day"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include inactive records"
     ),
@@ -202,16 +240,24 @@ def list_entities(
             if day is not None:
                 entities = service.get_entities_alive_at_day(day)
             elif entity_type is not None:
-                entities = service.get_entities_by_type(entity_type, active_only=not all_records)
+                entities = service.get_entities_by_type(
+                    entity_type, active_only=not all_records
+                )
             else:
-                entities = service.list_all(active_only=not all_records, order_by="name")
+                entities = service.list_all(
+                    active_only=not all_records, order_by="name"
+                )
 
         if not entities:
             rprint("[yellow]No entities found.[/yellow]")
             return
 
         # Create table
-        table = Table(title=f"\nEntities ({len(entities)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nEntities ({len(entities)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
         table.add_column("Type")
@@ -219,8 +265,16 @@ def list_entities(
         table.add_column("Dissolved", justify="right")
 
         for entity in entities:
-            founded = str(entity.founded_astro_day) if entity.founded_astro_day is not None else ""
-            dissolved = str(entity.dissolved_astro_day) if entity.dissolved_astro_day is not None else ""
+            founded = (
+                str(entity.founded_astro_day)
+                if entity.founded_astro_day is not None
+                else ""
+            )
+            dissolved = (
+                str(entity.dissolved_astro_day)
+                if entity.dissolved_astro_day is not None
+                else ""
+            )
 
             table.add_row(
                 str(entity.id),
@@ -239,12 +293,24 @@ def list_entities(
 
 @list_app.command("events")
 def list_events(
-    event_type: Optional[str] = typer.Option(None, "--type", "-t", help="Filter by event type"),
-    settlement_id: Optional[int] = typer.Option(None, "--settlement", "-s", help="Filter by settlement ID"),
-    entity_id: Optional[int] = typer.Option(None, "--entity", "-e", help="Filter by entity ID"),
-    day: Optional[int] = typer.Option(None, "--day", "-d", help="Filter events on this day"),
-    start_day: Optional[int] = typer.Option(None, "--start", help="Filter events from this day"),
-    end_day: Optional[int] = typer.Option(None, "--end", help="Filter events until this day"),
+    event_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by event type"
+    ),
+    settlement_id: Optional[int] = typer.Option(
+        None, "--settlement", "-s", help="Filter by settlement ID"
+    ),
+    entity_id: Optional[int] = typer.Option(
+        None, "--entity", "-e", help="Filter by entity ID"
+    ),
+    day: Optional[int] = typer.Option(
+        None, "--day", "-d", help="Filter events on this day"
+    ),
+    start_day: Optional[int] = typer.Option(
+        None, "--start", help="Filter events from this day"
+    ),
+    end_day: Optional[int] = typer.Option(
+        None, "--end", help="Filter events until this day"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include deprecated events"
     ),
@@ -255,13 +321,21 @@ def list_events(
             if day is not None:
                 events = service.get_events_at_day(day, active_only=not all_records)
             elif start_day is not None and end_day is not None:
-                events = service.get_events_in_range(start_day, end_day, active_only=not all_records)
+                events = service.get_events_in_range(
+                    start_day, end_day, active_only=not all_records
+                )
             elif settlement_id is not None:
-                events = service.get_events_for_settlement(settlement_id, active_only=not all_records)
+                events = service.get_events_for_settlement(
+                    settlement_id, active_only=not all_records
+                )
             elif entity_id is not None:
-                events = service.get_events_for_entity(entity_id, active_only=not all_records)
+                events = service.get_events_for_entity(
+                    entity_id, active_only=not all_records
+                )
             elif event_type is not None:
-                events = service.get_events_by_type(event_type, active_only=not all_records)
+                events = service.get_events_by_type(
+                    event_type, active_only=not all_records
+                )
             else:
                 # Get all events ordered by day
                 from sqlalchemy import select
@@ -278,7 +352,11 @@ def list_events(
             return
 
         # Create table
-        table = Table(title=f"\nEvents ({len(events)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nEvents ({len(events)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Day", justify="right")
         table.add_column("Type")
@@ -305,8 +383,15 @@ def list_events(
 
 @list_app.command("routes")
 def list_routes(
-    settlement_id: Optional[int] = typer.Option(None, "--settlement", "-s", help="Filter by settlement ID (origin or destination)"),
-    route_type: Optional[str] = typer.Option(None, "--type", "-t", help="Filter by route type"),
+    settlement_id: Optional[int] = typer.Option(
+        None,
+        "--settlement",
+        "-s",
+        help="Filter by settlement ID (origin or destination)",
+    ),
+    route_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by route type"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include inactive routes"
     ),
@@ -315,9 +400,13 @@ def list_routes(
     try:
         with RouteService() as service:
             if settlement_id is not None:
-                routes = service.get_routes_for_settlement(settlement_id, active_only=not all_records)
+                routes = service.get_routes_for_settlement(
+                    settlement_id, active_only=not all_records
+                )
             elif route_type is not None:
-                routes = service.get_routes_by_type(route_type, active_only=not all_records)
+                routes = service.get_routes_by_type(
+                    route_type, active_only=not all_records
+                )
             else:
                 routes = service.list_all(active_only=not all_records)
 
@@ -326,7 +415,11 @@ def list_routes(
             return
 
         # Create table
-        table = Table(title=f"\nRoutes ({len(routes)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nRoutes ({len(routes)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Origin", justify="right")
         table.add_column("Destination", justify="right")
@@ -355,9 +448,15 @@ def list_routes(
 
 @list_app.command("snapshots")
 def list_snapshots(
-    settlement_id: int = typer.Option(..., "--settlement", "-s", help="Settlement ID (required)"),
-    start_day: Optional[int] = typer.Option(None, "--start", help="Filter snapshots from this day"),
-    end_day: Optional[int] = typer.Option(None, "--end", help="Filter snapshots until this day"),
+    settlement_id: int = typer.Option(
+        ..., "--settlement", "-s", help="Settlement ID (required)"
+    ),
+    start_day: Optional[int] = typer.Option(
+        None, "--start", help="Filter snapshots from this day"
+    ),
+    end_day: Optional[int] = typer.Option(
+        None, "--end", help="Filter snapshots until this day"
+    ),
     all_records: bool = typer.Option(
         False, "--all", "-a", help="Include inactive snapshots"
     ),
@@ -366,16 +465,26 @@ def list_snapshots(
     try:
         with SnapshotService() as service:
             if start_day is not None and end_day is not None:
-                snapshots = service.get_snapshots_in_range(settlement_id, start_day, end_day, active_only=not all_records)
+                snapshots = service.get_snapshots_in_range(
+                    settlement_id, start_day, end_day, active_only=not all_records
+                )
             else:
-                snapshots = service.get_snapshots_for_settlement(settlement_id, active_only=not all_records)
+                snapshots = service.get_snapshots_for_settlement(
+                    settlement_id, active_only=not all_records
+                )
 
         if not snapshots:
-            rprint(f"[yellow]No snapshots found for settlement {settlement_id}.[/yellow]")
+            rprint(
+                f"[yellow]No snapshots found for settlement {settlement_id}.[/yellow]"
+            )
             return
 
         # Create table
-        table = Table(title=f"\nSnapshots for Settlement {settlement_id} ({len(snapshots)} found)", show_header=True, header_style="bold cyan")
+        table = Table(
+            title=f"\nSnapshots for Settlement {settlement_id} ({len(snapshots)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Day", justify="right")
         table.add_column("Population", justify="right", style="green")

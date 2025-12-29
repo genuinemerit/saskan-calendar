@@ -11,6 +11,7 @@ Provides comprehensive file operations including:
 :class:     FileMethods
 :author:    GM (genuinemerit @ pm.me)
 """
+
 from __future__ import annotations
 
 import json

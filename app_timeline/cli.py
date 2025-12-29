@@ -14,6 +14,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .cli_data import data_app
+from .cli_import_export import io_app
 from .cli_list import list_app
 from .cli_update import update_app
 from .config import get_config
@@ -31,6 +32,7 @@ app.add_typer(db_app, name="db")
 app.add_typer(data_app, name="data")
 app.add_typer(list_app, name="list")
 app.add_typer(update_app, name="update")
+app.add_typer(io_app, name="io")
 
 console = Console()
 

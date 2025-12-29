@@ -142,7 +142,9 @@ class TestProvinceCommands:
     def test_add_province_basic(self):
         """Test adding a basic province."""
         # Create region first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
 
         result = runner.invoke(
             app,
@@ -184,7 +186,9 @@ class TestSettlementCommands:
     def test_add_settlement_basic(self):
         """Test adding a basic settlement."""
         # Create region and province first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [
@@ -218,7 +222,9 @@ class TestSettlementCommands:
     def test_add_settlement_with_grid(self):
         """Test adding settlement with grid coordinates."""
         # Create region and province first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [
@@ -256,7 +262,9 @@ class TestSettlementCommands:
     def test_add_settlement_invalid_grid(self):
         """Test that invalid grid coordinates fail."""
         # Create region and province first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [
@@ -361,7 +369,9 @@ class TestEventCommands:
     def test_add_event_with_relations(self):
         """Test adding event with settlement and entity references."""
         # Create region, province, settlement, and entity
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [
@@ -429,7 +439,9 @@ class TestSnapshotCommands:
     def test_add_snapshot_basic(self):
         """Test adding a basic snapshot."""
         # Create region, province, and settlement first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [
@@ -483,7 +495,9 @@ class TestRouteCommands:
     def test_add_route_basic(self):
         """Test adding a basic route."""
         # Create region, province, and two settlements first
-        runner.invoke(app, ["data", "add-region", "--name", "Test Region", "--no-interactive"])
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
         runner.invoke(
             app,
             [

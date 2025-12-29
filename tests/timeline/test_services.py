@@ -58,17 +58,27 @@ class TestEpochService:
     def test_create_epoch_duplicate_name(self, db_session):
         """Test that duplicate epoch names are rejected."""
         with EpochService() as service:
-            service.create_epoch(name="Test Epoch", start_astro_day=0, end_astro_day=100)
+            service.create_epoch(
+                name="Test Epoch", start_astro_day=0, end_astro_day=100
+            )
 
             with pytest.raises(ValueError, match="already exists"):
-                service.create_epoch(name="Test Epoch", start_astro_day=200, end_astro_day=300)
+                service.create_epoch(
+                    name="Test Epoch", start_astro_day=200, end_astro_day=300
+                )
 
     def test_get_epochs_containing_day(self, db_session):
         """Test finding epochs containing a specific day."""
         with EpochService() as service:
-            epoch1 = service.create_epoch(name="Epoch 1", start_astro_day=0, end_astro_day=100)
-            epoch2 = service.create_epoch(name="Epoch 2", start_astro_day=50, end_astro_day=150)
-            epoch3 = service.create_epoch(name="Epoch 3", start_astro_day=200, end_astro_day=300)
+            epoch1 = service.create_epoch(
+                name="Epoch 1", start_astro_day=0, end_astro_day=100
+            )
+            epoch2 = service.create_epoch(
+                name="Epoch 2", start_astro_day=50, end_astro_day=150
+            )
+            epoch3 = service.create_epoch(
+                name="Epoch 3", start_astro_day=200, end_astro_day=300
+            )
 
             # Day 75 should be in epochs 1 and 2
             epochs = service.get_epochs_containing_day(75)
@@ -80,9 +90,15 @@ class TestEpochService:
     def test_get_overlapping_epochs(self, db_session):
         """Test finding overlapping epochs."""
         with EpochService() as service:
-            epoch1 = service.create_epoch(name="Epoch 1", start_astro_day=0, end_astro_day=100)
-            epoch2 = service.create_epoch(name="Epoch 2", start_astro_day=50, end_astro_day=150)
-            epoch3 = service.create_epoch(name="Epoch 3", start_astro_day=200, end_astro_day=300)
+            epoch1 = service.create_epoch(
+                name="Epoch 1", start_astro_day=0, end_astro_day=100
+            )
+            epoch2 = service.create_epoch(
+                name="Epoch 2", start_astro_day=50, end_astro_day=150
+            )
+            epoch3 = service.create_epoch(
+                name="Epoch 3", start_astro_day=200, end_astro_day=300
+            )
 
             # Epoch 1 should overlap with epoch 2 only
             overlapping = service.get_overlapping_epochs(epoch1.id)
@@ -92,9 +108,15 @@ class TestEpochService:
     def test_get_epochs_in_range(self, db_session):
         """Test finding epochs in a time range."""
         with EpochService() as service:
-            epoch1 = service.create_epoch(name="Epoch 1", start_astro_day=0, end_astro_day=100)
-            epoch2 = service.create_epoch(name="Epoch 2", start_astro_day=50, end_astro_day=150)
-            epoch3 = service.create_epoch(name="Epoch 3", start_astro_day=200, end_astro_day=300)
+            epoch1 = service.create_epoch(
+                name="Epoch 1", start_astro_day=0, end_astro_day=100
+            )
+            epoch2 = service.create_epoch(
+                name="Epoch 2", start_astro_day=50, end_astro_day=150
+            )
+            epoch3 = service.create_epoch(
+                name="Epoch 3", start_astro_day=200, end_astro_day=300
+            )
 
             # Query range 25-125 should overlap with epochs 1 and 2
             epochs = service.get_epochs_in_range(25, 125, fully_contained=False)
@@ -184,7 +206,9 @@ class TestSettlementService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as service:
             settlement = service.create_settlement(
@@ -208,7 +232,9 @@ class TestSettlementService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as service:
             # grid_x out of range
@@ -235,17 +261,31 @@ class TestSettlementService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as service:
             s1 = service.create_settlement(
-                name="City A", province_id=province.id, settlement_type="city", grid_x=10, grid_y=10
+                name="City A",
+                province_id=province.id,
+                settlement_type="city",
+                grid_x=10,
+                grid_y=10,
             )
             s2 = service.create_settlement(
-                name="City B", province_id=province.id, settlement_type="city", grid_x=20, grid_y=20
+                name="City B",
+                province_id=province.id,
+                settlement_type="city",
+                grid_x=20,
+                grid_y=20,
             )
             s3 = service.create_settlement(
-                name="City C", province_id=province.id, settlement_type="city", grid_x=30, grid_y=30
+                name="City C",
+                province_id=province.id,
+                settlement_type="city",
+                grid_x=30,
+                grid_y=30,
             )
 
             # Query area (15, 25, 15, 25) should only contain s2
@@ -263,7 +303,9 @@ class TestSnapshotService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
@@ -272,7 +314,10 @@ class TestSnapshotService:
 
         with SnapshotService() as service:
             snapshot = service.create_snapshot(
-                settlement_id=settlement.id, astro_day=100, population=5000, labor_force=2000
+                settlement_id=settlement.id,
+                astro_day=100,
+                population=5000,
+                labor_force=2000,
             )
 
             assert snapshot.id is not None
@@ -286,7 +331,9 @@ class TestSnapshotService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
@@ -294,10 +341,14 @@ class TestSnapshotService:
             )
 
         with SnapshotService() as service:
-            service.create_snapshot(settlement_id=settlement.id, astro_day=100, population=5000)
+            service.create_snapshot(
+                settlement_id=settlement.id, astro_day=100, population=5000
+            )
 
             with pytest.raises(ValueError, match="already exists"):
-                service.create_snapshot(settlement_id=settlement.id, astro_day=100, population=6000)
+                service.create_snapshot(
+                    settlement_id=settlement.id, astro_day=100, population=6000
+                )
 
     def test_get_snapshots_in_range(self, db_session):
         """Test finding snapshots in a time range."""
@@ -305,7 +356,9 @@ class TestSnapshotService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
@@ -332,7 +385,9 @@ class TestRouteService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             s1 = settlement_service.create_settlement(
@@ -362,7 +417,9 @@ class TestRouteService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
@@ -384,7 +441,9 @@ class TestRouteService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             s1 = settlement_service.create_settlement(
@@ -396,7 +455,10 @@ class TestRouteService:
 
         with RouteService() as service:
             route = service.create_route(
-                name="Main Road", settlement_a_id=s1.id, settlement_b_id=s2.id, distance_km=50.0
+                name="Main Road",
+                settlement_a_id=s1.id,
+                settlement_b_id=s2.id,
+                distance_km=50.0,
             )
 
             # Should find route regardless of order
@@ -428,7 +490,9 @@ class TestEntityService:
     def test_create_entity_invalid_temporal_bounds(self, db_session):
         """Test that end < start is rejected."""
         with EntityService() as service:
-            with pytest.raises(ValueError, match="dissolved_astro_day.*must be.*founded_astro_day"):
+            with pytest.raises(
+                ValueError, match="dissolved_astro_day.*must be.*founded_astro_day"
+            ):
                 service.create_entity(
                     name="Invalid Entity",
                     entity_type="person",
@@ -440,13 +504,22 @@ class TestEntityService:
         """Test finding entities alive at a specific day."""
         with EntityService() as service:
             e1 = service.create_entity(
-                name="Entity 1", entity_type="person", founded_astro_day=0, dissolved_astro_day=100
+                name="Entity 1",
+                entity_type="person",
+                founded_astro_day=0,
+                dissolved_astro_day=100,
             )
             e2 = service.create_entity(
-                name="Entity 2", entity_type="person", founded_astro_day=50, dissolved_astro_day=150
+                name="Entity 2",
+                entity_type="person",
+                founded_astro_day=50,
+                dissolved_astro_day=150,
             )
             e3 = service.create_entity(
-                name="Entity 3", entity_type="person", founded_astro_day=200, dissolved_astro_day=300
+                name="Entity 3",
+                entity_type="person",
+                founded_astro_day=200,
+                dissolved_astro_day=300,
             )
 
             # Day 75 should have e1 and e2
@@ -479,7 +552,9 @@ class TestEventService:
             region = region_service.create_region(name="Test Region")
 
         with ProvinceService() as province_service:
-            province = province_service.create_province(name="Test Province", region_id=region.id)
+            province = province_service.create_province(
+                name="Test Province", region_id=region.id
+            )
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
@@ -487,7 +562,9 @@ class TestEventService:
             )
 
         with EntityService() as entity_service:
-            entity = entity_service.create_entity(name="King Aldric", entity_type="person")
+            entity = entity_service.create_entity(
+                name="King Aldric", entity_type="person"
+            )
 
         with EventService() as service:
             event = service.create_event(
@@ -504,9 +581,15 @@ class TestEventService:
     def test_get_events_in_range(self, db_session):
         """Test finding events in a time range."""
         with EventService() as service:
-            e1 = service.create_event(title="Event 1", event_type="battle", astro_day=50)
-            e2 = service.create_event(title="Event 2", event_type="treaty", astro_day=100)
-            e3 = service.create_event(title="Event 3", event_type="founding", astro_day=150)
+            e1 = service.create_event(
+                title="Event 1", event_type="battle", astro_day=50
+            )
+            e2 = service.create_event(
+                title="Event 2", event_type="treaty", astro_day=100
+            )
+            e3 = service.create_event(
+                title="Event 3", event_type="founding", astro_day=150
+            )
 
             # Range 75-125 should contain e2 only
             events = service.get_events_in_range(75, 125)
@@ -516,11 +599,17 @@ class TestEventService:
     def test_get_events_in_epoch(self, db_session):
         """Test finding events during an epoch."""
         with EpochService() as epoch_service:
-            epoch = epoch_service.create_epoch(name="Test Epoch", start_astro_day=0, end_astro_day=100)
+            epoch = epoch_service.create_epoch(
+                name="Test Epoch", start_astro_day=0, end_astro_day=100
+            )
 
         with EventService() as service:
-            e1 = service.create_event(title="Event 1", event_type="battle", astro_day=50)
-            e2 = service.create_event(title="Event 2", event_type="treaty", astro_day=150)
+            e1 = service.create_event(
+                title="Event 1", event_type="battle", astro_day=50
+            )
+            e2 = service.create_event(
+                title="Event 2", event_type="treaty", astro_day=150
+            )
 
             events = service.get_events_in_epoch(epoch.id)
             assert len(events) == 1
