@@ -120,7 +120,7 @@ class SnapshotService(BaseService[SettlementSnapshot]):
         :param settlement_id: ID of the settlement
         :param start_day: Start of the range (inclusive)
         :param end_day: End of the range (inclusive)
-        :param active_only: If True, only return active snapshots
+        :param active_only: Ignored (snapshots don't have is_active field)
         :return: List of snapshots in the range, ordered by day
         """
         stmt = (
@@ -133,8 +133,7 @@ class SnapshotService(BaseService[SettlementSnapshot]):
             .order_by(SettlementSnapshot.astro_day)
         )
 
-        if active_only:
-            stmt = stmt.where(SettlementSnapshot.is_active == True)
+        # Note: Snapshots don't have is_active field, so active_only is ignored
 
         result = self.session.execute(stmt)
         return list(result.scalars().all())
