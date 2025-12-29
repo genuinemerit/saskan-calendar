@@ -47,6 +47,7 @@ pytest-html = "^4.1"
 pytest-mock = "^3.14"
 black = "^24.4"
 isort = "^5.13"
+pytest-cov = "^7.0.0"
 
 [tool.poetry.scripts]
 saskan-calendar = "scripts.manage:cli"
