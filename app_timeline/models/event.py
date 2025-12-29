@@ -37,7 +37,9 @@ class Event(Base, PrimaryKeyMixin, TimestampMixin):
     location_y = Column(Integer, nullable=True)
 
     # Related entities (foreign keys)
-    settlement_id = Column(Integer, ForeignKey("settlements.id"), nullable=True, index=True)
+    settlement_id = Column(
+        Integer, ForeignKey("settlements.id"), nullable=True, index=True
+    )
     province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True, index=True)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
 

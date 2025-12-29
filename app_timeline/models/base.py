@@ -21,7 +21,9 @@ class TimestampMixin:
     Records when the database record was created (system time, not lore time).
     """
 
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
 
 class PrimaryKeyMixin:
@@ -34,7 +36,10 @@ class TemporalBoundsMixin:
     """
     Mixin for entities that exist within temporal bounds in the lore timeline.
     Uses astro_day as the unit of time.
+
+    Both fields are nullable to allow for cases where temporal bounds are unknown
+    or not applicable (e.g., geographic regions).
     """
 
-    founded_astro_day = Column(Integer, nullable=False, index=True)
+    founded_astro_day = Column(Integer, nullable=True, index=True)
     dissolved_astro_day = Column(Integer, nullable=True, index=True)

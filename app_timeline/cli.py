@@ -13,6 +13,7 @@ from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
 
+from .cli_data import data_app
 from .config import get_config
 from .db import (
     create_all_tables,
@@ -25,6 +26,7 @@ from .db import (
 app = typer.Typer(help="Saskan Timeline database management")
 db_app = typer.Typer(help="Database management commands")
 app.add_typer(db_app, name="db")
+app.add_typer(data_app, name="data")
 
 console = Console()
 
@@ -59,9 +61,7 @@ def init_database():
 
 @db_app.command("drop")
 def drop_database(
-    confirm: bool = typer.Option(
-        False, "--yes", "-y", help="Skip confirmation prompt"
-    )
+    confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt")
 ):
     """Drop all tables from the database. WARNING: Deletes all data!"""
     config = get_config()
@@ -115,7 +115,9 @@ def show_database_info():
         row_counts = get_table_row_counts()
 
         # Create table
-        table = Table(title="\nDatabase Tables", show_header=True, header_style="bold cyan")
+        table = Table(
+            title="\nDatabase Tables", show_header=True, header_style="bold cyan"
+        )
         table.add_column("Table Name", style="cyan")
         table.add_column("Columns", justify="right")
         table.add_column("Rows", justify="right", style="green")

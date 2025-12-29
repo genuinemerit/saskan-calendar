@@ -24,9 +24,18 @@ class Settlement(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
     name = Column(String, nullable=False, unique=True, index=True)
     settlement_type = Column(String, nullable=False, index=True)
 
-    # Geographic location (coordinates in km)
+    # Geographic location
+    # Precise coordinates (in km from origin)
     location_x = Column(Float, nullable=True)
     location_y = Column(Float, nullable=True)
+
+    # Grid-based location (40x30 grid, each cell = 50 sq km)
+    # Grid coordinates: x (1-40 columns), y (1-30 rows)
+    grid_x = Column(Integer, nullable=True)
+    grid_y = Column(Integer, nullable=True)
+
+    # Physical attributes
+    area_sq_km = Column(Float, nullable=True)  # Settlement area in square kilometers
 
     # Administrative relationships
     parent_settlement_id = Column(

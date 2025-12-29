@@ -21,7 +21,9 @@ class Entity(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
 
     # Basic attributes
     name = Column(String, nullable=False, index=True)
-    entity_type = Column(String, nullable=False, index=True)  # person, organization, group, collective
+    entity_type = Column(
+        String, nullable=False, index=True
+    )  # person, organization, group, collective
 
     # Description/biography
     description = Column(Text, nullable=True)

@@ -29,7 +29,9 @@ class Route(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
 
     # Route characteristics
     distance_km = Column(Float, nullable=True)
-    difficulty = Column(String, nullable=True)  # Reference to route_difficulties in config
+    difficulty = Column(
+        String, nullable=True
+    )  # Reference to route_difficulties in config
 
     # Route type/classification
     route_type = Column(String, nullable=True)  # e.g., "trail", "road", "river", "sea"

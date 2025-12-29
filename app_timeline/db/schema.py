@@ -61,6 +61,7 @@ def get_table_row_counts() -> Dict[str, int]:
     """
     from ..models import (
         Entity,
+        Epoch,
         Event,
         Province,
         Region,
@@ -73,6 +74,7 @@ def get_table_row_counts() -> Dict[str, int]:
     counts = {}
 
     try:
+        counts["epochs"] = session.query(Epoch).count()
         counts["regions"] = session.query(Region).count()
         counts["provinces"] = session.query(Province).count()
         counts["settlements"] = session.query(Settlement).count()
@@ -99,6 +101,7 @@ def validate_schema() -> List[str]:
     table_names = inspector.get_table_names()
 
     expected_tables = {
+        "epochs",
         "regions",
         "provinces",
         "settlements",

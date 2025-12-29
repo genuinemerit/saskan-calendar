@@ -30,7 +30,9 @@ class Region(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
     meta_data = Column(JSON, nullable=True)
 
     # Relationships
-    provinces = relationship("Province", back_populates="region", cascade="all, delete-orphan")
+    provinces = relationship(
+        "Province", back_populates="region", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Region(id={self.id}, name='{self.name}', is_active={self.is_active})>"
@@ -62,4 +64,6 @@ class Province(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
     settlements = relationship("Settlement", back_populates="province")
 
     def __repr__(self) -> str:
-        return f"<Province(id={self.id}, name='{self.name}', is_active={self.is_active})>"
+        return (
+            f"<Province(id={self.id}, name='{self.name}', is_active={self.is_active})>"
+        )
