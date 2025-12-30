@@ -38,16 +38,19 @@ class TestSchemaManagement:
         create_all_tables()
 
         table_info = get_table_info()
-        assert len(table_info) == 7
+        assert len(table_info) == 10
 
         expected_tables = {
             "regions",
             "provinces",
             "settlements",
             "settlement_snapshots",
+            "region_snapshots",
+            "province_snapshots",
             "routes",
             "entities",
             "events",
+            "epochs",
         }
         assert set(table_info.keys()) == expected_tables
 
@@ -83,7 +86,7 @@ class TestSchemaManagement:
         """Test dropping all tables."""
         # Verify tables exist first
         table_info_before = get_table_info()
-        assert len(table_info_before) == 7
+        assert len(table_info_before) == 10
 
         # Drop tables
         drop_all_tables()

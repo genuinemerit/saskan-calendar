@@ -17,7 +17,9 @@ from .services import (
     EpochService,
     EventService,
     ProvinceService,
+    ProvinceSnapshotService,
     RegionService,
+    RegionSnapshotService,
     RouteService,
     SettlementService,
     SnapshotService,
@@ -742,6 +744,86 @@ def delete_snapshot(
             )
         else:
             rprint(f"[red]✗ Failed to delete snapshot {snapshot_id}.[/red]")
+            raise typer.Exit(code=1)
+
+    except ValueError as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        rprint(f"[red]✗ Unexpected error: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@update_app.command("delete-region-snapshot")
+def delete_region_snapshot(
+    snapshot_id: int = typer.Argument(..., help="ID of region snapshot to delete"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+):
+    """Delete a region snapshot (permanent deletion)."""
+    try:
+        if not yes:
+            if not Confirm.ask(
+                f"Are you sure you want to permanently delete region snapshot {snapshot_id}?"
+            ):
+                rprint("[yellow]Cancelled.[/yellow]")
+                raise typer.Exit(code=0)
+
+        with RegionSnapshotService() as service:
+            snapshot = service.get_by_id(snapshot_id)
+            if snapshot is None:
+                rprint(f"[red]✗ Region snapshot {snapshot_id} not found.[/red]")
+                raise typer.Exit(code=1)
+
+            snapshot_info = f"Region {snapshot.region_id}, Day {snapshot.astro_day}"
+            # Snapshots don't have is_active, so always hard delete
+            success = service.delete(snapshot_id, soft=False)
+
+        if success:
+            rprint(
+                f"[green]✓ Deleted region snapshot {snapshot_info} (ID: {snapshot_id})[/green]"
+            )
+        else:
+            rprint(f"[red]✗ Failed to delete region snapshot {snapshot_id}.[/red]")
+            raise typer.Exit(code=1)
+
+    except ValueError as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        rprint(f"[red]✗ Unexpected error: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@update_app.command("delete-province-snapshot")
+def delete_province_snapshot(
+    snapshot_id: int = typer.Argument(..., help="ID of province snapshot to delete"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
+):
+    """Delete a province snapshot (permanent deletion)."""
+    try:
+        if not yes:
+            if not Confirm.ask(
+                f"Are you sure you want to permanently delete province snapshot {snapshot_id}?"
+            ):
+                rprint("[yellow]Cancelled.[/yellow]")
+                raise typer.Exit(code=0)
+
+        with ProvinceSnapshotService() as service:
+            snapshot = service.get_by_id(snapshot_id)
+            if snapshot is None:
+                rprint(f"[red]✗ Province snapshot {snapshot_id} not found.[/red]")
+                raise typer.Exit(code=1)
+
+            snapshot_info = f"Province {snapshot.province_id}, Day {snapshot.astro_day}"
+            # Snapshots don't have is_active, so always hard delete
+            success = service.delete(snapshot_id, soft=False)
+
+        if success:
+            rprint(
+                f"[green]✓ Deleted province snapshot {snapshot_info} (ID: {snapshot_id})[/green]"
+            )
+        else:
+            rprint(f"[red]✗ Failed to delete province snapshot {snapshot_id}.[/red]")
             raise typer.Exit(code=1)
 
     except ValueError as e:

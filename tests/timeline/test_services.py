@@ -185,16 +185,21 @@ class TestProvinceService:
         with RegionService() as region_service:
             region1 = region_service.create_region(name="Region 1")
             region2 = region_service.create_region(name="Region 2")
+            region1_id = region1.id
+            region2_id = region2.id
 
         with ProvinceService() as service:
-            prov1 = service.create_province(name="Province A", region_id=region1.id)
-            prov2 = service.create_province(name="Province B", region_id=region1.id)
-            prov3 = service.create_province(name="Province C", region_id=region2.id)
+            prov1 = service.create_province(name="Province A", region_id=region1_id)
+            prov2 = service.create_province(name="Province B", region_id=region1_id)
+            prov3 = service.create_province(name="Province C", region_id=region2_id)
+            prov1_id = prov1.id
+            prov2_id = prov2.id
 
-            region1_provinces = service.get_provinces_by_region(region1.id)
+            region1_provinces = service.get_provinces_by_region(region1_id)
             assert len(region1_provinces) == 2
-            assert prov1 in region1_provinces
-            assert prov2 in region1_provinces
+            province_ids = [p.id for p in region1_provinces]
+            assert prov1_id in province_ids
+            assert prov2_id in province_ids
 
 
 class TestSettlementService:
@@ -316,14 +321,13 @@ class TestSnapshotService:
             snapshot = service.create_snapshot(
                 settlement_id=settlement.id,
                 astro_day=100,
-                population=5000,
-                labor_force=2000,
+                population_total=5000,
             )
 
             assert snapshot.id is not None
             assert snapshot.settlement_id == settlement.id
             assert snapshot.astro_day == 100
-            assert snapshot.population == 5000
+            assert snapshot.population_total == 5000
 
     def test_create_snapshot_duplicate(self, db_session):
         """Test that duplicate snapshots (same settlement + day) are rejected."""
@@ -342,12 +346,12 @@ class TestSnapshotService:
 
         with SnapshotService() as service:
             service.create_snapshot(
-                settlement_id=settlement.id, astro_day=100, population=5000
+                settlement_id=settlement.id, astro_day=100, population_total=5000
             )
 
             with pytest.raises(ValueError, match="already exists"):
                 service.create_snapshot(
-                    settlement_id=settlement.id, astro_day=100, population=6000
+                    settlement_id=settlement.id, astro_day=100, population_total=6000
                 )
 
     def test_get_snapshots_in_range(self, db_session):
@@ -366,9 +370,15 @@ class TestSnapshotService:
             )
 
         with SnapshotService() as service:
-            snap1 = service.create_snapshot(settlement_id=settlement.id, astro_day=50)
-            snap2 = service.create_snapshot(settlement_id=settlement.id, astro_day=100)
-            snap3 = service.create_snapshot(settlement_id=settlement.id, astro_day=150)
+            snap1 = service.create_snapshot(
+                settlement_id=settlement.id, astro_day=50, population_total=1000
+            )
+            snap2 = service.create_snapshot(
+                settlement_id=settlement.id, astro_day=100, population_total=2000
+            )
+            snap3 = service.create_snapshot(
+                settlement_id=settlement.id, astro_day=150, population_total=3000
+            )
 
             # Query range 75-125 should contain snap2 only
             snapshots = service.get_snapshots_in_range(settlement.id, 75, 125)
@@ -383,55 +393,58 @@ class TestRouteService:
         """Test creating a valid route."""
         with RegionService() as region_service:
             region = region_service.create_region(name="Test Region")
+            region_id = region.id
 
         with ProvinceService() as province_service:
             province = province_service.create_province(
-                name="Test Province", region_id=region.id
+                name="Test Province", region_id=region_id
             )
+            province_id = province.id
 
         with SettlementService() as settlement_service:
             s1 = settlement_service.create_settlement(
-                name="City A", province_id=province.id, settlement_type="city"
+                name="City A", province_id=province_id, settlement_type="city"
             )
             s2 = settlement_service.create_settlement(
-                name="City B", province_id=province.id, settlement_type="city"
+                name="City B", province_id=province_id, settlement_type="city"
             )
+            s1_id = s1.id
+            s2_id = s2.id
 
         with RouteService() as service:
             route = service.create_route(
-                name="Main Road",
-                settlement_a_id=s1.id,
-                settlement_b_id=s2.id,
+                origin_settlement_id=s1_id,
+                destination_settlement_id=s2_id,
                 distance_km=50.0,
-                travel_days=2.5,
                 route_type="road",
             )
 
             assert route.id is not None
-            assert route.name == "Main Road"
             assert route.distance_km == 50.0
 
     def test_create_route_same_settlement(self, db_session):
         """Test that routes must connect different settlements."""
         with RegionService() as region_service:
             region = region_service.create_region(name="Test Region")
+            region_id = region.id
 
         with ProvinceService() as province_service:
             province = province_service.create_province(
-                name="Test Province", region_id=region.id
+                name="Test Province", region_id=region_id
             )
+            province_id = province.id
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
-                name="City A", province_id=province.id, settlement_type="city"
+                name="City A", province_id=province_id, settlement_type="city"
             )
+            settlement_id = settlement.id
 
         with RouteService() as service:
             with pytest.raises(ValueError, match="two different settlements"):
                 service.create_route(
-                    name="Invalid Route",
-                    settlement_a_id=settlement.id,
-                    settlement_b_id=settlement.id,
+                    origin_settlement_id=settlement_id,
+                    destination_settlement_id=settlement_id,
                     distance_km=10.0,
                 )
 
@@ -439,34 +452,36 @@ class TestRouteService:
         """Test finding route between two settlements."""
         with RegionService() as region_service:
             region = region_service.create_region(name="Test Region")
+            region_id = region.id
 
         with ProvinceService() as province_service:
             province = province_service.create_province(
-                name="Test Province", region_id=region.id
+                name="Test Province", region_id=region_id
             )
+            province_id = province.id
 
         with SettlementService() as settlement_service:
             s1 = settlement_service.create_settlement(
-                name="City A", province_id=province.id, settlement_type="city"
+                name="City A", province_id=province_id, settlement_type="city"
             )
             s2 = settlement_service.create_settlement(
-                name="City B", province_id=province.id, settlement_type="city"
+                name="City B", province_id=province_id, settlement_type="city"
             )
+            s1_id = s1.id
+            s2_id = s2.id
 
         with RouteService() as service:
             route = service.create_route(
-                name="Main Road",
-                settlement_a_id=s1.id,
-                settlement_b_id=s2.id,
+                origin_settlement_id=s1_id,
+                destination_settlement_id=s2_id,
                 distance_km=50.0,
             )
+            route_id = route.id
 
-            # Should find route regardless of order
-            found1 = service.get_route_between_settlements(s1.id, s2.id)
-            found2 = service.get_route_between_settlements(s2.id, s1.id)
-
-            assert found1 == route
-            assert found2 == route
+            # Should find route with correct origin/destination order
+            found = service.get_route_between_settlements(s1_id, s2_id)
+            assert found is not None
+            assert found.id == route_id
 
 
 class TestEntityService:

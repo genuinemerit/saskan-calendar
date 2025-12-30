@@ -1,7 +1,7 @@
 # Saskan Timeline - Technical Documentation
 
-**Version:** 0.1.0  
-**Python:** 3.12  
+**Version:** 0.3.0
+**Python:** 3.12
 **Framework:** SQLAlchemy 2.0
 
 ---
@@ -40,24 +40,28 @@ app_timeline/
   config.py             # Configuration management
   models/               # SQLAlchemy models
     __init__.py
-    base.py            # Base classes and mixins
+    base.py            # Base classes and mixins (PR-003a: added DescriptionMixin, MetadataMixin)
     entity.py          # Entity model
-    epoch.py           # Epoch model
+    epoch.py           # Epoch model (PR-003a: added description field)
     event.py           # Event model
-    province.py        # Province and Region models
+    province.py        # Province and Region models (PR-003a: added description fields)
+    province_snapshot.py # ProvinceSnapshot model (PR-003a: new)
+    region_snapshot.py # RegionSnapshot model (PR-003a: new)
     route.py           # Route model
-    settlement.py      # Settlement and SettlementSnapshot models
+    settlement.py      # Settlement and SettlementSnapshot models (PR-003a: added snapshot_type/granularity)
   services/             # Business logic layer
     __init__.py
-    base_service.py    # Base service class
+    base.py            # Base service class
     entity_service.py  # Entity operations
     epoch_service.py   # Epoch operations
     event_service.py   # Event operations
     province_service.py # Province operations
+    province_snapshot_service.py # Province snapshot operations (PR-003a: new)
     region_service.py  # Region operations
+    region_snapshot_service.py # Region snapshot operations (PR-003a: new)
     route_service.py   # Route operations
     settlement_service.py # Settlement operations
-    snapshot_service.py # Snapshot operations
+    snapshot_service.py # Settlement snapshot operations
   utils/                # Utility functions
     __init__.py
     temporal.py        # Temporal conversion utilities
@@ -74,8 +78,9 @@ tests/timeline/
   conftest.py          # Pytest fixtures
   test_config.py       # Configuration tests
   test_db.py           # Database tests
-  test_models.py       # Model tests
+  test_models.py       # Model tests (includes ADR-008 mixin tests - PR-003a)
   test_services.py     # Service layer tests
+  test_snapshot_services.py # Region/province snapshot service tests (PR-003a)
   test_cli_data.py     # CLI create command tests
   test_cli_list.py     # CLI query command tests
   test_cli_update.py   # CLI update/delete command tests
@@ -91,7 +96,9 @@ tests/timeline/
 ### Table Relationships
 
 - Region (1) ---< (M) Province
+- Region (1) ---< (M) RegionSnapshot (PR-003a)
 - Province (1) ---< (M) Settlement
+- Province (1) ---< (M) ProvinceSnapshot (PR-003a)
 - Settlement (1) ---< (M) SettlementSnapshot
 - Settlement (parent) (1) ---< (M) Settlement (child)
 - Settlement (origin) (1) ---< (M) Route >--- (1) Settlement (destination)
@@ -109,11 +116,13 @@ Stores top-level geographic groupings.
 
 - id (INTEGER, PK)
 - name (VARCHAR, UNIQUE, NOT NULL)
-- founded_astro_day (INTEGER, NOT NULL)
+- description (TEXT, nullable) - PR-003a: Added via DescriptionMixin
+- founded_astro_day (INTEGER, nullable)
 - dissolved_astro_day (INTEGER, nullable)
 - is_active (BOOLEAN, NOT NULL, default=True)
-- meta_data (JSON, nullable)
+- meta_data (JSON, nullable) - PR-003a: Validated via MetadataMixin (flat structure)
 - created_at (DATETIME, NOT NULL)
+- updated_at (DATETIME, NOT NULL)
 
 #### provinces
 
@@ -123,8 +132,9 @@ Stores administrative divisions within regions.
 
 - id (INTEGER, PK)
 - name (VARCHAR, UNIQUE, NOT NULL)
-- region_id (INTEGER, FK -> regions.id)
-- founded_astro_day (INTEGER, NOT NULL)
+- description (TEXT, nullable) - PR-003a: Added via DescriptionMixin
+- region_id (INTEGER, FK -> regions.id, nullable)
+- founded_astro_day (INTEGER, nullable)
 - dissolved_astro_day (INTEGER, nullable)
 - is_active (BOOLEAN, NOT NULL, default=True)
 - meta_data (JSON, nullable)
@@ -159,13 +169,64 @@ Stores time-series demographic data for settlements.
 - id (INTEGER, PK)
 - settlement_id (INTEGER, FK -> settlements.id, NOT NULL)
 - astro_day (INTEGER, NOT NULL)
+- snapshot_type (VARCHAR, NOT NULL, default='simulation') - PR-003a: Added (census/simulation/estimate/etc.)
+- granularity (VARCHAR, NOT NULL, default='year') - PR-003a: Added (year/decade/century/etc.)
 - population_total (INTEGER, NOT NULL)
 - population_by_species (JSON, nullable)
 - population_by_habitat (JSON, nullable)
 - cultural_composition (JSON, nullable)
 - economic_data (JSON, nullable)
-- meta_data (JSON, nullable)
+- meta_data (JSON, nullable) - PR-003a: Validated via MetadataMixin (flat structure)
 - created_at (DATETIME, NOT NULL)
+- updated_at (DATETIME, NOT NULL)
+
+#### region_snapshots (PR-003a)
+
+Stores time-series demographic data for regions.
+
+**Columns:**
+
+- id (INTEGER, PK)
+- region_id (INTEGER, FK -> regions.id, NOT NULL)
+- astro_day (INTEGER, NOT NULL)
+- snapshot_type (VARCHAR, NOT NULL, default='simulation')
+- granularity (VARCHAR, NOT NULL, default='year')
+- population_total (INTEGER, NOT NULL)
+- population_by_species (JSON, nullable)
+- population_by_habitat (JSON, nullable)
+- cultural_composition (JSON, nullable)
+- economic_data (JSON, nullable)
+- meta_data (JSON, nullable) - Validated via MetadataMixin (flat structure)
+- created_at (DATETIME, NOT NULL)
+- updated_at (DATETIME, NOT NULL)
+
+**Constraints:**
+- CHECK (population_total >= 0)
+- CHECK (astro_day >= 0)
+
+#### province_snapshots (PR-003a)
+
+Stores time-series demographic data for provinces.
+
+**Columns:**
+
+- id (INTEGER, PK)
+- province_id (INTEGER, FK -> provinces.id, NOT NULL)
+- astro_day (INTEGER, NOT NULL)
+- snapshot_type (VARCHAR, NOT NULL, default='simulation')
+- granularity (VARCHAR, NOT NULL, default='year')
+- population_total (INTEGER, NOT NULL)
+- population_by_species (JSON, nullable)
+- population_by_habitat (JSON, nullable)
+- cultural_composition (JSON, nullable)
+- economic_data (JSON, nullable)
+- meta_data (JSON, nullable) - Validated via MetadataMixin (flat structure)
+- created_at (DATETIME, NOT NULL)
+- updated_at (DATETIME, NOT NULL)
+
+**Constraints:**
+- CHECK (population_total >= 0)
+- CHECK (astro_day >= 0)
 
 #### routes
 
@@ -929,6 +990,204 @@ Provides reusable validation functions for data integrity:
 
 ---
 
+## Best Practices and Common Patterns
+
+### ADR-008: Metadata and Description Management (PR-003a)
+
+The system implements ADR-008 with two mixins for flexible data storage:
+
+**DescriptionMixin** - Programmatic description management:
+```python
+# Models with description field: Epoch, Region, Province
+epoch = Epoch(name="Early Era", description="The founding period")
+
+# Programmatic methods
+epoch.update_description("Updated description text")
+epoch.clear_description()
+```
+
+**MetadataMixin** - Flat structure validation:
+```python
+# All models have meta_data field via MetadataMixin
+region = Region(name="Northlands", meta_data={"climate": "cold", "population_density": "sparse"})
+
+# Validation: Only flat key-value pairs allowed
+region.update_metadata({"climate": "temperate"}, mode="merge")  # ✓ Valid
+region.update_metadata({"nested": {"key": "value"}})  # ✗ Raises ValueError
+region.update_metadata({"array": [1, 2, 3]})  # ✗ Raises ValueError
+
+# Programmatic methods
+region.update_metadata({"key": "value"}, mode="replace")  # Replace all
+region.update_metadata({"key": "value"}, mode="merge")  # Merge with existing
+region.remove_metadata_keys(["old_key"])
+region.clear_metadata()
+value = region.get_metadata_value("climate", default="unknown")
+has_key = region.has_metadata_key("climate")
+```
+
+**IMPORTANT: SQLAlchemy JSON Mutation Tracking**
+
+When modifying JSON fields in-place, you MUST tell SQLAlchemy about the change:
+
+```python
+from sqlalchemy.orm.attributes import flag_modified
+
+# Wrong - SQLAlchemy won't detect the change
+region.meta_data["new_key"] = "value"
+session.commit()  # Change NOT persisted!
+
+# Correct - Use programmatic methods (they handle flag_modified internally)
+region.update_metadata({"new_key": "value"}, mode="merge")
+session.commit()  # ✓ Change persisted
+
+# Or manually flag the modification
+region.meta_data["new_key"] = "value"
+flag_modified(region, "meta_data")
+session.commit()  # ✓ Change persisted
+```
+
+### Service Context Manager Pattern
+
+Services use context managers for automatic session cleanup. **Critical**: Extract IDs before exiting context to avoid `DetachedInstanceError`:
+
+```python
+# Wrong - DetachedInstanceError when accessing region.id outside context
+with RegionService() as region_service:
+    region = region_service.create_region(name="Test Region")
+
+with ProvinceService() as province_service:
+    # Error! region is detached from session
+    province = province_service.create_province(name="Test Province", region_id=region.id)
+
+# Correct - Extract ID while in context
+with RegionService() as region_service:
+    region = region_service.create_region(name="Test Region")
+    region_id = region.id  # Extract ID before exiting context
+
+with ProvinceService() as province_service:
+    # ✓ Works! Using ID, not detached object
+    province = province_service.create_province(name="Test Province", region_id=region_id)
+```
+
+### Snapshot Interpolation (PR-003a)
+
+The system supports linear interpolation for demographic data across region, province, and settlement levels:
+
+```python
+from app_timeline.services import RegionSnapshotService
+
+with RegionSnapshotService() as service:
+    # Create sparse snapshots
+    service.create_snapshot(region_id=1, astro_day=100, population_total=50000,
+                          population_by_species={"huum": 40000, "sint": 10000})
+    service.create_snapshot(region_id=1, astro_day=200, population_total=70000,
+                          population_by_species={"huum": 50000, "sint": 20000})
+
+    # Interpolate at day 150 (midpoint)
+    interpolated = service.get_interpolated(region_id=1, astro_day=150)
+
+    # Returns dict with:
+    # - population_total: 60000 (linear interpolation)
+    # - population_by_species: {"huum": 45000, "sint": 15000} (per-component interpolation)
+    # - snapshot_type: "interpolated"
+    # - interpolation_info: metadata about source snapshots
+    # - cultural_composition, economic_data: from nearest "before" snapshot (not interpolated)
+```
+
+**Interpolation Behavior:**
+- **Linear interpolation** for `population_total` and breakdown fields (`population_by_species`, `population_by_habitat`)
+- **Nearest snapshot (before target)** for JSON fields (`cultural_composition`, `economic_data`, `meta_data`)
+- **Edge cases handled**: no data (None), before first snapshot, after last snapshot, exact match
+
+### Testing Patterns
+
+**Test File Organization (PR-003a update):**
+- `test_snapshot_services.py` - Region and province snapshot service tests (20 tests)
+- `test_models.py` - Added ADR-008 mixin tests, snapshot model tests (18 new tests)
+
+**Negative Testing:**
+Services validate inputs and raise `ValueError` for invalid data:
+
+```python
+# Test invalid inputs
+with pytest.raises(ValueError, match="does not exist"):
+    service.create_province(name="Test", region_id=999)  # Invalid FK
+
+with pytest.raises(ValueError, match="must be >= 0"):
+    service.create_snapshot(region_id=1, astro_day=-100, population_total=5000)  # Negative day
+
+with pytest.raises(ValueError, match="already exists"):
+    service.create_snapshot(region_id=1, astro_day=100, population_total=5000)
+    service.create_snapshot(region_id=1, astro_day=100, population_total=6000)  # Duplicate
+```
+
+**Testing with Multiple Services:**
+
+```python
+def test_multi_service_pattern(db_session):
+    """Pattern for tests requiring multiple related entities."""
+    # Create hierarchy: Region -> Province -> Settlement
+    with RegionService() as region_service:
+        region = region_service.create_region(name="Test Region")
+        region_id = region.id  # Extract ID before context exit
+
+    with ProvinceService() as province_service:
+        province = province_service.create_province(name="Test Province", region_id=region_id)
+        province_id = province.id
+
+    with SettlementService() as settlement_service:
+        settlement = settlement_service.create_settlement(
+            name="Test City", province_id=province_id, settlement_type="city"
+        )
+        settlement_id = settlement.id
+
+    # Now use extracted IDs for assertions or further operations
+    assert settlement_id is not None
+```
+
+### Schema Updates
+
+**Breaking Schema Changes:**
+PR-003a (v0.2.0 → v0.3.0) introduced breaking changes:
+- Added `region_snapshots` and `province_snapshots` tables
+- Added `snapshot_type` and `granularity` fields to all snapshot tables
+- Added `description` field to `epochs`, `regions`, `provinces`
+- Changed `population` to `population_total` in snapshots
+
+**Migration path:**
+```bash
+# Drop old database
+poetry run saskan-timeline db drop --yes
+
+# Recreate with new schema
+poetry run saskan-timeline db init
+
+# Re-import data (if backed up to JSON)
+poetry run saskan-timeline io import backup.json
+```
+
+### Performance Considerations
+
+**Snapshot Queries:**
+- Use filtering by `snapshot_type` and `granularity` for targeted queries
+- Index on `(region_id, astro_day)` and `(province_id, astro_day)` optimizes temporal queries
+- For large datasets, consider filtering by time range before interpolation
+
+**Metadata Queries:**
+SQLite JSON queries are limited. For production, use PostgreSQL with JSON operators:
+
+```python
+# PostgreSQL JSON queries (future)
+from sqlalchemy.dialects.postgresql import JSONB
+
+# Query by metadata value
+regions = session.query(Region).filter(
+    Region.meta_data['climate'].astext == 'cold'
+).all()
+```
+
+---
+
 ## Future Enhancements
 
 ### Planned Features
@@ -964,6 +1223,22 @@ Provides reusable validation functions for data integrity:
 ---
 
 ## Version History
+
+**v0.3.0** (2025-12-30) - PR-003a: Schema Refactoring for Macro-Scale Simulation
+
+- Added `RegionSnapshot` and `ProvinceSnapshot` models for multi-scale demographic tracking
+- Implemented snapshot interpolation services for sparse demographic data
+- Added `snapshot_type` and `granularity` fields to all snapshot tables (census/simulation/estimate, year/decade/century)
+- Implemented ADR-008: Metadata and Description Field Management
+  - `DescriptionMixin` for programmatic description management
+  - `MetadataMixin` with flat structure validation (rejects nested objects/arrays)
+  - Retrofitted `Region`, `Province`, and `Epoch` models with description fields
+- CLI commands for region and province snapshot management (add, delete)
+- Extended import/export to support `region_snapshots` and `province_snapshots`
+- New test file: `test_snapshot_services.py` (20 tests)
+- Extended `test_models.py` with ADR-008 mixin and snapshot tests (18 new tests)
+- Breaking schema change: v0.2.0 → v0.3.0 (requires database recreation)
+- Total test count: 243 tests (all passing)
 
 **v0.2.0** (2025-12-29) - PR-002: CLI Implementation
 

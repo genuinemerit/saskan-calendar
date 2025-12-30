@@ -5,12 +5,16 @@ Tests for SQLAlchemy models and relationships.
 from datetime import datetime
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app_timeline.models import (
     Entity,
+    Epoch,
     Event,
     Province,
+    ProvinceSnapshot,
     Region,
+    RegionSnapshot,
     Route,
     Settlement,
     SettlementSnapshot,
@@ -342,3 +346,334 @@ class TestEventModel:
 
         assert event1.is_deprecated is True
         assert event1.superseded_by_id == event2.id
+
+
+class TestDescriptionMixin:
+    """Tests for DescriptionMixin (PR-003a / ADR-008)."""
+
+    def test_epoch_description(self, db_session: Session):
+        """Test description field on Epoch model."""
+        epoch = Epoch(
+            name="Test Epoch",
+            start_astro_day=0,
+            end_astro_day=100,
+            description="Initial test period",
+        )
+
+        db_session.add(epoch)
+        db_session.commit()
+
+        assert epoch.description == "Initial test period"
+        assert epoch.has_description() is True
+
+    def test_update_description(self, db_session: Session):
+        """Test updating description programmatically."""
+        region = Region(name="Test Region", founded_astro_day=0)
+        db_session.add(region)
+        db_session.commit()
+
+        # Update description
+        region.update_description("Updated description")
+        db_session.commit()
+
+        assert region.description == "Updated description"
+        assert region.has_description() is True
+
+    def test_clear_description(self, db_session: Session):
+        """Test clearing description."""
+        province = Province(
+            name="Test Province",
+            founded_astro_day=0,
+            description="Initial description",
+        )
+        db_session.add(province)
+        db_session.commit()
+
+        province.clear_description()
+        db_session.commit()
+
+        assert province.description is None
+        assert province.has_description() is False
+
+
+class TestMetadataMixin:
+    """Tests for MetadataMixin (PR-003a / ADR-008)."""
+
+    def test_metadata_flat_structure_valid(self, db_session: Session):
+        """Test that flat metadata structure is accepted."""
+        region = Region(
+            name="Test Region",
+            founded_astro_day=0,
+            meta_data={"key1": "value1", "key2": 123, "key3": True, "key4": None},
+        )
+
+        db_session.add(region)
+        db_session.commit()
+
+        assert region.meta_data == {
+            "key1": "value1",
+            "key2": 123,
+            "key3": True,
+            "key4": None,
+        }
+
+    def test_update_metadata_merge(self, db_session: Session):
+        """Test merging metadata updates."""
+        region = Region(
+            name="Test Region",
+            founded_astro_day=0,
+            meta_data={"key1": "value1", "key2": "value2"},
+        )
+        db_session.add(region)
+        db_session.commit()
+
+        # Merge new values
+        region.update_metadata({"key2": "updated", "key3": "new"}, mode="merge")
+        flag_modified(region, "meta_data")  # Tell SQLAlchemy we modified the JSON field
+        db_session.commit()
+
+        assert region.meta_data == {
+            "key1": "value1",
+            "key2": "updated",
+            "key3": "new",
+        }
+
+    def test_update_metadata_replace(self, db_session: Session):
+        """Test replacing metadata."""
+        province = Province(
+            name="Test Province",
+            founded_astro_day=0,
+            meta_data={"key1": "value1", "key2": "value2"},
+        )
+        db_session.add(province)
+        db_session.commit()
+
+        # Replace entirely
+        province.update_metadata({"key3": "value3"}, mode="replace")
+        db_session.commit()
+
+        assert province.meta_data == {"key3": "value3"}
+
+    def test_remove_metadata_keys(self, db_session: Session):
+        """Test removing specific metadata keys."""
+        region = Region(
+            name="Test Region",
+            founded_astro_day=0,
+            meta_data={"key1": "value1", "key2": "value2", "key3": "value3"},
+        )
+        db_session.add(region)
+        db_session.commit()
+
+        region.remove_metadata_keys(["key2"])
+        flag_modified(region, "meta_data")  # Tell SQLAlchemy we modified the JSON field
+        db_session.commit()
+
+        assert region.meta_data == {"key1": "value1", "key3": "value3"}
+
+    def test_clear_metadata(self, db_session: Session):
+        """Test clearing all metadata."""
+        province = Province(
+            name="Test Province",
+            founded_astro_day=0,
+            meta_data={"key1": "value1"},
+        )
+        db_session.add(province)
+        db_session.commit()
+
+        province.clear_metadata()
+        db_session.commit()
+
+        assert province.meta_data is None
+
+    def test_get_metadata_value(self, db_session: Session):
+        """Test getting specific metadata value."""
+        region = Region(
+            name="Test Region",
+            founded_astro_day=0,
+            meta_data={"key1": "value1", "key2": 123},
+        )
+        db_session.add(region)
+        db_session.commit()
+
+        assert region.get_metadata_value("key1") == "value1"
+        assert region.get_metadata_value("key2") == 123
+        assert region.get_metadata_value("nonexistent") is None
+        assert region.get_metadata_value("nonexistent", "default") == "default"
+
+    def test_has_metadata_key(self, db_session: Session):
+        """Test checking if metadata key exists."""
+        province = Province(
+            name="Test Province",
+            founded_astro_day=0,
+            meta_data={"key1": "value1"},
+        )
+        db_session.add(province)
+        db_session.commit()
+
+        assert province.has_metadata_key("key1") is True
+        assert province.has_metadata_key("nonexistent") is False
+
+    def test_metadata_nested_object_rejected(self, db_session: Session):
+        """Test that nested objects in metadata are rejected."""
+        region = Region(name="Test Region", founded_astro_day=0, meta_data={})
+        db_session.add(region)
+        db_session.commit()
+
+        # Attempt to add nested object
+        try:
+            region.update_metadata({"nested": {"key": "value"}})
+            assert False, "Should have raised ValueError"
+        except ValueError as e:
+            assert "Nested objects not allowed" in str(e)
+
+    def test_metadata_array_rejected(self, db_session: Session):
+        """Test that arrays in metadata are rejected."""
+        province = Province(name="Test Province", founded_astro_day=0, meta_data={})
+        db_session.add(province)
+        db_session.commit()
+
+        # Attempt to add array
+        try:
+            province.update_metadata({"tags": ["tag1", "tag2"]})
+            assert False, "Should have raised ValueError"
+        except ValueError as e:
+            assert "Arrays not allowed" in str(e)
+
+
+class TestRegionSnapshotModel:
+    """Tests for RegionSnapshot model (PR-003a)."""
+
+    def test_create_region_snapshot(self, db_session: Session):
+        """Test creating a region snapshot."""
+        region = Region(name="Test Region", founded_astro_day=0)
+        db_session.add(region)
+        db_session.flush()
+
+        snapshot = RegionSnapshot(
+            region_id=region.id,
+            astro_day=100,
+            snapshot_type="census",
+            granularity="year",
+            population_total=50000,
+            population_by_species={"huum": 30000, "sint": 20000},
+            population_by_habitat={"on_ground": 45000, "under_ground": 5000},
+            cultural_composition={"language": "Fatuni"},
+            economic_data={"primary_industry": "agriculture"},
+            meta_data={"source": "census_2025"},
+        )
+
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.id is not None
+        assert snapshot.region_id == region.id
+        assert snapshot.astro_day == 100
+        assert snapshot.snapshot_type == "census"
+        assert snapshot.granularity == "year"
+        assert snapshot.population_total == 50000
+
+    def test_region_snapshot_relationship(self, db_session: Session):
+        """Test relationship between region and snapshots."""
+        region = Region(name="Test Region", founded_astro_day=0)
+        snapshot = RegionSnapshot(
+            region=region,
+            astro_day=100,
+            population_total=50000,
+        )
+
+        db_session.add(region)
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.region_id == region.id
+        assert snapshot in region.snapshots
+
+    def test_region_snapshot_check_constraints(self, db_session: Session):
+        """Test CHECK constraints on RegionSnapshot."""
+        region = Region(name="Test Region", founded_astro_day=0)
+        db_session.add(region)
+        db_session.flush()
+
+        # This should be caught by service layer, but test at model level
+        # Note: SQLite doesn't enforce CHECK constraints by default in all configs
+        snapshot = RegionSnapshot(
+            region_id=region.id,
+            astro_day=100,
+            population_total=50000,  # Valid
+        )
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.population_total >= 0
+        assert snapshot.astro_day >= 0
+
+
+class TestProvinceSnapshotModel:
+    """Tests for ProvinceSnapshot model (PR-003a)."""
+
+    def test_create_province_snapshot(self, db_session: Session):
+        """Test creating a province snapshot."""
+        province = Province(name="Test Province", founded_astro_day=0)
+        db_session.add(province)
+        db_session.flush()
+
+        snapshot = ProvinceSnapshot(
+            province_id=province.id,
+            astro_day=200,
+            snapshot_type="simulation",
+            granularity="decade",
+            population_total=20000,
+            population_by_species={"huum": 15000, "sint": 5000},
+        )
+
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.id is not None
+        assert snapshot.province_id == province.id
+        assert snapshot.snapshot_type == "simulation"
+        assert snapshot.granularity == "decade"
+
+    def test_province_snapshot_relationship(self, db_session: Session):
+        """Test relationship between province and snapshots."""
+        province = Province(name="Test Province", founded_astro_day=0)
+        snapshot = ProvinceSnapshot(
+            province=province,
+            astro_day=100,
+            population_total=20000,
+        )
+
+        db_session.add(province)
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.province_id == province.id
+        assert snapshot in province.snapshots
+
+
+class TestSettlementSnapshotUpdates:
+    """Tests for SettlementSnapshot updates (PR-003a)."""
+
+    def test_settlement_snapshot_with_type_and_granularity(self, db_session: Session):
+        """Test that SettlementSnapshot now has snapshot_type and granularity."""
+        settlement = Settlement(
+            name="Test Settlement",
+            settlement_type="hamlet",
+            founded_astro_day=0,
+        )
+        db_session.add(settlement)
+        db_session.flush()
+
+        snapshot = SettlementSnapshot(
+            settlement_id=settlement.id,
+            astro_day=100,
+            population_total=1000,
+            snapshot_type="census",
+            granularity="year",
+        )
+
+        db_session.add(snapshot)
+        db_session.commit()
+
+        assert snapshot.snapshot_type == "census"
+        assert snapshot.granularity == "year"

@@ -19,7 +19,9 @@ from .services import (
     EpochService,
     EventService,
     ProvinceService,
+    ProvinceSnapshotService,
     RegionService,
+    RegionSnapshotService,
     RouteService,
     SettlementService,
     SnapshotService,
@@ -422,6 +424,112 @@ def add_event(
             f"[green]✓ Created {event.event_type} event '{event.title}' (ID: {event.id})[/green]"
         )
         rprint(f"  Occurred: Day {event.astro_day}")
+
+    except ValueError as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        rprint(f"[red]✗ Unexpected error: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@data_app.command("add-region-snapshot")
+def add_region_snapshot(
+    region_id: int = typer.Option(..., "--region", "-r", help="Region ID (required)"),
+    astro_day: int = typer.Option(..., "--day", "-d", help="Astro day (required)"),
+    population_total: int = typer.Option(
+        ..., "--population", "-p", help="Total population (required)"
+    ),
+    snapshot_type: str = typer.Option(
+        "simulation",
+        "--type",
+        "-t",
+        help="Snapshot type (simulation/census/estimate/etc)",
+    ),
+    granularity: str = typer.Option(
+        "year", "--granularity", "-g", help="Granularity (year/decade/century/etc)"
+    ),
+    interactive: bool = typer.Option(
+        True, "--interactive/--no-interactive", help="Prompt for metadata"
+    ),
+):
+    """Add a region snapshot (population at a point in time)."""
+    try:
+        # Prompt for metadata if interactive
+        meta_data = None
+        if interactive:
+            meta_data = prompt_metadata()
+
+        # Create snapshot
+        with RegionSnapshotService() as service:
+            snapshot = service.create_snapshot(
+                region_id=region_id,
+                astro_day=astro_day,
+                population_total=population_total,
+                snapshot_type=snapshot_type,
+                granularity=granularity,
+                meta_data=meta_data,
+            )
+
+        rprint(
+            f"[green]✓ Created region snapshot for region {snapshot.region_id} at day {snapshot.astro_day}[/green]"
+        )
+        rprint(f"  Population: {snapshot.population_total:,}")
+        rprint(f"  Type: {snapshot.snapshot_type}, Granularity: {snapshot.granularity}")
+
+    except ValueError as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        rprint(f"[red]✗ Unexpected error: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@data_app.command("add-province-snapshot")
+def add_province_snapshot(
+    province_id: int = typer.Option(
+        ..., "--province", "-p", help="Province ID (required)"
+    ),
+    astro_day: int = typer.Option(..., "--day", "-d", help="Astro day (required)"),
+    population_total: int = typer.Option(
+        ..., "--population", help="Total population (required)"
+    ),
+    snapshot_type: str = typer.Option(
+        "simulation",
+        "--type",
+        "-t",
+        help="Snapshot type (simulation/census/estimate/etc)",
+    ),
+    granularity: str = typer.Option(
+        "year", "--granularity", "-g", help="Granularity (year/decade/century/etc)"
+    ),
+    interactive: bool = typer.Option(
+        True, "--interactive/--no-interactive", help="Prompt for metadata"
+    ),
+):
+    """Add a province snapshot (population at a point in time)."""
+    try:
+        # Prompt for metadata if interactive
+        meta_data = None
+        if interactive:
+            meta_data = prompt_metadata()
+
+        # Create snapshot
+        with ProvinceSnapshotService() as service:
+            snapshot = service.create_snapshot(
+                province_id=province_id,
+                astro_day=astro_day,
+                population_total=population_total,
+                snapshot_type=snapshot_type,
+                granularity=granularity,
+                meta_data=meta_data,
+            )
+
+        rprint(
+            f"[green]✓ Created province snapshot for province {snapshot.province_id} at day {snapshot.astro_day}[/green]"
+        )
+        rprint(f"  Population: {snapshot.population_total:,}")
+        rprint(f"  Type: {snapshot.snapshot_type}, Granularity: {snapshot.granularity}")
 
     except ValueError as e:
         rprint(f"[red]✗ Error: {e}[/red]")

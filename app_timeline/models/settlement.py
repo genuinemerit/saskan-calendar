@@ -9,7 +9,13 @@ from __future__ import annotations
 from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import relationship
 
-from .base import Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin
+from .base import (
+    Base,
+    MetadataMixin,
+    PrimaryKeyMixin,
+    TemporalBoundsMixin,
+    TimestampMixin,
+)
 
 
 class Settlement(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
@@ -70,10 +76,13 @@ class Settlement(Base, PrimaryKeyMixin, TemporalBoundsMixin, TimestampMixin):
         )
 
 
-class SettlementSnapshot(Base, PrimaryKeyMixin, TimestampMixin):
+class SettlementSnapshot(Base, PrimaryKeyMixin, TimestampMixin, MetadataMixin):
     """
     Time-series snapshot of a settlement's demographics and characteristics
     at a specific point in the timeline.
+
+    PR-003a: Added snapshot_type and granularity fields for consistency
+    with regional/provincial snapshots.
     """
 
     __tablename__ = "settlement_snapshots"
@@ -85,6 +94,10 @@ class SettlementSnapshot(Base, PrimaryKeyMixin, TimestampMixin):
 
     # When in the lore timeline this snapshot represents
     astro_day = Column(Integer, nullable=False, index=True)
+
+    # PR-003a: Provenance and granularity tracking
+    snapshot_type = Column(String, nullable=False, default="simulation", index=True)
+    granularity = Column(String, nullable=False, default="year", index=True)
 
     # Population totals
     population_total = Column(Integer, nullable=False)

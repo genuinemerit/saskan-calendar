@@ -7,10 +7,10 @@ Epoch model for named time periods in the timeline.
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.types import JSON
 
-from .base import Base, PrimaryKeyMixin, TimestampMixin
+from .base import Base, DescriptionMixin, PrimaryKeyMixin, TimestampMixin
 
 
-class Epoch(Base, PrimaryKeyMixin, TimestampMixin):
+class Epoch(Base, PrimaryKeyMixin, TimestampMixin, DescriptionMixin):
     """
     Named time periods for organizing timeline events.
 
@@ -29,9 +29,12 @@ class Epoch(Base, PrimaryKeyMixin, TimestampMixin):
     name = Column(String, nullable=False, unique=True, index=True)
     start_astro_day = Column(Integer, nullable=False, index=True)
     end_astro_day = Column(Integer, nullable=False, index=True)
-    description = Column(Text, nullable=True)
+    description = Column(
+        Text, nullable=True
+    )  # ADR-008: Use DescriptionMixin for programmatic access
 
     # Flexible metadata for cultural significance, sources, etc.
+    # Note: Epoch does not use MetadataMixin (per PR-003a design doc)
     meta_data = Column(JSON, nullable=True)
 
     def __repr__(self) -> str:

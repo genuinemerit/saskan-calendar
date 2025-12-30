@@ -19,7 +19,9 @@ from .services import (
     EpochService,
     EventService,
     ProvinceService,
+    ProvinceSnapshotService,
     RegionService,
+    RegionSnapshotService,
     RouteService,
     SettlementService,
     SnapshotService,
@@ -35,7 +37,7 @@ def export_data(
         None,
         "--type",
         "-t",
-        help="Export only this entity type (epochs/regions/provinces/settlements/entities/events/routes/snapshots)",
+        help="Export only this entity type (epochs/regions/provinces/settlements/entities/events/routes/snapshots/region_snapshots/province_snapshots)",
     ),
     include_inactive: bool = typer.Option(
         False, "--include-inactive", help="Include inactive/deprecated records"
@@ -181,7 +183,7 @@ def export_data(
                         for r in routes
                     ]
 
-            # Export snapshots
+            # Export snapshots (settlement snapshots)
             if export_all or entity_type == "snapshots":
                 _ = progress.add_task(description="Exporting snapshots...", total=None)
                 with SnapshotService() as service:
@@ -195,9 +197,57 @@ def export_data(
                             "population_by_habitat": s.population_by_habitat,
                             "cultural_composition": s.cultural_composition,
                             "economic_data": s.economic_data,
+                            "snapshot_type": s.snapshot_type,
+                            "granularity": s.granularity,
                             "meta_data": s.meta_data,
                         }
                         for s in snapshots
+                    ]
+
+            # Export region snapshots
+            if export_all or entity_type == "region_snapshots":
+                _ = progress.add_task(
+                    description="Exporting region snapshots...", total=None
+                )
+                with RegionSnapshotService() as service:
+                    region_snapshots = service.list_all()
+                    data["region_snapshots"] = [
+                        {
+                            "region_id": s.region_id,
+                            "astro_day": s.astro_day,
+                            "population_total": s.population_total,
+                            "population_by_species": s.population_by_species,
+                            "population_by_habitat": s.population_by_habitat,
+                            "cultural_composition": s.cultural_composition,
+                            "economic_data": s.economic_data,
+                            "snapshot_type": s.snapshot_type,
+                            "granularity": s.granularity,
+                            "meta_data": s.meta_data,
+                        }
+                        for s in region_snapshots
+                    ]
+
+            # Export province snapshots
+            if export_all or entity_type == "province_snapshots":
+                _ = progress.add_task(
+                    description="Exporting province snapshots...", total=None
+                )
+                with ProvinceSnapshotService() as service:
+                    province_snapshots = service.list_all()
+                    data["province_snapshots"] = [
+                        {
+                            "province_id": s.province_id,
+                            "astro_day": s.astro_day,
+                            "population_total": s.population_total,
+                            "population_by_species": s.population_by_species,
+                            "population_by_habitat": s.population_by_habitat,
+                            "cultural_composition": s.cultural_composition,
+                            "economic_data": s.economic_data,
+                            "snapshot_type": s.snapshot_type,
+                            "granularity": s.granularity,
+                            "meta_data": s.meta_data,
+                        }
+                        for s in province_snapshots
                     ]
 
         # Write to file
@@ -459,7 +509,7 @@ def import_data(
                         rprint(f"[red]  Error importing route: {e}[/red]")
                         stats["errors"] += 1
 
-            # Import snapshots
+            # Import settlement snapshots
             if "snapshots" in data:
                 _ = progress.add_task(
                     description=f"Importing {len(data['snapshots'])} snapshots...",
@@ -480,6 +530,52 @@ def import_data(
                             stats["created"] += 1
                     except Exception as e:
                         rprint(f"[red]  Error importing snapshot: {e}[/red]")
+                        stats["errors"] += 1
+
+            # Import region snapshots
+            if "region_snapshots" in data:
+                _ = progress.add_task(
+                    description=f"Importing {len(data['region_snapshots'])} region snapshots...",
+                    total=None,
+                )
+                for snapshot_data in data["region_snapshots"]:
+                    try:
+                        if dry_run:
+                            rprint(
+                                f"  Would create region snapshot: Region {snapshot_data['region_id']} @ Day {snapshot_data['astro_day']}"
+                            )
+                            stats["created"] += 1
+                            continue
+
+                        with RegionSnapshotService() as service:
+                            # Snapshots don't have unique names, so skip_existing doesn't apply
+                            service.create_snapshot(**snapshot_data)
+                            stats["created"] += 1
+                    except Exception as e:
+                        rprint(f"[red]  Error importing region snapshot: {e}[/red]")
+                        stats["errors"] += 1
+
+            # Import province snapshots
+            if "province_snapshots" in data:
+                _ = progress.add_task(
+                    description=f"Importing {len(data['province_snapshots'])} province snapshots...",
+                    total=None,
+                )
+                for snapshot_data in data["province_snapshots"]:
+                    try:
+                        if dry_run:
+                            rprint(
+                                f"  Would create province snapshot: Province {snapshot_data['province_id']} @ Day {snapshot_data['astro_day']}"
+                            )
+                            stats["created"] += 1
+                            continue
+
+                        with ProvinceSnapshotService() as service:
+                            # Snapshots don't have unique names, so skip_existing doesn't apply
+                            service.create_snapshot(**snapshot_data)
+                            stats["created"] += 1
+                    except Exception as e:
+                        rprint(f"[red]  Error importing province snapshot: {e}[/red]")
                         stats["errors"] += 1
 
         # Print summary

@@ -1,7 +1,7 @@
 # Saskan Timeline - User Guide
 
-**Version:** 0.1.0
-**Status:** MVP - Database Foundation
+**Version:** 0.3.0
+**Status:** Macro-Scale Simulation Infrastructure (PR-003a)
 
 ---
 
@@ -12,10 +12,11 @@ The Saskan Timeline system is a database-backed application for managing histori
 **Key Features:**
 
 - Geographic hierarchy (Regions -> Provinces -> Settlements)
-- Time-series demographic snapshots
+- Multi-scale time-series demographic snapshots (region, province, settlement)
+- Snapshot interpolation for sparse demographic data
 - Event tracking with temporal references
 - Relationship management (routes, hierarchies)
-- Flexible metadata storage (JSON fields)
+- Flexible metadata storage with ADR-008 flat structure validation
 - SQLite database (with PostgreSQL migration path)
 
 ---
@@ -75,12 +76,14 @@ poetry run saskan-timeline db drop --yes
 
 - Multiple provinces per region
 - Temporal bounds (founded/dissolved dates)
+- Description and metadata fields (ADR-008)
 
 **Provinces** - Administrative divisions
 
 - Usually one Ring Town per province (with exceptions)
 - Can have 0, 1, or 2+ Ring Towns
 - Part of a region (optional)
+- Description and metadata fields (ADR-008)
 
 **Settlements** - Cities, towns, villages, camps
 
@@ -89,11 +92,27 @@ poetry run saskan-timeline db drop --yes
 - Geographic coordinates (location_x, location_y)
 - Autonomous flag for independent settlements
 
-**Settlement Snapshots** - Time-series demographic data
+**Region Snapshots** - Time-series demographic data at regional level (PR-003a)
 
 - Population totals and breakdowns (by species, habitat)
 - Cultural composition (language, religion, tribes)
 - Economic data (industries, trade goods)
+- Snapshot type (census, simulation, estimate, etc.)
+- Temporal granularity (year, decade, century, etc.)
+- Supports interpolation for sparse data
+
+**Province Snapshots** - Time-series demographic data at provincial level (PR-003a)
+
+- Same structure as region snapshots
+- Bridges between regional and settlement-level data
+- Ideal for tracking macro-scale demographic changes
+
+**Settlement Snapshots** - Time-series demographic data at settlement level
+
+- Population totals and breakdowns (by species, habitat)
+- Cultural composition (language, religion, tribes)
+- Economic data (industries, trade goods)
+- Snapshot type and granularity fields (PR-003a)
 - Multiple snapshots per settlement at different dates
 
 **Routes** - Connections between settlements
@@ -224,8 +243,14 @@ saskan-timeline data add-event --title "Founding of Ingar" --type founding --day
 # Add a new route
 saskan-timeline data add-route --origin 1 --destination 2 --distance 50 --type road
 
-# Add a demographic snapshot
+# Add settlement snapshot
 saskan-timeline data add-snapshot --settlement 1 --day 100 --population 5000
+
+# Add region snapshot (PR-003a)
+saskan-timeline data add-region-snapshot --region 1 --day 100 --population 50000 --type census --granularity year
+
+# Add province snapshot (PR-003a)
+saskan-timeline data add-province-snapshot --province 1 --day 100 --population 20000 --type simulation --granularity decade
 ```
 
 ### Querying Data
@@ -325,6 +350,8 @@ saskan-timeline update delete-region 1 --yes
 # Note: Epochs and snapshots always use hard delete (no soft delete)
 saskan-timeline update delete-epoch 1
 saskan-timeline update delete-snapshot 1
+saskan-timeline update delete-region-snapshot 1  # PR-003a
+saskan-timeline update delete-province-snapshot 1  # PR-003a
 ```
 
 ### Import/Export
@@ -337,6 +364,8 @@ saskan-timeline io export output.json
 
 # Export specific entity type
 saskan-timeline io export epochs.json --type epochs
+saskan-timeline io export region_snapshots.json --type region_snapshots  # PR-003a
+saskan-timeline io export province_snapshots.json --type province_snapshots  # PR-003a
 
 # Include inactive records in export
 saskan-timeline io export all_data.json --include-inactive
@@ -525,6 +554,19 @@ With the CLI implementation complete, upcoming work includes:
 ---
 
 ## Version History
+
+**v0.3.0** (2025-12-30) - PR-003a: Schema Refactoring for Macro-Scale Simulation
+
+- Added RegionSnapshot and ProvinceSnapshot models for multi-scale demographic tracking
+- Implemented snapshot interpolation services for sparse demographic data
+- Added snapshot_type and granularity fields to all snapshot tables (census/simulation/estimate, year/decade/century)
+- Implemented ADR-008: Metadata and Description Field Management
+  - Added DescriptionMixin for programmatic description management
+  - Added MetadataMixin with flat structure validation
+  - Retrofitted Region, Province, and Epoch models with description fields
+- CLI commands for region and province snapshot management (add, delete)
+- Extended import/export to support region_snapshots and province_snapshots
+- Breaking schema change: v0.2.0 → v0.3.0 (requires database recreation)
 
 **v0.2.0** (2025-12-29) - PR-002: CLI Implementation
 

@@ -64,7 +64,9 @@ def get_table_row_counts() -> Dict[str, int]:
         Epoch,
         Event,
         Province,
+        ProvinceSnapshot,
         Region,
+        RegionSnapshot,
         Route,
         Settlement,
         SettlementSnapshot,
@@ -76,7 +78,9 @@ def get_table_row_counts() -> Dict[str, int]:
     try:
         counts["epochs"] = session.query(Epoch).count()
         counts["regions"] = session.query(Region).count()
+        counts["region_snapshots"] = session.query(RegionSnapshot).count()
         counts["provinces"] = session.query(Province).count()
+        counts["province_snapshots"] = session.query(ProvinceSnapshot).count()
         counts["settlements"] = session.query(Settlement).count()
         counts["settlement_snapshots"] = session.query(SettlementSnapshot).count()
         counts["routes"] = session.query(Route).count()
@@ -103,7 +107,9 @@ def validate_schema() -> List[str]:
     expected_tables = {
         "epochs",
         "regions",
+        "region_snapshots",
         "provinces",
+        "province_snapshots",
         "settlements",
         "settlement_snapshots",
         "routes",
