@@ -102,6 +102,7 @@ def add_epoch(
 @data_app.command("add-region")
 def add_region(
     name: str = typer.Option(..., "--name", "-n", help="Region name (required)"),
+    description: Optional[str] = typer.Option(None, "--description", "-d", help="Region description"),
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
@@ -117,6 +118,7 @@ def add_region(
         with RegionService() as service:
             region = service.create_region(
                 name=name,
+                description=description,
                 meta_data=meta_data,
             )
 
@@ -136,6 +138,7 @@ def add_province(
     region_id: Optional[int] = typer.Option(
         None, "--region", "-r", help="Parent region ID"
     ),
+    description: Optional[str] = typer.Option(None, "--description", "-d", help="Province description"),
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
@@ -152,6 +155,7 @@ def add_province(
             province = service.create_province(
                 name=name,
                 region_id=region_id,
+                description=description,
                 meta_data=meta_data,
             )
 
@@ -176,6 +180,9 @@ def add_settlement(
     ),
     province_id: Optional[int] = typer.Option(
         None, "--province", "-p", help="Parent province ID"
+    ),
+    parent_settlement_id: Optional[int] = typer.Option(
+        None, "--parent", help="Parent settlement ID (for boroughs/districts)"
     ),
     grid_x: Optional[int] = typer.Option(
         None, "--grid-x", help="Grid X coordinate (1-40)"
@@ -208,6 +215,7 @@ def add_settlement(
             settlement = service.create_settlement(
                 name=name,
                 province_id=province_id,
+                parent_settlement_id=parent_settlement_id,
                 settlement_type=settlement_type,
                 location_x=location_x,
                 location_y=location_y,
@@ -240,6 +248,12 @@ def add_snapshot(
     population_total: int = typer.Option(
         ..., "--population", "-p", help="Total population (required)"
     ),
+    snapshot_type: str = typer.Option(
+        "simulation", "--type", "-t", help="Snapshot type (simulation/historical/estimated)"
+    ),
+    granularity: str = typer.Option(
+        "year", "--granularity", "-g", help="Data granularity (year/month/day)"
+    ),
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
@@ -257,6 +271,8 @@ def add_snapshot(
                 settlement_id=settlement_id,
                 astro_day=astro_day,
                 population_total=population_total,
+                snapshot_type=snapshot_type,
+                granularity=granularity,
                 meta_data=meta_data,
             )
 
@@ -288,6 +304,12 @@ def add_route(
     difficulty: Optional[str] = typer.Option(
         None, "--difficulty", help="Route difficulty"
     ),
+    founded_astro_day: Optional[int] = typer.Option(
+        None, "--founded", help="Day route was established"
+    ),
+    dissolved_astro_day: Optional[int] = typer.Option(
+        None, "--dissolved", help="Day route ended/closed"
+    ),
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
@@ -307,6 +329,8 @@ def add_route(
                 distance_km=distance_km,
                 route_type=route_type,
                 difficulty=difficulty,
+                founded_astro_day=founded_astro_day,
+                dissolved_astro_day=dissolved_astro_day,
                 meta_data=meta_data,
             )
 
@@ -403,6 +427,12 @@ def add_event(
     description: Optional[str] = typer.Option(
         None, "--description", help="Event description"
     ),
+    location_x: Optional[int] = typer.Option(
+        None, "--location-x", help="Event location X coordinate"
+    ),
+    location_y: Optional[int] = typer.Option(
+        None, "--location-y", help="Event location Y coordinate"
+    ),
     interactive: bool = typer.Option(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
@@ -445,6 +475,8 @@ def add_event(
                 settlement_id=settlement_id,
                 entity_id=entity_id,
                 description=description,
+                location_x=location_x,
+                location_y=location_y,
                 meta_data=meta_data,
             )
 

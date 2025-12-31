@@ -33,6 +33,8 @@ class RouteService(BaseService[Route]):
         distance_km: Optional[float] = None,
         route_type: Optional[str] = None,
         difficulty: Optional[str] = None,
+        founded_astro_day: Optional[int] = None,
+        dissolved_astro_day: Optional[int] = None,
         meta_data: Optional[dict] = None,
     ) -> Route:
         """
@@ -43,6 +45,8 @@ class RouteService(BaseService[Route]):
         :param distance_km: Distance in kilometers
         :param route_type: Type of route (e.g., 'road', 'trail', 'river')
         :param difficulty: Route difficulty
+        :param founded_astro_day: Day route was established
+        :param dissolved_astro_day: Day route ended/closed
         :param meta_data: Optional metadata dictionary
         :return: Created route
         :raises ValueError: If validation fails
@@ -77,6 +81,8 @@ class RouteService(BaseService[Route]):
             distance_km=distance_km,
             route_type=route_type,
             difficulty=difficulty,
+            founded_astro_day=founded_astro_day,
+            dissolved_astro_day=dissolved_astro_day,
             meta_data=meta_data,
         )
 

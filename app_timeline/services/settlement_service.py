@@ -31,6 +31,7 @@ class SettlementService(BaseService[Settlement]):
         name: str,
         province_id: Optional[int],
         settlement_type: str,
+        parent_settlement_id: Optional[int] = None,
         location_x: Optional[float] = None,
         location_y: Optional[float] = None,
         grid_x: Optional[int] = None,
@@ -44,12 +45,13 @@ class SettlementService(BaseService[Settlement]):
         :param name: Unique name for the settlement
         :param province_id: Optional ID of the parent province
         :param settlement_type: Type (e.g., 'city', 'town', 'village')
+        :param parent_settlement_id: Optional ID of parent settlement (for boroughs/districts)
         :param location_x: Precise X coordinate in km
         :param location_y: Precise Y coordinate in km
         :param grid_x: Grid column (1-40)
         :param grid_y: Grid row (1-30)
         :param area_sq_km: Settlement area in square kilometers
-        :param meta_data: Optional metadata dictionary (can include description, etc.)
+        :param meta_data: Optional metadata dictionary
         :return: Created settlement
         :raises ValueError: If validation fails
         """
@@ -69,6 +71,14 @@ class SettlementService(BaseService[Settlement]):
                 if province is None:
                     raise ValueError(f"Province with ID {province_id} does not exist")
 
+        # Validate parent settlement exists if provided
+        if parent_settlement_id is not None:
+            parent = self.get_by_id(parent_settlement_id)
+            if parent is None:
+                raise ValueError(
+                    f"Parent settlement with ID {parent_settlement_id} does not exist"
+                )
+
         # Validate grid coordinates if provided
         if grid_x is not None and not (1 <= grid_x <= 40):
             raise ValueError(f"grid_x must be between 1 and 40, got {grid_x}")
@@ -78,6 +88,7 @@ class SettlementService(BaseService[Settlement]):
         return self.create(
             name=name,
             province_id=province_id,
+            parent_settlement_id=parent_settlement_id,
             settlement_type=settlement_type,
             location_x=location_x,
             location_y=location_y,

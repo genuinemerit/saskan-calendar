@@ -30,6 +30,7 @@ class ProvinceService(BaseService[Province]):
         self,
         name: str,
         region_id: Optional[int] = None,
+        description: Optional[str] = None,
         meta_data: Optional[dict] = None,
     ) -> Province:
         """
@@ -37,7 +38,8 @@ class ProvinceService(BaseService[Province]):
 
         :param name: Unique name for the province
         :param region_id: Optional ID of the parent region
-        :param meta_data: Optional metadata dictionary (can include description, etc.)
+        :param description: Optional description of the province
+        :param meta_data: Optional metadata dictionary
         :return: Created province
         :raises ValueError: If validation fails
         """
@@ -57,7 +59,9 @@ class ProvinceService(BaseService[Province]):
                 if region is None:
                     raise ValueError(f"Region with ID {region_id} does not exist")
 
-        return self.create(name=name, region_id=region_id, meta_data=meta_data)
+        return self.create(
+            name=name, region_id=region_id, description=description, meta_data=meta_data
+        )
 
     def get_provinces_by_region(
         self, region_id: int, active_only: bool = True

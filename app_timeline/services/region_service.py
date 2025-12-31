@@ -24,12 +24,18 @@ class RegionService(BaseService[Region]):
         """Initialize the region service."""
         super().__init__(Region)
 
-    def create_region(self, name: str, meta_data: Optional[dict] = None) -> Region:
+    def create_region(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        meta_data: Optional[dict] = None,
+    ) -> Region:
         """
         Create a new region with validation.
 
         :param name: Unique name for the region
-        :param meta_data: Optional metadata dictionary (can include description, etc.)
+        :param description: Optional description of the region
+        :param meta_data: Optional metadata dictionary
         :return: Created region
         :raises ValueError: If validation fails
         """
@@ -40,7 +46,7 @@ class RegionService(BaseService[Region]):
                 f"Region with name '{name}' already exists (ID: {existing.id})"
             )
 
-        return self.create(name=name, meta_data=meta_data)
+        return self.create(name=name, description=description, meta_data=meta_data)
 
     def get_active_regions(self):
         """

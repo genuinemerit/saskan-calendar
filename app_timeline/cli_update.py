@@ -199,11 +199,23 @@ def update_settlement(
     province_id: Optional[int] = typer.Option(
         None, "--province", "-p", help="New province ID"
     ),
+    parent_settlement_id: Optional[int] = typer.Option(
+        None, "--parent", help="New parent settlement ID"
+    ),
     grid_x: Optional[int] = typer.Option(
         None, "--grid-x", help="New grid X coordinate"
     ),
     grid_y: Optional[int] = typer.Option(
         None, "--grid-y", help="New grid Y coordinate"
+    ),
+    location_x: Optional[float] = typer.Option(
+        None, "--location-x", help="New precise X coordinate (km)"
+    ),
+    location_y: Optional[float] = typer.Option(
+        None, "--location-y", help="New precise Y coordinate (km)"
+    ),
+    area_sq_km: Optional[float] = typer.Option(
+        None, "--area", help="New settlement area (sq km)"
     ),
 ):
     """Update an existing settlement."""
@@ -215,10 +227,18 @@ def update_settlement(
             updates["settlement_type"] = settlement_type
         if province_id is not None:
             updates["province_id"] = province_id
+        if parent_settlement_id is not None:
+            updates["parent_settlement_id"] = parent_settlement_id
         if grid_x is not None:
             updates["grid_x"] = grid_x
         if grid_y is not None:
             updates["grid_y"] = grid_y
+        if location_x is not None:
+            updates["location_x"] = location_x
+        if location_y is not None:
+            updates["location_y"] = location_y
+        if area_sq_km is not None:
+            updates["area_sq_km"] = area_sq_km
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")
@@ -306,11 +326,23 @@ def update_event(
     description: Optional[str] = typer.Option(
         None, "--description", help="New description"
     ),
+    region_id: Optional[int] = typer.Option(
+        None, "--region", "-r", help="New region ID"
+    ),
+    province_id: Optional[int] = typer.Option(
+        None, "--province", "-p", help="New province ID"
+    ),
     settlement_id: Optional[int] = typer.Option(
         None, "--settlement", "-s", help="New settlement ID"
     ),
     entity_id: Optional[int] = typer.Option(
         None, "--entity", "-e", help="New entity ID"
+    ),
+    location_x: Optional[int] = typer.Option(
+        None, "--location-x", help="New event location X coordinate"
+    ),
+    location_y: Optional[int] = typer.Option(
+        None, "--location-y", help="New event location Y coordinate"
     ),
 ):
     """Update an existing event."""
@@ -324,10 +356,18 @@ def update_event(
             updates["astro_day"] = day
         if description is not None:
             updates["description"] = description
+        if region_id is not None:
+            updates["region_id"] = region_id
+        if province_id is not None:
+            updates["province_id"] = province_id
         if settlement_id is not None:
             updates["settlement_id"] = settlement_id
         if entity_id is not None:
             updates["entity_id"] = entity_id
+        if location_x is not None:
+            updates["location_x"] = location_x
+        if location_y is not None:
+            updates["location_y"] = location_y
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")
@@ -370,6 +410,12 @@ def update_route(
     difficulty: Optional[str] = typer.Option(
         None, "--difficulty", help="New difficulty level"
     ),
+    founded_astro_day: Optional[int] = typer.Option(
+        None, "--founded", help="Day route was established"
+    ),
+    dissolved_astro_day: Optional[int] = typer.Option(
+        None, "--dissolved", help="Day route ended/closed"
+    ),
 ):
     """Update an existing route."""
     try:
@@ -384,6 +430,10 @@ def update_route(
             updates["route_type"] = route_type
         if difficulty is not None:
             updates["difficulty"] = difficulty
+        if founded_astro_day is not None:
+            updates["founded_astro_day"] = founded_astro_day
+        if dissolved_astro_day is not None:
+            updates["dissolved_astro_day"] = dissolved_astro_day
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")
@@ -416,6 +466,12 @@ def update_snapshot(
     population: Optional[int] = typer.Option(
         None, "--population", "-p", help="New population total"
     ),
+    snapshot_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="New snapshot type (simulation/historical/estimated)"
+    ),
+    granularity: Optional[str] = typer.Option(
+        None, "--granularity", "-g", help="New data granularity (year/month/day)"
+    ),
 ):
     """Update an existing settlement snapshot."""
     try:
@@ -424,6 +480,10 @@ def update_snapshot(
             updates["astro_day"] = day
         if population is not None:
             updates["population_total"] = population
+        if snapshot_type is not None:
+            updates["snapshot_type"] = snapshot_type
+        if granularity is not None:
+            updates["granularity"] = granularity
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")

@@ -38,7 +38,7 @@ def export_data(
         None,
         "--type",
         "-t",
-        help="Export specific entity type (epochs/regions/provinces/settlements/entities/events/routes/snapshots/region_snapshots/province_snapshots)",
+        help="Export specific entity type (epochs/regions/provinces/settlements/entities/events/routes/settlement_snapshots/region_snapshots/province_snapshots)",
     ),
     include_inactive: bool = typer.Option(
         False, "--include-inactive", help="Include inactive/deprecated records"
@@ -161,6 +161,10 @@ def export_data(
                             "event_type": ev.event_type,
                             "astro_day": ev.astro_day,
                             "description": ev.description,
+                            "location_x": ev.location_x,
+                            "location_y": ev.location_y,
+                            "region_id": ev.region_id,
+                            "province_id": ev.province_id,
                             "settlement_id": ev.settlement_id,
                             "entity_id": ev.entity_id,
                             "meta_data": ev.meta_data,
@@ -180,17 +184,19 @@ def export_data(
                             "distance_km": r.distance_km,
                             "route_type": r.route_type,
                             "difficulty": r.difficulty,
+                            "founded_astro_day": r.founded_astro_day,
+                            "dissolved_astro_day": r.dissolved_astro_day,
                             "meta_data": r.meta_data,
                         }
                         for r in routes
                     ]
 
-            # Export snapshots (settlement snapshots)
-            if export_all or entity_type == "snapshots":
-                _ = progress.add_task(description="Exporting snapshots...", total=None)
+            # Export settlement snapshots
+            if export_all or entity_type == "settlement_snapshots" or entity_type == "snapshots":
+                _ = progress.add_task(description="Exporting settlement snapshots...", total=None)
                 with SnapshotService() as service:
                     snapshots = service.list_all()
-                    data["snapshots"] = [
+                    data["settlement_snapshots"] = [
                         {
                             "settlement_id": s.settlement_id,
                             "astro_day": s.astro_day,
@@ -511,13 +517,14 @@ def import_data(
                         rprint(f"[red]  Error importing route: {e}[/red]")
                         stats["errors"] += 1
 
-            # Import settlement snapshots
-            if "snapshots" in data:
+            # Import settlement snapshots (support both old "snapshots" and new "settlement_snapshots" keys)
+            snapshots_key = "settlement_snapshots" if "settlement_snapshots" in data else "snapshots"
+            if snapshots_key in data:
                 _ = progress.add_task(
-                    description=f"Importing {len(data['snapshots'])} snapshots...",
+                    description=f"Importing {len(data[snapshots_key])} settlement snapshots...",
                     total=None,
                 )
-                for snapshot_data in data["snapshots"]:
+                for snapshot_data in data[snapshots_key]:
                     try:
                         if dry_run:
                             rprint(

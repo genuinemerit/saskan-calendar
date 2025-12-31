@@ -36,6 +36,8 @@ class EventService(BaseService[Event]):
         settlement_id: Optional[int] = None,
         entity_id: Optional[int] = None,
         description: Optional[str] = None,
+        location_x: Optional[int] = None,
+        location_y: Optional[int] = None,
         meta_data: Optional[dict] = None,
     ) -> Event:
         """
@@ -51,6 +53,8 @@ class EventService(BaseService[Event]):
         :param settlement_id: Optional settlement where event occurred
         :param entity_id: Optional entity involved in the event
         :param description: Optional description
+        :param location_x: Optional X coordinate of event location
+        :param location_y: Optional Y coordinate of event location
         :param meta_data: Optional metadata dictionary
         :return: Created event
         :raises ValueError: If validation fails
@@ -113,6 +117,8 @@ class EventService(BaseService[Event]):
             settlement_id=settlement_id,
             entity_id=entity_id,
             description=description,
+            location_x=location_x,
+            location_y=location_y,
             meta_data=meta_data,
         )
 

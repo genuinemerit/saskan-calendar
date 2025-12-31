@@ -31,6 +31,8 @@ class SnapshotService(BaseService[SettlementSnapshot]):
         settlement_id: int,
         astro_day: int,
         population_total: int,
+        snapshot_type: str = "simulation",
+        granularity: str = "year",
         population_by_species: Optional[dict] = None,
         population_by_habitat: Optional[dict] = None,
         cultural_composition: Optional[dict] = None,
@@ -43,6 +45,8 @@ class SnapshotService(BaseService[SettlementSnapshot]):
         :param settlement_id: ID of the settlement
         :param astro_day: Day this snapshot represents
         :param population_total: Total population (required)
+        :param snapshot_type: Type of snapshot (simulation/historical/estimated)
+        :param granularity: Data granularity (year/month/day)
         :param population_by_species: Population breakdown by species
         :param population_by_habitat: Population breakdown by habitat
         :param cultural_composition: Cultural/social composition
@@ -71,6 +75,8 @@ class SnapshotService(BaseService[SettlementSnapshot]):
             settlement_id=settlement_id,
             astro_day=astro_day,
             population_total=population_total,
+            snapshot_type=snapshot_type,
+            granularity=granularity,
             population_by_species=population_by_species,
             population_by_habitat=population_by_habitat,
             cultural_composition=cultural_composition,
