@@ -318,11 +318,17 @@ class TestEventModel:
 
     def test_event_deprecation(self, db_session: Session):
         """Test event deprecation and superseding."""
+        # Create region for event location association
+        region = Region(name="Test Region")
+        db_session.add(region)
+        db_session.flush()
+
         event1 = Event(
             astro_day=100,
             event_type="battle",
             title="Original Event",
             description="Original description",
+            region_id=region.id,
         )
 
         db_session.add(event1)
@@ -333,6 +339,7 @@ class TestEventModel:
             event_type="battle",
             title="Corrected Event",
             description="Corrected description",
+            region_id=region.id,
         )
 
         db_session.add(event2)

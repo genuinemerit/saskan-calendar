@@ -18,7 +18,9 @@ from .services import (
     EpochService,
     EventService,
     ProvinceService,
+    ProvinceSnapshotService,
     RegionService,
+    RegionSnapshotService,
     RouteService,
     SettlementService,
     SnapshotService,
@@ -26,6 +28,18 @@ from .services import (
 
 list_app = typer.Typer(help="List and query timeline data")
 console = Console()
+
+
+def _format_metadata(meta_data: dict | None) -> str:
+    """Format metadata dict as concise string for display."""
+    if not meta_data:
+        return ""
+    # Show up to 3 key-value pairs, truncate if needed
+    items = list(meta_data.items())[:3]
+    formatted = ", ".join(f"{k}: {v}" for k, v in items)
+    if len(meta_data) > 3:
+        formatted += f" (+{len(meta_data) - 3} more)"
+    return formatted
 
 
 @list_app.command("epochs")
@@ -57,6 +71,7 @@ def list_epochs(
         table.add_column("End Day", justify="right")
         table.add_column("Duration", justify="right")
         table.add_column("Description")
+        table.add_column("Metadata", style="dim")
 
         for epoch in epochs:
             table.add_row(
@@ -66,6 +81,7 @@ def list_epochs(
                 str(epoch.end_astro_day),
                 str(epoch.duration),
                 epoch.description or "",
+                _format_metadata(epoch.meta_data),
             )
 
         console.print(table)
@@ -98,9 +114,16 @@ def list_regions(
         )
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
+        table.add_column("Description")
+        table.add_column("Metadata", style="dim")
 
         for region in regions:
-            table.add_row(str(region.id), region.name)
+            table.add_row(
+                str(region.id),
+                region.name,
+                region.description or "",
+                _format_metadata(region.meta_data),
+            )
 
         console.print(table)
 
@@ -143,12 +166,16 @@ def list_provinces(
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Name", style="green")
         table.add_column("Region ID", justify="right")
+        table.add_column("Description")
+        table.add_column("Metadata", style="dim")
 
         for province in provinces:
             table.add_row(
                 str(province.id),
                 province.name,
                 str(province.region_id) if province.region_id else "",
+                province.description or "",
+                _format_metadata(province.meta_data),
             )
 
         console.print(table)
@@ -201,6 +228,7 @@ def list_settlements(
         table.add_column("Type")
         table.add_column("Province ID", justify="right")
         table.add_column("Grid Location")
+        table.add_column("Metadata", style="dim")
 
         for settlement in settlements:
             grid_loc = ""
@@ -213,6 +241,7 @@ def list_settlements(
                 settlement.settlement_type,
                 str(settlement.province_id) if settlement.province_id else "",
                 grid_loc,
+                _format_metadata(settlement.meta_data),
             )
 
         console.print(table)
@@ -263,6 +292,7 @@ def list_entities(
         table.add_column("Type")
         table.add_column("Founded", justify="right")
         table.add_column("Dissolved", justify="right")
+        table.add_column("Metadata", style="dim")
 
         for entity in entities:
             founded = (
@@ -282,6 +312,7 @@ def list_entities(
                 entity.entity_type,
                 founded,
                 dissolved,
+                _format_metadata(entity.meta_data),
             )
 
         console.print(table)
@@ -295,6 +326,12 @@ def list_entities(
 def list_events(
     event_type: Optional[str] = typer.Option(
         None, "--type", "-t", help="Filter by event type"
+    ),
+    region_id: Optional[int] = typer.Option(
+        None, "--region", "-r", help="Filter by region ID"
+    ),
+    province_id: Optional[int] = typer.Option(
+        None, "--province", "-p", help="Filter by province ID"
     ),
     settlement_id: Optional[int] = typer.Option(
         None, "--settlement", "-s", help="Filter by settlement ID"
@@ -323,6 +360,14 @@ def list_events(
             elif start_day is not None and end_day is not None:
                 events = service.get_events_in_range(
                     start_day, end_day, active_only=not all_records
+                )
+            elif region_id is not None:
+                events = service.get_events_for_region(
+                    region_id, active_only=not all_records
+                )
+            elif province_id is not None:
+                events = service.get_events_for_province(
+                    province_id, active_only=not all_records
                 )
             elif settlement_id is not None:
                 events = service.get_events_for_settlement(
@@ -361,17 +406,28 @@ def list_events(
         table.add_column("Day", justify="right")
         table.add_column("Type")
         table.add_column("Title", style="green")
-        table.add_column("Settlement", justify="right")
+        table.add_column("Location")
         table.add_column("Entity", justify="right")
+        table.add_column("Metadata", style="dim")
 
         for event in events:
+            # Determine location string
+            location = ""
+            if event.region_id:
+                location = f"R:{event.region_id}"
+            elif event.province_id:
+                location = f"P:{event.province_id}"
+            elif event.settlement_id:
+                location = f"S:{event.settlement_id}"
+
             table.add_row(
                 str(event.id),
                 str(event.astro_day),
                 event.event_type,
                 event.title,
-                str(event.settlement_id) if event.settlement_id else "",
+                location,
                 str(event.entity_id) if event.entity_id else "",
+                _format_metadata(event.meta_data),
             )
 
         console.print(table)
@@ -426,6 +482,7 @@ def list_routes(
         table.add_column("Distance (km)", justify="right")
         table.add_column("Type")
         table.add_column("Difficulty")
+        table.add_column("Metadata", style="dim")
 
         for route in routes:
             distance = f"{route.distance_km:.1f}" if route.distance_km else ""
@@ -437,6 +494,7 @@ def list_routes(
                 distance,
                 route.route_type or "",
                 route.difficulty or "",
+                _format_metadata(route.meta_data),
             )
 
         console.print(table)
@@ -446,8 +504,8 @@ def list_routes(
         raise typer.Exit(code=1)
 
 
-@list_app.command("snapshots")
-def list_snapshots(
+@list_app.command("settlement-snapshots")
+def list_settlement_snapshots(
     settlement_id: int = typer.Option(
         ..., "--settlement", "-s", help="Settlement ID (required)"
     ),
@@ -488,12 +546,18 @@ def list_snapshots(
         table.add_column("ID", style="cyan", justify="right")
         table.add_column("Day", justify="right")
         table.add_column("Population", justify="right", style="green")
+        table.add_column("Type")
+        table.add_column("Granularity")
+        table.add_column("Metadata", style="dim")
 
         for snapshot in snapshots:
             table.add_row(
                 str(snapshot.id),
                 str(snapshot.astro_day),
                 f"{snapshot.population_total:,}",
+                snapshot.snapshot_type or "",
+                snapshot.granularity or "",
+                _format_metadata(snapshot.meta_data),
             )
 
         console.print(table)
@@ -501,3 +565,121 @@ def list_snapshots(
     except Exception as e:
         rprint(f"[red]✗ Error: {e}[/red]")
         raise typer.Exit(code=1)
+
+
+
+@list_app.command("region-snapshots")
+def list_region_snapshots(
+    region_id: int = typer.Option(..., "--region", "-r", help="Region ID (required)"),
+    start_day: Optional[int] = typer.Option(
+        None, "--start", help="Filter snapshots from this day"
+    ),
+    end_day: Optional[int] = typer.Option(
+        None, "--end", help="Filter snapshots until this day"
+    ),
+    snapshot_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by snapshot type"
+    ),
+):
+    """List demographic snapshots for a region."""
+    try:
+        with RegionSnapshotService() as service:
+            snapshots = service.get_snapshots_for_region(
+                region_id,
+                start_day=start_day,
+                end_day=end_day,
+                snapshot_type=snapshot_type,
+            )
+
+        if not snapshots:
+            rprint(f"[yellow]No snapshots found for region {region_id}.[/yellow]")
+            return
+
+        # Create table
+        table = Table(
+            title=f"\nRegion Snapshots for Region {region_id} ({len(snapshots)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        table.add_column("ID", style="cyan", justify="right")
+        table.add_column("Day", justify="right")
+        table.add_column("Population", justify="right", style="green")
+        table.add_column("Type")
+        table.add_column("Granularity")
+        table.add_column("Metadata", style="dim")
+
+        for snapshot in snapshots:
+            table.add_row(
+                str(snapshot.id),
+                str(snapshot.astro_day),
+                f"{snapshot.population_total:,}",
+                snapshot.snapshot_type or "",
+                snapshot.granularity or "",
+                _format_metadata(snapshot.meta_data),
+            )
+
+        console.print(table)
+
+    except Exception as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+
+
+@list_app.command("province-snapshots")
+def list_province_snapshots(
+    province_id: int = typer.Option(
+        ..., "--province", "-p", help="Province ID (required)"
+    ),
+    start_day: Optional[int] = typer.Option(
+        None, "--start", help="Filter snapshots from this day"
+    ),
+    end_day: Optional[int] = typer.Option(
+        None, "--end", help="Filter snapshots until this day"
+    ),
+    snapshot_type: Optional[str] = typer.Option(
+        None, "--type", "-t", help="Filter by snapshot type"
+    ),
+):
+    """List demographic snapshots for a province."""
+    try:
+        with ProvinceSnapshotService() as service:
+            snapshots = service.get_snapshots_for_province(
+                province_id,
+                start_day=start_day,
+                end_day=end_day,
+                snapshot_type=snapshot_type,
+            )
+
+        if not snapshots:
+            rprint(f"[yellow]No snapshots found for province {province_id}.[/yellow]")
+            return
+
+        # Create table
+        table = Table(
+            title=f"\nProvince Snapshots for Province {province_id} ({len(snapshots)} found)",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        table.add_column("ID", style="cyan", justify="right")
+        table.add_column("Day", justify="right")
+        table.add_column("Population", justify="right", style="green")
+        table.add_column("Type")
+        table.add_column("Granularity")
+        table.add_column("Metadata", style="dim")
+
+        for snapshot in snapshots:
+            table.add_row(
+                str(snapshot.id),
+                str(snapshot.astro_day),
+                f"{snapshot.population_total:,}",
+                snapshot.snapshot_type or "",
+                snapshot.granularity or "",
+                _format_metadata(snapshot.meta_data),
+            )
+
+        console.print(table)
+
+    except Exception as e:
+        rprint(f"[red]✗ Error: {e}[/red]")
+        raise typer.Exit(code=1)
+

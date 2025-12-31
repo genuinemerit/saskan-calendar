@@ -388,6 +388,12 @@ def add_event(
     astro_day: int = typer.Option(
         ..., "--day", "-d", help="Day event occurred (required)"
     ),
+    region_id: Optional[int] = typer.Option(
+        None, "--region", "-r", help="Region where event occurred"
+    ),
+    province_id: Optional[int] = typer.Option(
+        None, "--province", "-p", help="Province where event occurred"
+    ),
     settlement_id: Optional[int] = typer.Option(
         None, "--settlement", "-s", help="Settlement where event occurred"
     ),
@@ -401,8 +407,28 @@ def add_event(
         True, "--interactive/--no-interactive", help="Prompt for metadata"
     ),
 ):
-    """Add a new historical event."""
+    """
+    Add a new historical event.
+
+    An event must be associated with exactly ONE of: region, province, or settlement.
+    Specify --region, --province, OR --settlement (not multiple).
+    """
     try:
+        # Validate geographic association
+        location_count = sum([
+            region_id is not None,
+            province_id is not None,
+            settlement_id is not None
+        ])
+        if location_count == 0:
+            rprint("[red]✗ Error: Event must be associated with a region, province, or settlement[/red]")
+            rprint("  Use --region, --province, or --settlement")
+            raise typer.Exit(code=1)
+        if location_count > 1:
+            rprint("[red]✗ Error: Event can only be associated with ONE location[/red]")
+            rprint("  Use --region, --province, OR --settlement (not multiple)")
+            raise typer.Exit(code=1)
+
         # Prompt for metadata if interactive
         meta_data = None
         if interactive:
@@ -414,6 +440,8 @@ def add_event(
                 title=title,
                 event_type=event_type,
                 astro_day=astro_day,
+                region_id=region_id,
+                province_id=province_id,
                 settlement_id=settlement_id,
                 entity_id=entity_id,
                 description=description,

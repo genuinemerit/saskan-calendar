@@ -345,7 +345,7 @@ class TestSnapshotListCommands:
 
     def test_list_snapshots(self):
         """Test listing snapshots for a settlement."""
-        result = runner.invoke(app, ["list", "snapshots", "--settlement", "1"])
+        result = runner.invoke(app, ["list", "settlement-snapshots", "--settlement", "1"])
         assert result.exit_code == 0
         assert "1,000" in result.stdout
         assert "1 found" in result.stdout
@@ -354,7 +354,7 @@ class TestSnapshotListCommands:
         """Test listing snapshots within a date range."""
         result = runner.invoke(
             app,
-            ["list", "snapshots", "--settlement", "1", "--start", "0", "--end", "100"],
+            ["list", "settlement-snapshots", "--settlement", "1", "--start", "0", "--end", "100"],
         )
         assert result.exit_code == 0
         assert "1,000" in result.stdout
@@ -362,6 +362,6 @@ class TestSnapshotListCommands:
 
     def test_list_snapshots_empty(self):
         """Test listing snapshots for settlement with none."""
-        result = runner.invoke(app, ["list", "snapshots", "--settlement", "2"])
+        result = runner.invoke(app, ["list", "settlement-snapshots", "--settlement", "2"])
         assert result.exit_code == 0
         assert "No snapshots found" in result.stdout

@@ -25,13 +25,29 @@ from .services import (
     SnapshotService,
 )
 
-update_app = typer.Typer(help="Update and delete timeline data")
+update_app = typer.Typer(
+    help="Update and delete timeline data",
+    epilog="""
+Examples:
+  # Update epoch name
+  saskan-timeline update epoch 1 --name "Early Period"
+
+  # Update multiple fields
+  saskan-timeline update region 5 --name "Northlands" --description "Cold northern territories"
+
+  # Delete with confirmation
+  saskan-timeline update delete-event 42
+
+  # Delete without confirmation
+  saskan-timeline update delete-route 10 --yes
+""",
+)
 
 
 @update_app.command("epoch")
 def update_epoch(
     epoch_id: int = typer.Argument(..., help="ID of epoch to update"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="New epoch name"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="New name"),
     start_day: Optional[int] = typer.Option(
         None, "--start", "-s", help="New start day"
     ),
@@ -40,7 +56,14 @@ def update_epoch(
         None, "--description", "-d", help="New description"
     ),
 ):
-    """Update an existing epoch."""
+    """
+    Update an existing epoch.
+
+    Provide epoch ID and one or more fields to update. Only specified fields
+    will be modified.
+
+    Example: saskan-timeline update epoch 1 --name "First Era" --start 0
+    """
     try:
         # Build update dictionary with only provided values
         updates = {}
@@ -78,13 +101,22 @@ def update_epoch(
 @update_app.command("region")
 def update_region(
     region_id: int = typer.Argument(..., help="ID of region to update"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="New region name"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="New name"),
+    description: Optional[str] = typer.Option(None, "--description", "-d", help="New description"),
 ):
-    """Update an existing region."""
+    """
+    Update an existing region.
+
+    Provide region ID and one or more fields to update.
+
+    Example: saskan-timeline update region 5 --name "Northlands"
+    """
     try:
         updates = {}
         if name is not None:
             updates["name"] = name
+        if description is not None:
+            updates["description"] = description
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")
@@ -110,18 +142,27 @@ def update_region(
 @update_app.command("province")
 def update_province(
     province_id: int = typer.Argument(..., help="ID of province to update"),
-    name: Optional[str] = typer.Option(None, "--name", "-n", help="New province name"),
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="New name"),
     region_id: Optional[int] = typer.Option(
         None, "--region", "-r", help="New region ID"
     ),
+    description: Optional[str] = typer.Option(None, "--description", "-d", help="New description"),
 ):
-    """Update an existing province."""
+    """
+    Update an existing province.
+
+    Provide province ID and one or more fields to update.
+
+    Example: saskan-timeline update province 3 --name "Western Province"
+    """
     try:
         updates = {}
         if name is not None:
             updates["name"] = name
         if region_id is not None:
             updates["region_id"] = region_id
+        if description is not None:
+            updates["description"] = description
 
         if not updates:
             rprint("[yellow]No fields specified for update.[/yellow]")

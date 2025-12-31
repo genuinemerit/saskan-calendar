@@ -1,0 +1,134 @@
+# ADR-009: Message Contracts and Data Exchange Strategy
+
+Status
+
+Accepted
+
+Date
+
+2025-12-29
+
+Context
+
+The Saskan project consists of multiple subsystems developed incrementally and, in some cases, independently. These subsystems exchange structured messages across architectural boundaries (e.g., application layers, services, tools, pipelines).
+
+Key goals include:
+	•	Clear separation between architectural layers
+	•	Explicit and enforceable message structure
+	•	Long-term maintainability by a small team
+	•	Support for evolution and versioning
+	•	Avoidance of unnecessary infrastructure or proprietary lock-in
+	•	High data quality suitable for analytical and archival use
+
+The project has adopted Data Transfer Objects (DTOs) with explicit transformation methods and JSON Schema validation to enforce message contracts at subsystem boundaries.
+
+This decision formalizes that approach and documents evaluated alternatives.
+
+⸻
+
+Decision
+
+The project will use the following strategy for message contracts and data exchange:
+	1.	DTO-based message definitions
+	•	DTOs define the canonical structure of messages at subsystem boundaries.
+	•	DTOs are not domain objects and do not contain business logic.
+	2.	Explicit transform methods
+	•	Transformations are required when crossing architectural layers.
+	•	Domain models, persistence models, and transport formats remain decoupled.
+	3.	JSON Schema as the contract specification
+	•	JSON Schema defines permitted structure, required fields, types, and constraints.
+	•	Validation occurs at subsystem boundaries.
+	•	Schemas are versioned and treated as first-class artifacts.
+	4.	Transport-agnostic design
+	•	Message contracts are independent of transport mechanisms (HTTP, CLI, files, queues).
+	•	JSON is the default interchange format.
+	5.	Analytics artifacts
+	•	Apache Parquet is explicitly permitted and recommended for analytics pipelines.
+	•	Parquet is used for derived, read-heavy, analytical, or archival data.
+	•	Parquet files are not considered systems of record.
+	•	DuckDB or equivalent engines may be used to query Parquet artifacts.
+
+⸻
+
+Consequences
+
+Positive
+	•	Strong, explicit boundaries between subsystems
+	•	Early detection of invalid or incompatible messages
+	•	Language-agnostic contracts
+	•	Clear separation of concerns
+	•	Safe evolution through schema versioning
+	•	Reduced risk of implicit coupling
+	•	Clean integration with analytics workflows
+
+Negative
+	•	Additional code for DTOs and transformations
+	•	Slightly higher upfront ceremony
+	•	Requires discipline to avoid bypassing schemas
+
+These trade-offs are acceptable given the project’s longevity and quality goals.
+
+⸻
+
+Alternatives Considered (Summary)
+
+1. Ad-hoc Dictionaries / Untyped Objects
+	•	Pros: Minimal effort, zero tooling
+	•	Cons: High long-term risk, silent breakage, poor evolvability
+	•	Rejected: Insufficient rigor for multi-subsystem architecture
+
+2. Static Typing Only (e.g., dataclasses + type checking)
+	•	Pros: Good IDE support, low runtime overhead
+	•	Cons: No runtime validation, weak cross-language guarantees
+	•	Rejected: Inadequate protection at subsystem boundaries
+
+3. Runtime Model Libraries (e.g., Pydantic-first)
+	•	Pros: Excellent ergonomics, integrated validation
+	•	Cons: Python-centric, potential coupling of validation and domain logic
+	•	Deferred: Acceptable as an implementation detail, but not as the primary contract authority
+
+4. OpenAPI-First Design
+	•	Pros: Strong HTTP tooling, client generation
+	•	Cons: HTTP-centric, verbose, limited applicability to non-API messages
+	•	Deferred: Suitable for public HTTP APIs, not internal messaging
+
+5. Protobuf / gRPC
+	•	Pros: Strong cross-language support, efficient, stable
+	•	Cons: Higher tooling complexity, weaker constraint expressiveness
+	•	Deferred: Considered for future high-throughput or multi-language systems
+
+6. Avro / Schema Registry
+	•	Pros: Strong schema evolution guarantees, data-pipeline-friendly
+	•	Cons: Additional infrastructure, event-stream bias
+	•	Deferred: Appropriate for future streaming analytics, not current scope
+
+7. GraphQL Schemas
+	•	Pros: Client-driven querying
+	•	Cons: API-specific, heavy abstraction
+	•	Rejected: Does not generalize to system messaging
+
+8. Database-as-Contract
+	•	Pros: Strong integrity at storage layer
+	•	Cons: Tight coupling, poor subsystem isolation
+	•	Rejected: Conflicts with modular architecture goals
+
+⸻
+
+Notes on Analytics and Data Pipelines
+	•	Transactional and canonical state resides in relational systems (e.g., PostgreSQL).
+	•	Analytical and derived datasets may be exported to Parquet.
+	•	Parquet artifacts:
+	•	Are immutable or append-only
+	•	Are versioned
+	•	Are validated by upstream processes
+	•	DuckDB or similar engines may be used for querying Parquet data without introducing additional operational complexity.
+
+⸻
+
+Summary
+
+The DTO + transform + JSON Schema approach provides a durable, explicit, and transport-neutral contract model aligned with the project’s architectural goals. It balances rigor with flexibility and integrates cleanly with analytical workflows via Parquet when required.
+
+This decision establishes a stable foundation for future Saskan subsystems while preserving optionality for more specialized technologies if justified by concrete use cases.
+
+⸻

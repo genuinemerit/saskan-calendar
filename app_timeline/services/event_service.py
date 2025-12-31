@@ -31,6 +31,8 @@ class EventService(BaseService[Event]):
         title: str,
         event_type: str,
         astro_day: int,
+        region_id: Optional[int] = None,
+        province_id: Optional[int] = None,
         settlement_id: Optional[int] = None,
         entity_id: Optional[int] = None,
         description: Optional[str] = None,
@@ -39,9 +41,13 @@ class EventService(BaseService[Event]):
         """
         Create a new event with validation.
 
+        An event must be associated with exactly ONE of: region, province, or settlement.
+
         :param title: Title for the event
         :param event_type: Type (e.g., 'battle', 'founding', 'treaty')
         :param astro_day: When the event occurred
+        :param region_id: Optional region where event occurred
+        :param province_id: Optional province where event occurred
         :param settlement_id: Optional settlement where event occurred
         :param entity_id: Optional entity involved in the event
         :param description: Optional description
@@ -49,6 +55,35 @@ class EventService(BaseService[Event]):
         :return: Created event
         :raises ValueError: If validation fails
         """
+        # Validate exactly one geographic association
+        location_count = sum([
+            region_id is not None,
+            province_id is not None,
+            settlement_id is not None
+        ])
+        if location_count != 1:
+            raise ValueError(
+                "Event must be associated with exactly ONE of: region, province, or settlement"
+            )
+
+        # Validate region if provided
+        if region_id is not None:
+            from .region_service import RegionService
+
+            with RegionService() as region_service:
+                region = region_service.get_by_id(region_id)
+                if region is None:
+                    raise ValueError(f"Region with ID {region_id} does not exist")
+
+        # Validate province if provided
+        if province_id is not None:
+            from .province_service import ProvinceService
+
+            with ProvinceService() as province_service:
+                province = province_service.get_by_id(province_id)
+                if province is None:
+                    raise ValueError(f"Province with ID {province_id} does not exist")
+
         # Validate settlement if provided
         if settlement_id is not None:
             from .settlement_service import SettlementService
@@ -73,6 +108,8 @@ class EventService(BaseService[Event]):
             title=title,
             event_type=event_type,
             astro_day=astro_day,
+            region_id=region_id,
+            province_id=province_id,
             settlement_id=settlement_id,
             entity_id=entity_id,
             description=description,
@@ -92,6 +129,46 @@ class EventService(BaseService[Event]):
         stmt = (
             select(Event)
             .where(Event.event_type == event_type)
+            .order_by(Event.astro_day)
+        )
+        if active_only:
+            stmt = stmt.where(Event.is_deprecated == False)
+        result = self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    def get_events_for_region(
+        self, region_id: int, active_only: bool = True
+    ) -> List[Event]:
+        """
+        Get all events that occurred at a specific region.
+
+        :param region_id: ID of the region
+        :param active_only: If True, only return non-deprecated events
+        :return: List of events at the region
+        """
+        stmt = (
+            select(Event)
+            .where(Event.region_id == region_id)
+            .order_by(Event.astro_day)
+        )
+        if active_only:
+            stmt = stmt.where(Event.is_deprecated == False)
+        result = self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    def get_events_for_province(
+        self, province_id: int, active_only: bool = True
+    ) -> List[Event]:
+        """
+        Get all events that occurred at a specific province.
+
+        :param province_id: ID of the province
+        :param active_only: If True, only return non-deprecated events
+        :return: List of events at the province
+        """
+        stmt = (
+            select(Event)
+            .where(Event.province_id == province_id)
             .order_by(Event.astro_day)
         )
         if active_only:

@@ -7,6 +7,7 @@ CLI commands for importing and exporting timeline data.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -32,12 +33,12 @@ io_app = typer.Typer(help="Import and export timeline data")
 
 @io_app.command("export")
 def export_data(
-    output: Path = typer.Argument(..., help="Output JSON file path"),
+    output: Optional[Path] = typer.Argument(None, help="Output JSON file path (default: data/timeline/exports/[type]_[timestamp].json)"),
     entity_type: Optional[str] = typer.Option(
         None,
         "--type",
         "-t",
-        help="Export only this entity type (epochs/regions/provinces/settlements/entities/events/routes/snapshots/region_snapshots/province_snapshots)",
+        help="Export specific entity type (epochs/regions/provinces/settlements/entities/events/routes/snapshots/region_snapshots/province_snapshots)",
     ),
     include_inactive: bool = typer.Option(
         False, "--include-inactive", help="Include inactive/deprecated records"
@@ -46,19 +47,20 @@ def export_data(
     """
     Export timeline data to JSON file.
 
-    Exports timeline entities to a structured JSON file. Can export all entities
-    or filter to a specific type. By default, only active records are exported.
-
-    The Progress context manager (from Rich library) is used to display a spinner
-    during export. The progress.add_task() calls register tasks for display but
-    don't require tracking since we use indeterminate spinners (total=None).
-
-    :param output: Path where JSON file will be written
-    :param entity_type: Optional filter to export only one entity type
-    :param include_inactive: If True, include inactive/deprecated records
-    :raises typer.Exit: On export failure with code 1
+    Exports all or filtered timeline entities. By default, only active records
+    are exported. If no output path is provided, exports to
+    data/timeline/exports/[type]_[timestamp].json
     """
     try:
+        # Generate default output path if not provided
+        if output is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            type_name = entity_type if entity_type else "all"
+            default_dir = Path("data/timeline/exports")
+            default_dir.mkdir(parents=True, exist_ok=True)
+            output = default_dir / f"{type_name}_{timestamp}.json"
+            rprint(f"[dim]No output path specified, using: {output}[/dim]")
+
         data = {}
 
         with Progress(

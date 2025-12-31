@@ -1,0 +1,56 @@
+{
+  "epochs": [],
+  "regions": [
+    {
+      "name": "Saskan Lands",
+      "meta_data": null
+    }
+  ],
+  "provinces": [],
+  "settlements": [],
+  "entities": [],
+  "events": [
+    {
+      "title": "Extinction event",
+      "event_type": "Fire storm",
+      "astro_day": 500,
+      "description": "Devastating fire storm rolled through the entire country",
+      "settlement_id": null,
+      "entity_id": null,
+      "meta_data": null
+    }
+  ],
+  "routes": [],
+  "snapshots": [],
+  "region_snapshots": [
+    {
+      "region_id": 1,
+      "astro_day": 0,
+      "population_total": 200000000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"100%\""
+      }
+    },
+    {
+      "region_id": 1,
+      "astro_day": 36500,
+      "population_total": 2000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"10%\""
+      }
+    }
+  ],
+  "province_snapshots": []
+}

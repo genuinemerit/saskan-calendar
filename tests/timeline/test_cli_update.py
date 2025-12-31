@@ -89,6 +89,8 @@ def setup_test_data():
             "founding",
             "--day",
             "50",
+            "--settlement",
+            "1",
             "--no-interactive",
         ],
     )

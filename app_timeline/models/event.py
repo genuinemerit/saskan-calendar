@@ -6,7 +6,7 @@ Event model for timeline events.
 
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKey, Integer, JSON, String, Text
 
 from .base import Base, PrimaryKeyMixin, TimestampMixin
 
@@ -16,9 +16,22 @@ class Event(Base, PrimaryKeyMixin, TimestampMixin):
     Represents a historical event in the timeline.
     Events are immutable historical facts - once created, they should not be modified.
     Use is_deprecated flag to mark events as superseded.
+
+    Geographic Association:
+    An event must be associated with exactly ONE of: region, province, or settlement.
+    The CHECK constraint ensures mutual exclusivity.
     """
 
     __tablename__ = "events"
+
+    __table_args__ = (
+        CheckConstraint(
+            "(CASE WHEN region_id IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN province_id IS NOT NULL THEN 1 ELSE 0 END + "
+            "CASE WHEN settlement_id IS NOT NULL THEN 1 ELSE 0 END) = 1",
+            name="event_location_exclusivity"
+        ),
+    )
 
     # When the event occurred (lore time)
     astro_day = Column(Integer, nullable=False, index=True)
@@ -37,10 +50,12 @@ class Event(Base, PrimaryKeyMixin, TimestampMixin):
     location_y = Column(Integer, nullable=True)
 
     # Related entities (foreign keys)
+    # Geographic association: exactly one of region_id, province_id, or settlement_id
+    region_id = Column(Integer, ForeignKey("regions.id"), nullable=True, index=True)
+    province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True, index=True)
     settlement_id = Column(
         Integer, ForeignKey("settlements.id"), nullable=True, index=True
     )
-    province_id = Column(Integer, ForeignKey("provinces.id"), nullable=True, index=True)
     entity_id = Column(Integer, ForeignKey("entities.id"), nullable=True, index=True)
 
     # Deprecation/correction handling

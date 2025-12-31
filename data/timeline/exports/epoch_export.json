@@ -1,0 +1,15 @@
+{
+  "epochs": [
+    {
+      "name": "Catastrophe",
+      "start_astro_day": 0,
+      "end_astro_day": 10,
+      "description": "Ecosystem collapse causes widespread havoc",
+      "meta_data": {
+        "heat_event": "44 C.",
+        "chill_event": "Long Winter",
+        "blast_event": "fires"
+      }
+    }
+  ]
+}

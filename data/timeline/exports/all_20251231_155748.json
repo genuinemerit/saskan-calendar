@@ -1,0 +1,56 @@
+{
+  "epochs": [
+    {
+      "name": "Catastrophe",
+      "start_astro_day": 0,
+      "end_astro_day": 10,
+      "description": "Multiple events led to ecological devastation",
+      "meta_data": null
+    }
+  ],
+  "regions": [
+    {
+      "name": "Saskantinon",
+      "meta_data": {
+        "Note": "\"All the grids, all the provinces\""
+      }
+    }
+  ],
+  "provinces": [],
+  "settlements": [],
+  "entities": [],
+  "events": [],
+  "routes": [],
+  "snapshots": [],
+  "region_snapshots": [
+    {
+      "region_id": 1,
+      "astro_day": 0,
+      "population_total": 200000000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"100%\""
+      }
+    },
+    {
+      "region_id": 1,
+      "astro_day": 36500,
+      "population_total": 200,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"100%\""
+      }
+    }
+  ],
+  "province_snapshots": []
+}

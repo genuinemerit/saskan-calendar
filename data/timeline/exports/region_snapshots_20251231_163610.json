@@ -1,0 +1,32 @@
+{
+  "region_snapshots": [
+    {
+      "region_id": 1,
+      "astro_day": 0,
+      "population_total": 200000000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"100%\""
+      }
+    },
+    {
+      "region_id": 1,
+      "astro_day": 36500,
+      "population_total": 2000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"10%\""
+      }
+    }
+  ]
+}

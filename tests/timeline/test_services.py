@@ -549,61 +549,75 @@ class TestEventService:
 
     def test_create_event(self, db_session):
         """Test creating a valid event."""
+        with RegionService() as region_service:
+            region = region_service.create_region(name="Test Region")
+            region_id = region.id
+
         with EventService() as service:
             event = service.create_event(
                 title="Battle of the Plains",
                 event_type="battle",
                 astro_day=500,
+                region_id=region_id,
                 description="Major conflict",
             )
 
             assert event.id is not None
             assert event.title == "Battle of the Plains"
             assert event.astro_day == 500
+            assert event.region_id == region_id
 
     def test_create_event_with_relations(self, db_session):
         """Test creating event with settlement and entity references."""
         with RegionService() as region_service:
             region = region_service.create_region(name="Test Region")
+            region_id = region.id
 
         with ProvinceService() as province_service:
             province = province_service.create_province(
-                name="Test Province", region_id=region.id
+                name="Test Province", region_id=region_id
             )
+            province_id = province.id
 
         with SettlementService() as settlement_service:
             settlement = settlement_service.create_settlement(
-                name="Test City", province_id=province.id, settlement_type="city"
+                name="Test City", province_id=province_id, settlement_type="city"
             )
+            settlement_id = settlement.id
 
         with EntityService() as entity_service:
             entity = entity_service.create_entity(
                 name="King Aldric", entity_type="person"
             )
+            entity_id = entity.id
 
         with EventService() as service:
             event = service.create_event(
                 title="City Founding",
                 event_type="founding",
                 astro_day=100,
-                settlement_id=settlement.id,
-                entity_id=entity.id,
+                settlement_id=settlement_id,
+                entity_id=entity_id,
             )
 
-            assert event.settlement_id == settlement.id
-            assert event.entity_id == entity.id
+            assert event.settlement_id == settlement_id
+            assert event.entity_id == entity_id
 
     def test_get_events_in_range(self, db_session):
         """Test finding events in a time range."""
+        with RegionService() as region_service:
+            region = region_service.create_region(name="Test Region")
+            region_id = region.id
+
         with EventService() as service:
             e1 = service.create_event(
-                title="Event 1", event_type="battle", astro_day=50
+                title="Event 1", event_type="battle", astro_day=50, region_id=region_id
             )
             e2 = service.create_event(
-                title="Event 2", event_type="treaty", astro_day=100
+                title="Event 2", event_type="treaty", astro_day=100, region_id=region_id
             )
             e3 = service.create_event(
-                title="Event 3", event_type="founding", astro_day=150
+                title="Event 3", event_type="founding", astro_day=150, region_id=region_id
             )
 
             # Range 75-125 should contain e2 only
@@ -613,17 +627,22 @@ class TestEventService:
 
     def test_get_events_in_epoch(self, db_session):
         """Test finding events during an epoch."""
+        with RegionService() as region_service:
+            region = region_service.create_region(name="Test Region")
+            region_id = region.id
+
         with EpochService() as epoch_service:
             epoch = epoch_service.create_epoch(
                 name="Test Epoch", start_astro_day=0, end_astro_day=100
             )
+            epoch_id = epoch.id
 
         with EventService() as service:
             e1 = service.create_event(
-                title="Event 1", event_type="battle", astro_day=50
+                title="Event 1", event_type="battle", astro_day=50, region_id=region_id
             )
             e2 = service.create_event(
-                title="Event 2", event_type="treaty", astro_day=150
+                title="Event 2", event_type="treaty", astro_day=150, region_id=region_id
             )
 
             events = service.get_events_in_epoch(epoch.id)

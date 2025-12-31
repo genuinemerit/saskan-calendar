@@ -348,6 +348,11 @@ class TestEventCommands:
 
     def test_add_event_basic(self):
         """Test adding a basic event."""
+        # Create region first (event requires location association)
+        runner.invoke(
+            app, ["data", "add-region", "--name", "Test Region", "--no-interactive"]
+        )
+
         result = runner.invoke(
             app,
             [
@@ -359,6 +364,8 @@ class TestEventCommands:
                 "battle",
                 "--day",
                 "100",
+                "--region",
+                "1",
                 "--no-interactive",
             ],
         )
