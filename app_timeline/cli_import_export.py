@@ -52,6 +52,14 @@ def export_data(
     data/timeline/exports/[type]_[timestamp].json
     """
     try:
+        # Validate entity_type for common typos (dash instead of underscore)
+        if entity_type and "-snapshots" in entity_type:
+            suggested = entity_type.replace("-snapshots", "_snapshots")
+            rprint(f"[red]✗ Invalid entity type: '{entity_type}'[/red]")
+            rprint(f"[yellow]  Did you mean '{suggested}'?[/yellow]")
+            rprint(f"[dim]  Valid snapshot types use underscores: settlement_snapshots, region_snapshots, province_snapshots[/dim]")
+            raise typer.Exit(code=1)
+
         # Generate default output path if not provided
         if output is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -291,10 +299,6 @@ def import_data(
     Reads a JSON file containing timeline entities and imports them into the database.
     The JSON format should match the structure produced by the export command. Can
     import partial data (only the entity types present in the file will be imported).
-
-    The Progress context manager (from Rich library) is used to display spinners
-    during import. The progress.add_task() calls register tasks for display but
-    don't require tracking since we use indeterminate spinners (total=None).
 
     For entities with unique names (epochs, regions, provinces, settlements, entities),
     the --skip-existing flag can be used to skip records that already exist (matched

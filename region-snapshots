@@ -3,16 +3,26 @@
     {
       "name": "Catastrophe",
       "start_astro_day": 0,
-      "end_astro_day": 10,
-      "description": "Multiple events led to ecological devastation",
+      "end_astro_day": 3651,
+      "description": "Multiple ecological and social disasters converged during this epoch to devastate the Lands",
       "meta_data": null
+    },
+    {
+      "name": "Long Winter",
+      "start_astro_day": 3650,
+      "end_astro_day": 10000,
+      "description": "Haze from fires blocks out Fatune",
+      "meta_data": {
+        "chill_event": "Long Winter",
+        "blast_event": "fires"
+      }
     }
   ],
   "regions": [
     {
       "name": "Saskantinon",
       "meta_data": {
-        "Note": "\"All the grids, all the provinces\""
+        "All": "Yes"
       }
     }
   ],
@@ -21,7 +31,7 @@
   "entities": [],
   "events": [],
   "routes": [],
-  "snapshots": [],
+  "settlement_snapshots": [],
   "region_snapshots": [
     {
       "region_id": 1,
@@ -39,8 +49,22 @@
     },
     {
       "region_id": 1,
-      "astro_day": 36500,
-      "population_total": 200,
+      "astro_day": 1825,
+      "population_total": 80000,
+      "population_by_species": null,
+      "population_by_habitat": null,
+      "cultural_composition": null,
+      "economic_data": null,
+      "snapshot_type": "census",
+      "granularity": "year",
+      "meta_data": {
+        "huum": "\"100%\""
+      }
+    },
+    {
+      "region_id": 1,
+      "astro_day": 3650,
+      "population_total": 1000,
       "population_by_species": null,
       "population_by_habitat": null,
       "cultural_composition": null,

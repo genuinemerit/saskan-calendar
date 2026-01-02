@@ -1,0 +1,14 @@
+{
+  "epochs": [
+    {
+      "name": "Long Winter",
+      "start_astro_day": 3650,
+      "end_astro_day": 10000,
+      "description": "Haze from fires blocks out Fatune",
+      "meta_data": {
+        "chill_event": "Long Winter",
+        "blast_event": "fires"
+      }
+    }
+  ]
+}
