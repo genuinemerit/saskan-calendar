@@ -26,7 +26,7 @@ from .db import (
     validate_schema,
 )
 
-app = typer.Typer(help="Saskan Timeline database management")
+app = typer.Typer(help="Saskan Timeline database management", add_completion=False)
 db_app = typer.Typer(help="Database management commands")
 app.add_typer(db_app, name="db")
 app.add_typer(data_app, name="data")
@@ -70,12 +70,11 @@ def drop_database(
     confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt")
 ):
     """Drop all tables from the database. WARNING: Deletes all data!"""
-    config = get_config()
+    _ = get_config()
 
     if not confirm:
-        rprint(
-            f"[yellow]WARNING: This will delete all tables and data from {config.database.path}[/yellow]"
-        )
+        rprint("[yellow]WARNING: This will delete all tables and data from" +
+               "f{config.database.path}[/yellow]")
         response = typer.prompt("Are you sure? (yes/no)")
         if response.lower() not in ["yes", "y"]:
             rprint("[cyan]Operation cancelled.[/cyan]")
@@ -98,7 +97,7 @@ def show_database_info():
         config = get_config()
 
         # Database location
-        rprint(f"\n[cyan]Database Information[/cyan]")
+        rprint("\n[cyan]Database Information[/cyan]")
         rprint(f"  Path: {config.database.path}")
         rprint(f"  Dialect: {config.database.dialect}")
 
@@ -108,7 +107,7 @@ def show_database_info():
             size_mb = size_bytes / (1024 * 1024)
             rprint(f"  Size: {size_mb:.2f} MB ({size_bytes:,} bytes)")
         else:
-            rprint(f"  Status: [yellow]Database file does not exist[/yellow]")
+            rprint("  Status: [yellow]Database file does not exist[/yellow]")
             return
 
         # Table information

@@ -81,7 +81,7 @@ route_types:
 # Application settings
 app:
   # Version
-  version: "0.1.0"
+  version: "0.3.1"
 
   # Default astro_day for "present day" queries (can be overridden)
   default_astro_day: 0
