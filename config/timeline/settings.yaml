@@ -81,7 +81,46 @@ route_types:
 # Application settings
 app:
   # Version
-  version: "0.3.1"
+  version: "0.3.2"
 
   # Default astro_day for "present day" queries (can be overridden)
   default_astro_day: 0
+
+# Simulation parameters (PR-003b: Macro-scale simulation)
+simulation:
+  # Default growth rates per species (annual intrinsic growth rate)
+  # Rate of 0.004 = 0.4% annual growth
+  growth_rates:
+    huum: 0.004                # Human - 0.4% annual
+    sint: 0.006                # Sentient animals/vegetables - 0.6% annual
+    mixed: 0.005               # Huum-sint mixed - 0.5% annual
+    beks: 0.000                # Non-sentient animals - not simulated
+    maken: 0.002               # Non-organic - 0.2% annual (slow)
+    extra_terrestrial_huum_appearing: 0.003
+    extra_terrestrial_non_huum: 0.003
+
+  # Base carrying capacity by entity type
+  base_carrying_capacity:
+    region: 50000              # Base K for regions
+    province: 25000            # Base K for provinces (smaller scale)
+
+  # Environmental factor range (climate, terrain quality)
+  # Sampled uniformly at simulation start
+  environmental_factor_range: [0.8, 1.2]
+
+  # Infrastructure factor (starts at 1.0, improved by events)
+  infrastructure_factor_initial: 1.0
+
+  # Location factor range (trade routes, resource access)
+  # Sampled uniformly at simulation start
+  location_factor_range: [0.9, 1.1]
+
+  # Chunk size for incremental simulation (default: 100 years)
+  # 1 year ≈ 365.25 days, so 100 years ≈ 36525 days
+  chunk_size_days: 36525
+
+  # Snapshot granularity intervals (in days)
+  granularities:
+    year: 365
+    decade: 3652
+    century: 36525

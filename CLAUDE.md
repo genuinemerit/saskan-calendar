@@ -73,6 +73,10 @@ poetry run saskan-timeline update delete-settlement 1 --hard --yes  # Permanent 
 poetry run saskan-timeline io export backup.json
 poetry run saskan-timeline io import data.json --dry-run
 poetry run saskan-timeline io import data.json --skip-existing
+
+# Macro-scale simulation (PR-003b)
+poetry run saskan-timeline simulate region 1 --start 0 --end 36525 --seed 42
+poetry run saskan-timeline simulate province 1 --start 0 --end 36525 --granularity decade
 ```
 
 ### Code Quality
@@ -324,6 +328,141 @@ with RegionSnapshotService() as service:
     # Returns: population_total=60000 (linear interpolation)
 ```
 
+### Macro-Scale Simulation (PR-003b)
+
+**Macro-scale simulation** simulates population dynamics for regions and provinces using logistic growth, carrying capacity, and event integration. This implements ADR-006 (incremental simulation) and ADR-007 (hybrid manual-algorithmic workflow).
+
+**Basic Workflow:**
+
+1. **Create initial snapshot** (optional - simulation can start from zero):
+```bash
+poetry run saskan-timeline data add-region-snapshot \
+  --region 1 --day 0 --population 10000 \
+  --interactive  # Add species breakdown
+```
+
+2. **Create events** (optional - human-authored events drive demographic impacts):
+```bash
+poetry run saskan-timeline data add-event \
+  --title "Great Drought" \
+  --type natural_disaster \
+  --day 10000 \
+  --region 1 \
+  --interactive  # Add effects in metadata
+```
+
+Example event metadata with effects:
+```json
+{
+  "effects": {
+    "shock_multiplier": 0.75,
+    "environmental_change": -0.1,
+    "infrastructure_damage": 0.90
+  },
+  "tags": ["climate", "disaster"],
+  "importance": "high"
+}
+```
+
+3. **Run simulation**:
+```bash
+# Simulate first 100 years with annual snapshots
+poetry run saskan-timeline simulate region 1 \
+  --start 0 --end 36525 \
+  --granularity year \
+  --seed 42
+
+# Simulate 500 years with decade snapshots
+poetry run saskan-timeline simulate province 1 \
+  --start 0 --end 182625 \
+  --granularity decade \
+  --chunk-size 18262  # 50-year chunks
+```
+
+4. **Query results**:
+```bash
+poetry run saskan-timeline list region-snapshots --region 1 --type simulation
+```
+
+**Simulation Features:**
+
+- **Logistic Growth**: Population grows following dN/dt = r×N×(1-N/K)
+- **Multi-Species**: Independent growth rates per species (huum, sint, mixed, etc.)
+- **Carrying Capacity**: K = K_base × environmental × infrastructure × location
+- **Event Integration**: Human-authored events modify state (shocks, infrastructure changes)
+- **Deterministic**: Same seed produces identical results for reproducibility
+- **Chunked Execution**: Simulates in chunks (default: 100 years) with validation between
+- **Configurable Granularity**: Snapshot intervals (year, decade, century)
+
+**Effect Parameters in Events:**
+
+Events can include these effect parameters in `meta_data["effects"]`:
+
+- `shock_multiplier` (0.0-1.0): Population shock (e.g., 0.75 = 25% loss from famine/war)
+- `infrastructure_damage` (0.0-1.0): Reduce infrastructure factor
+- `infrastructure_boost` (float): Increase infrastructure factor (e.g., +0.2 from irrigation)
+- `environmental_change` (±0.5): Modify environmental factor
+
+**Example: Complete Simulation Workflow**
+
+```bash
+# 1. Initialize database
+poetry run saskan-timeline db init
+
+# 2. Create region
+poetry run saskan-timeline data add-region --name "Northern Highlands"
+# Region ID: 1
+
+# 3. Add initial population snapshot
+poetry run saskan-timeline data add-region-snapshot \
+  --region 1 --day 0 --population 5000 \
+  --type census --granularity year
+
+# 4. Create historical events
+poetry run saskan-timeline data add-event \
+  --title "Discovery of Irrigation" \
+  --type cultural \
+  --day 5000 \
+  --region 1 \
+  --description "Major agricultural advancement" \
+  --interactive
+# Metadata: {"effects": {"infrastructure_boost": 0.3}}
+
+poetry run saskan-timeline data add-event \
+  --title "Great Famine of Year 50" \
+  --type natural_disaster \
+  --day 18262 \
+  --region 1 \
+  --interactive
+# Metadata: {"effects": {"shock_multiplier": 0.70, "environmental_change": -0.15}}
+
+# 5. Run simulation
+poetry run saskan-timeline simulate region 1 \
+  --start 0 --end 36525 \
+  --granularity decade \
+  --seed 42
+
+# 6. View results
+poetry run saskan-timeline list region-snapshots --region 1 --type simulation
+```
+
+**Configuration:**
+
+Simulation parameters are defined in `config/timeline/settings.yaml`:
+
+```yaml
+simulation:
+  growth_rates:
+    huum: 0.004    # 0.4% annual growth
+    sint: 0.006    # 0.6% annual growth
+  base_carrying_capacity:
+    region: 50000
+    province: 25000
+  environmental_factor_range: [0.8, 1.2]
+  infrastructure_factor_initial: 1.0
+  chunk_size_days: 36525  # 100 years
+```
+
 ## Critical Design Principles
 
 ### AI Usage Philosophy (ADR-005)
@@ -454,52 +593,46 @@ Then run: `poetry run saskan-timeline db init`
 - CLI commands for region/province snapshot management
 - Extended import/export support
 
-### Next: PR-003b - Macro-Scale Simulation Engine
+### Current Version: 0.3.1 (PR-003b Complete)
 
-**Status:** Next major development effort (NOT YET STARTED)
+**PR-003b: Macro-Scale Simulation Engine** ✅ COMPLETE
 
-**Scope:**
+Implemented complete macro-scale demographic simulation for regions and provinces:
 
-1. **Population Dynamics Formulas**
-   - Implement logistic growth calculations
-   - Carrying capacity formulas (K_t = K_base × C_t × I_t × L_t)
-   - Multi-species population modeling
+1. **Population Dynamics Formulas** ✅
+   - Logistic growth: dN/dt = r×N×(1-N/K)
+   - Carrying capacity: K_t = K_base × C_t × I_t × L_t
+   - Multi-species population modeling with independent growth rates
 
-2. **Region/Province Simulation Engine**
-   - Discrete-step simulation at regional and provincial levels
-   - Generate demographic snapshots from simulation runs
-   - Pre-settlement era simulation capability (before cities existed)
-   - Follows ADR-006: Chunked execution with checkpoints (default 100-year segments)
+2. **Region/Province Simulation Engine** ✅
+   - Unified SimulationEngine for both regions and provinces
+   - Discrete-step simulation (day-by-day with periodic snapshots)
+   - Generates demographic snapshots with `snapshot_type='simulation'`
+   - Chunked execution (ADR-006) with validation between chunks
 
-3. **Event System Basics**
-   - Migration events
-   - Climate events (droughts, favorable periods)
-   - Event effects on population dynamics
+3. **Event System Integration** ✅
    - Human-authored events applied during simulation (ADR-007)
+   - Event effects: population shocks, infrastructure changes, environmental impacts
+   - Events stored in database with effect parameters in meta_data["effects"]
 
-4. **CLI Commands**
-   - `saskan-timeline simulate region <region_id> --start <day> --end <day>`
-   - `saskan-timeline simulate province <province_id> --start <day> --end <day>`
-   - Integration with existing snapshot infrastructure
-   - Validation and reporting between simulation chunks
+4. **CLI Commands** ✅
+   - `saskan-timeline simulate region <id> --start <day> --end <day>`
+   - `saskan-timeline simulate province <id> --start <day> --end <day>`
+   - Options: --seed, --granularity (year/decade/century), --chunk-size
+   - Rich output with results tables and species breakdowns
 
-5. **Integration Points**
-   - Leverages PR-003a schema (RegionSnapshot, ProvinceSnapshot tables)
-   - Uses interpolation services from PR-003a
-   - Generates snapshots with `snapshot_type='simulation'`
-   - Respects ADR-007: Humans define events/parameters, algorithm simulates demographics
+5. **Full Integration** ✅
+   - Uses PR-003a snapshot services (RegionSnapshotService, ProvinceSnapshotService)
+   - Interpolation for loading initial state
+   - Configuration from settings.yaml
+   - Comprehensive test coverage (48 tests passing)
 
-**Key Dependencies:**
-- ✅ PR-003a (snapshot schema and services)
-- ✅ ADR-003 (Python simulation engine)
-- ✅ ADR-006 (Incremental, resumable simulation)
-- ✅ ADR-007 (Hybrid manual-algorithmic workflow)
+**Files Added:**
+- `app_timeline/simulation/` - Complete simulation module (5 files, ~1300 lines)
+- `app_timeline/cli_simulate.py` - CLI commands with Rich output
+- `tests/timeline/test_simulation_*.py` - Comprehensive test suite (3 files, ~700 lines)
 
-**Design Notes:**
-- Simulation engine will read events from database (human-authored)
-- Simulation writes demographic snapshots (algorithm-calculated)
-- Chunked execution allows inspection and parameter adjustment
-- Deterministic with optional random seed for reproducibility
+**See "Macro-Scale Simulation" section above for usage examples.**
 
 ### Future Work (After PR-003b)
 
